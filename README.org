@@ -1,0 +1,78 @@
+#+TITLE: projector
+#+AUTHOR: Mohsin Kaleem
+
+#+html: <p align="right">
+#+html: <a href="https://github.com/mohkale/projector" alt="lint" style="margin-right: 4px;"><img src="https://github.com/mohkale/projector/actions/workflows/lint.yml/badge.svg" /></a>
+#+html: <a href="https://github.com/mohkale/projector" alt="test" style="margin-right: 4px;"><img src="https://github.com/mohkale/projector/actions/workflows/test.yml/badge.svg" /></a>
+#+html: <a href="https://melpa.org/#/projector"><img align="center" alt="MELPA" src="https://melpa.org/packages/projector.svg"/></a>
+#+html: </p>
+
+Project specific interaction library for Emacs builtin ~project.el~.
+
+*NOTE: This project does not have feature parity with the main features of projectile
+yet.*
+
+This Emacs package provides a [[https://github.com/bbatsov/projectile][Projectile]] like project management library built atop
+Emacs built-in ~project.el~. The end goal is to provide a stable and reliable
+out-of-the-box project management experience for as many project types as possible.
+
+* The Why?
+  Projectile is *fantastic!* The out of the box experience is amazing, but it's also
+  quite overbearing. Currently projectile has almost 6000 lines of source code all
+  contained in a single file. This includes cross-platform facilities for detecting
+  the current project root, definitions for numerous project types, and a myriad of
+  helper functions (such as a pluggable TAGS table back-end, or wrappers across other
+  Emacs commands or packages with the sole amendment being they run in the project
+  root). Suffice it to say I think projectile is /spread a little too thin and trying
+  to do way too much/. This is a consequence of it evolving naturally from a time when
+  Emacs had poor built-in project support. Going forward I expect more packages to
+  start using the new built-in Emacs ~project.el~ and Projectile becoming yet-another
+  pluggable backend for it. In that vein this project is simply trying to migrate
+  over the minimum feature set I find valuable from Projectile for my personal use.
+  Where possible I do also try to improve on features. For example Projectile doesn't
+  support binding an interactive function as a compilation command (like
+  ~rustic-compile~) but Projector does.
+
+  *Note*: If any part of this description is no longer up-to-date please open a PR to
+  discuss updating it :-).
+
+* Features
+** Projector Commands
+   This feature works just like projectiles ~projectile-compile-project~ family of
+   commands, with projects being allowed to optionally define commands for
+   configuring, building, running and testing the current project.
+
+   *Note*: Projector supports both shell-commands, interactive functions and helper
+   functions which can return either of these as valid targets for each of these
+   commands. This means, for example, we can support using rustic-modes builtin
+   compilation commands and fallback to basic shell-commands when those aren't
+   defined. See [[file:src/projector-types.el][projector-types]] for how this is configured.
+
+   You can also customise these commands on a project-by-project basis by using a
+   directory-local variable for each of them or by passing a prefix-argument to the
+   command (Example: ~C-u M-x projector-build-project~) which will result in projector
+   prompting you for a command and then caching it to make sure it's used the next
+   time you run that command.
+
+   If a project-type doesn't define a default for one of these commands, for example
+   if it doesn't support configuring as an independent step, then the respective
+   projector command will fail.
+
+** Projector Hook
+   Provides a more general purpose parallel to ~projectile-toggle-project-read-only~.
+   With this you can hook certain functions (Example: ~read-only-mode~) into a project
+   and retroactively apply it to both all the open buffers from that project and any
+   new buffers that will be opened in it.
+
+** TODO Projector Find
+   + [ ] Support for jumping to related files (example: .h -> .cpp) within the same project.
+   + [ ] Support for jumping to test cases from src files and vice-versa.
+
+* Related Projects
+** [[https://github.com/mohkale/compile-multi][compile-multi]]
+   Supports auto extracting compilation commands from the current project (for example
+   from Makefiles) and lets you interactively select one to run. Projector is designed
+   to be a generic frontend for numerous project types, not an extractor for the
+   specific compilation targets a given project defines.
+
+#  LocalWords:  pluggable
