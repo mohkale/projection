@@ -4,7 +4,7 @@
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project
-;; Package-Requires: ((emacs "29.0") (project "0.8.1"))
+;; Package-Requires: ((emacs "29.0") (project "0.8.1") (compile-multi "0.1"))
 ;; Version: 0.1
 
 ;; Copyright (C) 2023  Mohsin Kaleem
@@ -59,7 +59,9 @@
   "p" 'projector-run-project
   "k" 'projector-package-project
   "i" 'projector-install-project
-  "RET" 'projector-project-command)
+  "RET" 'projector-project-command
+  ;; `projector-multi'
+  "SPC" 'projector-multi-compile)
 
 (provide 'projector)
 ;;; projector.el ends here

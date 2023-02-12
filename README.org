@@ -1,5 +1,6 @@
 #+TITLE: projector
 #+AUTHOR: Mohsin Kaleem
+# LocalWords: pluggable ibuffer
 
 #+html: <p align="right">
 #+html: <a href="https://github.com/mohkale/projector" alt="lint" style="margin-right: 4px;"><img src="https://github.com/mohkale/projector/actions/workflows/lint.yml/badge.svg" /></a>
@@ -88,11 +89,14 @@ out-of-the-box project management experience for as many project types as possib
    Allows you to create an ibuffer window with a filter showing only the buffers in
    the current project.
 
-* Related Projects
-** [[https://github.com/mohkale/compile-multi][compile-multi]]
-   Supports auto extracting compilation commands from the current project (for example
-   from Makefiles) and lets you interactively select one to run. Projector is designed
-   to be a generic frontend for numerous project types, not an extractor for the
-   specific compilation targets a given project defines.
+** compile-multi
+   Is a [[https://github.com/mohkale/compile-multi][package]] that supports auto extracting compilation commands from the current
+   project (for example from Makefiles) and lets you interactively select one to run.
+   Projector is designed to be a generic frontend for numerous project types, not an
+   extractor for the specific compilation targets a given project defines. However
+   projector does expose a ~projector-multi-compile~ command that wraps around
+   ~compile-multi~. It uses this to inject compilation target definitions for projector
+   itself (for example "project:build" is offered to run ~projector-build-project~ for
+   projects that have a configured build command) and also for build frameworks
+   projector is aware of (such as Make or CMake).
 
-#  LocalWords:  pluggable ibuffer

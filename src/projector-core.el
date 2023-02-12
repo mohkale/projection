@@ -57,7 +57,8 @@ Used when no other registered type matches the current project."
 (cl-defun projector-register-type
     (project &key predicate
              configure build test run package install
-             src-dir test-dir test-prefix test-suffix)
+             src-dir test-dir test-prefix test-suffix
+             targets)
   "Register or update entries in `projector-types'.
 PROJECT should be the name of the project entry as a symbol.
 
@@ -83,6 +84,9 @@ will be used for jumping between these related files or otherwise
 associating them to each other. This can be supplied as either a single
 value or a list of values but it will be saved as a list.
 
+TARGETS specifies a collection of `compile-multi' targets for this project
+type. See `compile-multi-config' for a description of the supported value.
+
 SRC-DIR, and TEST-DIR are currently unused."
   (declare (indent defun))
   (let ((alist
@@ -98,7 +102,12 @@ SRC-DIR, and TEST-DIR are currently unused."
                                          (src-dir . ,src-dir)
                                          (test-dir . ,test-dir)
                                          (test-suffix . ,(ensure-list test-suffix))
-                                         (test-prefix . ,(ensure-list test-prefix)))
+                                         (test-prefix . ,(ensure-list test-prefix))
+                                         ;; Compilation target generation
+                                         (targets . ,(if (and targets
+                                                              (symbolp targets))
+                                                         (list targets)
+                                                       targets)))
                   when value
                     collect (cons key value))))
     (if-let ((existing (assoc project projector-types)))
@@ -123,6 +132,7 @@ Use DOCSTRING as the variable docstring when provided."
 (projector--define-cache projector--project-cache
   "Cache of previous various values per project.")
 
+;;;###autoload
 (defun projector-reset-project-cache (&optional all-projects hash-table)
   "Reset the cached project-type and commands for the current project.
 With ALL-PROJECTS clear the cache for all projects and not just the current
@@ -168,30 +178,43 @@ When CACHE is given retrieve the entry from CACHE instead of
 
 
 
+(defun projector--project-matches-p (root-dir project-type project-config)
+  "Assert whether project of type PROJECT-TYPE matches ROOT-DIR.
+PROJECT-CONFIG is the configuration for PROJECT-TYPE."
+  (let ((default-directory root-dir))
+    (if-let ((predicate (alist-get 'predicate project-config)))
+        (progn
+          (setq predicate
+                (if (and (consp predicate)
+                         (functionp predicate))
+                    (list predicate)
+                  ;; For some reason this can't handle closures accurately.
+                  (ensure-list predicate)))
+          (cl-loop for it in predicate
+                   when (cond
+                         ((stringp it)
+                          (file-exists-p it))
+                         ((functionp it)
+                          (funcall it))
+                         (t
+                          (user-error "Unknown project predicate type %s: %S" project-type it)))
+                   return t
+                   finally return nil))
+      (warn "Project with no predicate in `projector-types': %s" project-type))))
+
 (defun projector--match-project-type (root-dir)
   "Match project type for ROOT-DIR from `projector-types'."
-  (let ((default-directory root-dir))
-    (cl-loop for (project . config) in projector-types
-             with predicate = nil
-             unless (setq predicate (alist-get 'predicate config))
-               do (warn "Project with no predicate in `projector-types': %s" project)
-             do (setq predicate
-                      (if (and (consp predicate)
-                               (functionp predicate))
-                          (list predicate)
-                        ;; For some reason this can't handle closures accurately.
-                        (ensure-list predicate)))
-             when (cl-loop for it in predicate
-                           when (cond
-                                 ((stringp it)
-                                  (file-exists-p it))
-                                 ((functionp it)
-                                  (funcall it))
-                                 (t
-                                  (user-error "Unknown project predicate type %s: %S" project it)))
-                             return t
-                           finally return nil)
-               return (cons project config))))
+  (cl-loop
+   for (project . config) in projector-types
+   when (projector--project-matches-p root-dir project config)
+     return (cons project config)))
+
+(defun projector--match-project-types (root-dir)
+  "Match all project types for ROOT-DIR from `projector-types'."
+  (cl-loop
+   for (project . config) in projector-types
+   when (projector--project-matches-p root-dir project config)
+     collect (cons project config)))
 
 (defun projector-project-type (root-dir &optional must-match)
   "Determine the project type for ROOT-DIR.
@@ -205,6 +228,26 @@ With MUST-MATCH an error will be raised if no project type could be matched."
    (when must-match
      (error "Could not determine current project type for %s" root-dir))
    (cons t projector-default-type)))
+
+(defun projector-project-types (root-dir &optional must-match)
+  "Determine all project types matching ROOT-DIR.
+With MUST-MATCH an error will be raised if no project types could be matched."
+  (list (projector-project-type root-dir must-match))
+  (or
+   (when-let ((types (projector--cache-get root-dir 'types)))
+     (delq nil
+           (mapcar (lambda (type)
+                     (assoc type projector-types))
+                   types)))
+
+   (when-let ((config (projector--match-project-types root-dir)))
+     (projector--cache-put root-dir 'types (mapcar #'car config))
+     config)
+
+   (when must-match
+     (error "Could not determine any project types for %s" root-dir))
+
+   (list (cons t projector-default-type))))
 
 
 

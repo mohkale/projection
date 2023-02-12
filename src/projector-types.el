@@ -22,31 +22,14 @@
 
 ;;; Code:
 
-(require 'subr-x)
 (require 'projector-core)
+(require 'projector-utils)
 
 ;; NOTE: Project type detection happens in reverse order to registration. As
 ;; function based project type detection is considerably slower than simple
 ;; file based matching, such project types are defined near the top of this
 ;; file and the remaining near the end. Ideally common project types should
 ;; be checked earlier than exotic ones.
-
-(defun projector--command-or-shell (func shell-command)
-  "Generate a command function which will run either FUNC or SHELL-COMMAND.
-The result is a lambda which, if FUNC is bound and interactive returns FUNC,
-otherwise it will return SHELL-COMMAND."
-  (lambda ()
-    (if (commandp func)
-        func
-      shell-command)))
-
-(defun projector--join-shell-command (argv)
-  "Join quoted arguments from ARGV into a shell command."
-  (string-join (mapcar #'shell-quote-argument argv) " "))
-
-(defun projector--all-files-exists (&rest files)
-  "Generate a predicate function which is true if all files in FILES exist."
-  (apply-partially #'cl-every #'file-exists-p files))
 
 
 
@@ -131,40 +114,24 @@ otherwise it will return SHELL-COMMAND."
 
 
 
+(require 'projector-multi-make)
+
 (projector-register-type 'make
   :predicate '("Makefile" "GNUMakefile")
   :build   "make"
   :test    "make test"
-  :install "make install")
+  :install "make install"
+  :targets #'projector-multi-make-targets)
 
 
 
-(defcustom projector-cmake-build-directory "build"
-  "Build directory for cmake project builds."
-  :type 'string
-  :group 'projector)
-
-(defcustom projector-cmake-configure-options nil
-  "Default CMake options when configured with projector.
-Place any -D options or extra flags you always want to use (for example
--DCMAKE_EXPORT_COMPILE_COMMANDS) in this option variable."
-  :type '(list (repeat string))
-  :group 'projector)
-
-;; TODO: Support [[https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html][cmake-presets]].
-
-(defun projector--cmake-command (&optional target)
-  "Generate a CMake command optionally to run TARGET."
-  (projector--join-shell-command
-   `("cmake"
-     "--build" ,projector-cmake-build-directory
-     ,@(when target (list "--target" target)))))
+(require 'projector-multi-cmake)
 
 (projector-register-type 'cmake
   :predicate "CMakeLists.txt"
   ;; The configure step takes the source directory and the output build
   ;; directory.
-  :configure (lambda ()
+  :configure (defun projector-cmake-run--configure ()
                (projector--join-shell-command
                 `("cmake"
                   "-S" "."
@@ -172,10 +139,11 @@ Place any -D options or extra flags you always want to use (for example
                   ,@projector-cmake-configure-options)))
   ;; The remaining commands take the build directory and an optional target
   ;; with it.
-  :build (lambda () (projector--cmake-command))
-  :test (lambda () (projector--cmake-command "test"))
-  :install (lambda () (projector--cmake-command "install"))
-  :package (lambda () (projector--cmake-command "package")))
+  :build   (defun projector-cmake-run--build   () (projector--cmake-command))
+  :test    (defun projector-cmake-run--test    () (projector--cmake-command "ctest"))
+  :install (defun projector-cmake-run--install () (projector--cmake-command "install"))
+  :package (defun projector-cmake-run--package () (projector--cmake-command "package"))
+  :targets #'projector-multi-cmake-targets)
 
 
 
