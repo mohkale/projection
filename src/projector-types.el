@@ -124,14 +124,6 @@ otherwise it will return SHELL-COMMAND."
 
 
 
-(projector-register-type 'gnumake
-  :predicate "GNUMakefile"
-  :build "make"
-  :test "make test"
-  :install "make install")
-
-
-
 (defcustom projector-cmake-build-directory "build"
   "Build directory for cmake project builds."
   :type 'string
