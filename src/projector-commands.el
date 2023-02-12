@@ -147,11 +147,7 @@ Returns an alist mapping the command type to the shell command string."
          ;; Select keys from cands interactively (note they will be casted to strings).
          (completing-read-multiple
           (projector--prompt "Run commands: " (projector--current-project))
-          (lambda (str pred action)
-            (if (eq action 'metadata)
-                `(metadata (affixation-function . ,#'identity))
-              (complete-with-action action cands str pred)))
-          nil t)
+          cands nil t)
          ;; Ensure their ordered in the same way as the original cands list.
          (cl-sort #'< :key
                   (lambda (it)
