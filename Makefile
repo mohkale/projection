@@ -1,4 +1,5 @@
-SRC   := src/*.el
+SRC   := $(wildcard src/*.el)
+BIN   := $(subst .el,.elc,$(SRC))
 EMACS ?= emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))'
 
 .PHONY: ci/cd
@@ -22,7 +23,7 @@ checkdoc: ## Check for missing or poorly formatted docstrings
 compile: ## Check for byte-compiler errors
 	@for file in $(SRC); do \
 	    echo "[compile] $$file" ;\
-	    rm -f "$${file}c" ;\
+	    [ -e "$${file}c" ] && rm -f "$${file}c" ;\
 	    $(EMACS) -Q --batch -L . -f batch-byte-compile $$file 2>&1 \
 	        | grep -v "^Wrote" \
 	        | grep . && exit 1 || true ;\
@@ -30,9 +31,10 @@ compile: ## Check for byte-compiler errors
 
 .PHONY: clean
 clean: ## Remove build artifacts
-	@echo "[clean]" $(subst .el,.elc,$(SRC))
-	@rm -f $(subst .el,.elc,$(SRC))
+	@echo "[clean]" $(BIN)
+	@rm -f $(BIN)
 
 .PHONY: test
 test:
-	cask emacs -batch -f package-initialize -L . -f buttercup-run-discover
+	@echo "[test] buttercup-run-discover"
+	@cask $(EMACS) -batch -f package-initialize -L . -f buttercup-run-discover
