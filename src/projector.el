@@ -6,6 +6,7 @@
 ;; Keywords: project
 ;; Package-Requires: ((emacs "29.0") (project "0.8.1") (compile-multi "0.1"))
 ;; Version: 0.1
+;; Homepage: https://github.com/mohkale/projector
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 

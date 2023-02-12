@@ -100,3 +100,4 @@ out-of-the-box project management experience for as many project types as possib
    projects that have a configured build command) and also for build frameworks
    projector is aware of (such as Make or CMake).
 
+** TODO project-recentf

@@ -164,6 +164,7 @@ retroactively applied to every buffer in the current project with
                      error-count)))))
     (projector--cache-put project 'hooks hook-entries projector-hook--cache)))
 
+;;;###autoload
 (defun projector-hook-clear (&optional no-update)
   "Clear all project hooks enabled for the current project.
 See `projector-hook' for a description of NO-UPDATE."
