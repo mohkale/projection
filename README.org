@@ -84,6 +84,10 @@ out-of-the-box project management experience for as many project types as possib
    and prefixes for test files is configured by the project-type in
    [[file:src/projector-types.el]].
 
+** Projector ibuffer
+   Allows you to create an ibuffer window with a filter showing only the buffers in
+   the current project.
+
 * Related Projects
 ** [[https://github.com/mohkale/compile-multi][compile-multi]]
    Supports auto extracting compilation commands from the current project (for example
@@ -91,4 +95,4 @@ out-of-the-box project management experience for as many project types as possib
    to be a generic frontend for numerous project types, not an extractor for the
    specific compilation targets a given project defines.
 
-#  LocalWords:  pluggable
+#  LocalWords:  pluggable ibuffer
