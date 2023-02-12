@@ -1,4 +1,4 @@
-;;; projector-types.el --- Built-in project type definitions for `projector'. -*- lexical-binding: t; -*-
+;;; projection-types.el --- Built-in project type definitions for `projection'. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -18,12 +18,12 @@
 ;;; Commentary:
 
 ;; This module registers a collection of standard project types for use with
-;; `projector'.
+;; `projection'.
 
 ;;; Code:
 
-(require 'projector-core)
-(require 'projector-utils)
+(require 'projection-core)
+(require 'projection-utils)
 
 ;; NOTE: Project type detection happens in reverse order to registration. As
 ;; function based project type detection is considerably slower than simple
@@ -33,8 +33,8 @@
 
 
 
-(projector-register-type 'haskell-cabal
-  :predicate (defun projector-haskell-cabal-project-p ()
+(projection-register-type 'haskell-cabal
+  :predicate (defun projection-haskell-cabal-project-p ()
                (and (file-expand-wildcards "?*.cabal")
                     (not (file-exists-p "stack.yml"))))
   :build "cabal build"
@@ -44,8 +44,8 @@
 
 
 
-(projector-register-type 'dotnet
-  :predicate (defun projector-dotnet-project-p ()
+(projection-register-type 'dotnet
+  :predicate (defun projection-dotnet-project-p ()
                (or (file-expand-wildcards "?*.csproj")
                    (file-expand-wildcards "?*.fsproj")
                    (file-expand-wildcards "?*.sln")))
@@ -55,8 +55,8 @@
 
 
 
-(projector-register-type 'golang
-  :predicate (defun projector-golang-project-p ()
+(projection-register-type 'golang
+  :predicate (defun projection-golang-project-p ()
                (or (file-exists-p "go.mod")
                    (file-expand-wildcards "*.go")))
   :build "go build"
@@ -65,7 +65,7 @@
 
 
 
-(projector-register-type 'scons
+(projection-register-type 'scons
   :predicate "SConstruct"
   :build "scons"
   :test "scons test"
@@ -76,7 +76,7 @@
 ;; TODO: This is the only project type that specifies a :compilation-dir option.
 ;; is it really necessary, shouldn't the command take an option for this instead.
 
-;; (projector-register-type 'meson
+;; (projection-register-type 'meson
 ;;   :predicate "meson.build"
 ;;   :compilation-dir "build"
 ;;   :configure "meson %s"
@@ -85,14 +85,14 @@
 
 
 
-(projector-register-type 'nix
+(projection-register-type 'nix
   :predicate "default.nix"
   :build "nix-build"
   :test  "nix-build")
 
 
 
-(projector-register-type 'nix-flake
+(projection-register-type 'nix-flake
   :predicate "flake.nix"
   :build "nix build"
   :test  "nix flake check"
@@ -100,7 +100,7 @@
 
 
 
-(projector-register-type 'bazel
+(projection-register-type 'bazel
   :predicate "WORKSPACE"
   :build "bazel build"
   :test  "bazel test"
@@ -108,54 +108,54 @@
 
 
 
-(projector-register-type 'debian
+(projection-register-type 'debian
   :predicate "debian/control"
   :build "debuild -uc -us")
 
 
 
-(require 'projector-multi-make)
+(require 'projection-multi-make)
 
-(projector-register-type 'make
+(projection-register-type 'make
   :predicate '("Makefile" "GNUMakefile")
   :build   "make"
   :test    "make test"
   :install "make install"
-  :targets #'projector-multi-make-targets)
+  :targets #'projection-multi-make-targets)
 
 
 
-(require 'projector-multi-cmake)
+(require 'projection-multi-cmake)
 
-(projector-register-type 'cmake
+(projection-register-type 'cmake
   :predicate "CMakeLists.txt"
   ;; The configure step takes the source directory and the output build
   ;; directory.
-  :configure (defun projector-cmake-run--configure ()
-               (projector--join-shell-command
+  :configure (defun projection-cmake-run--configure ()
+               (projection--join-shell-command
                 `("cmake"
                   "-S" "."
-                  "-B" ,projector-cmake-build-directory
-                  ,@projector-cmake-configure-options)))
+                  "-B" ,projection-cmake-build-directory
+                  ,@projection-cmake-configure-options)))
   ;; The remaining commands take the build directory and an optional target
   ;; with it.
-  :build   (defun projector-cmake-run--build   () (projector--cmake-command))
-  :test    (defun projector-cmake-run--test    () (projector--cmake-command "ctest"))
-  :install (defun projector-cmake-run--install () (projector--cmake-command "install"))
-  :package (defun projector-cmake-run--package () (projector--cmake-command "package"))
-  :targets #'projector-multi-cmake-targets)
+  :build   (defun projection-cmake-run--build   () (projection--cmake-command))
+  :test    (defun projection-cmake-run--test    () (projection--cmake-command "ctest"))
+  :install (defun projection-cmake-run--install () (projection--cmake-command "install"))
+  :package (defun projection-cmake-run--package () (projection--cmake-command "package"))
+  :targets #'projection-multi-cmake-targets)
 
 
 
-(projector-register-type 'php-symfony
-  :predicate (projector--all-files-exists "composer.json" "app" "src" "vendor")
+(projection-register-type 'php-symfony
+  :predicate (projection--all-files-exists "composer.json" "app" "src" "vendor")
   :build "app/console server:run"
   :test "phpunit -c app"
   :test-suffix "Test")
 
 
 
-(projector-register-type 'rebar
+(projection-register-type 'rebar
   :predicate "rebar.config"
   :build "rebar3 compile"
   :test "rebar3 do eunit,ct"
@@ -163,7 +163,7 @@
 
 
 
-(projector-register-type 'elixir
+(projection-register-type 'elixir
   :predicate "mix.exs"
   :build "mix compile"
   :test "mix test"
@@ -171,21 +171,21 @@
 
 
 
-(projector-register-type 'grunt
+(projection-register-type 'grunt
   :predicate "Gruntfile.js"
   :build "grunt"
   :test "grunt test")
 
 
 
-(projector-register-type 'gulp
+(projection-register-type 'gulp
   :predicate "gulpfile.js"
   :build "gulp"
   :test "gulp test")
 
 
 
-(projector-register-type 'npm
+(projection-register-type 'npm
   :predicate "package.json"
   :build "npm install"
   :test "npm test"
@@ -193,8 +193,8 @@
 
 
 
-(projector-register-type 'angular
-  :predicate (projector--all-files-exists "angular.json" ".angular-cli.json")
+(projection-register-type 'angular
+  :predicate (projection--all-files-exists "angular.json" ".angular-cli.json")
   :build "ng build"
   :run "ng serve"
   :test "ng test"
@@ -202,7 +202,7 @@
 
 
 
-(projector-register-type 'django
+(projection-register-type 'django
   :predicate "manage.py"
   :build "python manage.py runserver"
   :test "python manage.py test"
@@ -211,7 +211,7 @@
 
 
 
-(projector-register-type 'python-pip
+(projection-register-type 'python-pip
   :predicate "requirements.txt"
   :build "python setup.py build"
   :test "python -m unittest discover"
@@ -220,7 +220,7 @@
 
 
 
-(projector-register-type 'python-pkg
+(projection-register-type 'python-pkg
   :predicate "setup.py"
   :build "python setup.py build"
   :test "python -m unittest discover"
@@ -229,7 +229,7 @@
 
 
 
-(projector-register-type 'python-tox
+(projection-register-type 'python-tox
   :predicate "tox.ini"
   :build "tox -r --notest"
   :test "tox"
@@ -238,7 +238,7 @@
 
 
 
-(projector-register-type 'python-pipenv
+(projection-register-type 'python-pipenv
   :predicate "Pipfile"
   :build "pipenv run build"
   :test "pipenv run test"
@@ -247,7 +247,7 @@
 
 
 
-(projector-register-type 'python-poetry
+(projection-register-type 'python-poetry
   :predicate "poetry.lock"
   :build "poetry build"
   :test "poetry run python -m unittest discover"
@@ -256,7 +256,7 @@
 
 
 
-(projector-register-type 'maven
+(projection-register-type 'maven
   :predicate "pom.xml"
   :build "mvn -B clean install"
   :test "mvn -B test"
@@ -265,7 +265,7 @@
 
 
 
-(projector-register-type 'gradle
+(projection-register-type 'gradle
   :predicate "build.gradle"
   :build "gradle build"
   :test "gradle test"
@@ -273,7 +273,7 @@
 
 
 
-(projector-register-type 'gradlew
+(projection-register-type 'gradlew
   :predicate "gradlew"
   :build "./gradlew build"
   :test "./gradlew test"
@@ -281,15 +281,15 @@
 
 
 
-(projector-register-type 'grails
-  :predicate (projector--all-files-exists "application.yml" "grails-app")
+(projection-register-type 'grails
+  :predicate (projection--all-files-exists "application.yml" "grails-app")
   :build "grails package"
   :test "grails test-app"
   :test-suffix "Spec")
 
 
 
-(projector-register-type 'sbt
+(projection-register-type 'sbt
   :predicate "build.sbt"
   :build "sbt compile"
   :test "sbt test"
@@ -299,7 +299,7 @@
 
 
 
-(projector-register-type 'mill
+(projection-register-type 'mill
   :predicate "build.sc"
   :build "mill all __.compile"
   :test "mill all __.test"
@@ -307,7 +307,7 @@
 
 
 
-(projector-register-type 'lein-test
+(projection-register-type 'lein-test
   :predicate "project.clj"
   :build "lein compile"
   :test "lein test"
@@ -315,15 +315,15 @@
 
 
 
-(projector-register-type 'lein-midje
-  :predicate (projector--all-files-exists "project.clj" ".midje.clj")
+(projection-register-type 'lein-midje
+  :predicate (projection--all-files-exists "project.clj" ".midje.clj")
   :build "lein compile"
   :test "lein midje"
   :test-prefix "t_")
 
 
 
-(projector-register-type 'boot-clj
+(projection-register-type 'boot-clj
   :predicate "build.boot"
   :build "boot aot"
   :test "boot test"
@@ -331,13 +331,13 @@
 
 
 
-(projector-register-type 'clojure-cli
+(projection-register-type 'clojure-cli
   :predicate "deps.edn"
   :test-suffix "_test")
 
 
 
-(projector-register-type 'bloop
+(projection-register-type 'bloop
   :predicate ".bloop"
   :build "bloop compile root"
   :test "bloop test --propagate --reporter scalac root"
@@ -347,8 +347,8 @@
 
 
 
-(projector-register-type 'ruby-rspec
-  :predicate (projector--all-files-exists "Gemfile" "lib" "spec")
+(projection-register-type 'ruby-rspec
+  :predicate (projection--all-files-exists "Gemfile" "lib" "spec")
   :build "bundle exec rake"
   :test "bundle exec rspec"
   :src-dir "lib/"
@@ -357,8 +357,8 @@
 
 
 
-(projector-register-type 'ruby-test
-  :predicate (projector--all-files-exists "Gemfile" "lib" "test")
+(projection-register-type 'ruby-test
+  :predicate (projection--all-files-exists "Gemfile" "lib" "test")
   :build "bundle exec rake"
   :test "bundle exec rake test"
   :test-suffix "_spec")
@@ -367,16 +367,16 @@
 
 ;; Rails needs to be registered after npm, otherwise `package.json` makes it `npm`.
 ;; https://github.com/bbatsov/projectile/pull/1191
-(projector-register-type 'rails-test
-  :predicate (projector--all-files-exists "Gemfile" "app" "lib" "db" "config" "test")
+(projection-register-type 'rails-test
+  :predicate (projection--all-files-exists "Gemfile" "app" "lib" "db" "config" "test")
   :build "bundle exec rails server"
   :test "bundle exec rake test"
   :test-suffix "_test")
 
 
 
-(projector-register-type 'rails-rspec
-  :predicate (projector--all-files-exists "Gemfile" "app" "lib" "db" "config" "spec")
+(projection-register-type 'rails-rspec
+  :predicate (projection--all-files-exists "Gemfile" "app" "lib" "db" "config" "spec")
   :build "bundle exec rails server"
   :test "bundle exec rspec"
   :src-dir "lib/"
@@ -385,7 +385,7 @@
 
 
 
-(projector-register-type 'crystal-spec
+(projection-register-type 'crystal-spec
   :predicate "shard.yml"
   :test "crystal spec"
   :src-dir "src/"
@@ -394,7 +394,7 @@
 
 
 
-(projector-register-type 'emacs-cask
+(projection-register-type 'emacs-cask
   :predicate "Cask"
   :build "cask install"
   :test-prefix "test-"
@@ -402,7 +402,7 @@
 
 
 
-(projector-register-type 'emacs-eldev
+(projection-register-type 'emacs-eldev
   :predicate '("Eldev" "Eldev-local")
   :build "eldev compile"
   :test "eldev test"
@@ -411,14 +411,14 @@
 
 
 
-(projector-register-type 'r
+(projection-register-type 'r
   :predicate "DESCRIPTION"
   :build "R CMD INSTALL --with-keep.source ."
   :test (concat "R CMD check -o " temporary-file-directory " ."))
 
 
 
-(projector-register-type 'haskell-stack
+(projection-register-type 'haskell-stack
   :predicate "stack.yaml"
   :build "stack build"
   :test "stack build --test"
@@ -426,15 +426,15 @@
 
 
 
-(projector-register-type 'rust-cargo
+(projection-register-type 'rust-cargo
   :predicate "Cargo.toml"
-  :build (projector--command-or-shell 'rustic-compile "cargo build")
-  :test  (projector--command-or-shell 'rustic-cargo-test "cargo test")
-  :run   (projector--command-or-shell 'rustic-cargo-run "cargo run"))
+  :build (projection--command-or-shell 'rustic-compile "cargo build")
+  :test  (projection--command-or-shell 'rustic-cargo-test "cargo test")
+  :run   (projection--command-or-shell 'rustic-cargo-run "cargo run"))
 
 
 
-(projector-register-type 'racket
+(projection-register-type 'racket
   :predicate "info.rkt"
   :test "raco test ."
   :install "raco pkg install"
@@ -442,7 +442,7 @@
 
 
 
-(projector-register-type 'dart
+(projection-register-type 'dart
   :predicate "pubspec.yaml"
   :build "pub get"
   :test "pub run test"
@@ -451,12 +451,12 @@
 
 
 
-(projector-register-type 'ocaml-dune
+(projection-register-type 'ocaml-dune
   :predicate "dune-project"
   :build "dune build"
   :test "dune runtest")
 
 
 
-(provide 'projector-types)
-;;; projector-types.el ends here
+(provide 'projection-types)
+;;; projection-types.el ends here

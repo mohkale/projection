@@ -1,4 +1,4 @@
-;;; projector-multi.el --- projector integration for `compile-multi'. -*- lexical-binding: t; -*-
+;;; projection-multi.el --- projection integration for `compile-multi'. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -22,46 +22,46 @@
 ;;; Code:
 
 (require 'compile-multi)
-(require 'projector-commands)
+(require 'projection-commands)
 
-(defgroup projector-multi nil
+(defgroup projection-multi nil
   "Project type integration for `compile-multi'."
-  :group 'projector
+  :group 'projection
   :group 'compile-multi)
 
-(defcustom projector-multi-extend-existing-config t
-  "Include existing `compile-multi-config' in `projector-multi-compile'."
+(defcustom projection-multi-extend-existing-config t
+  "Include existing `compile-multi-config' in `projection-multi-compile'."
   :type 'boolean
-  :group 'projector-multi)
+  :group 'projection-multi)
 
 
 
-(defconst projector-multi--project-type-commands-prefix "project:")
-(defun projector-multi--project-type-commands (project-type)
-  "Extract `projector-commands' `compile-multi' targets for PROJECT-TYPE."
+(defconst projection-multi--project-type-commands-prefix "project:")
+(defun projection-multi--project-type-commands (project-type)
+  "Extract `projection-commands' `compile-multi' targets for PROJECT-TYPE."
   (cl-loop
-   for (type _ cmd) in projector-commands--registered-cmd-types
+   for (type _ cmd) in projection-commands--registered-cmd-types
    when (alist-get type (cdr project-type))
-   collect (cons (concat projector-multi--project-type-commands-prefix
+   collect (cons (concat projection-multi--project-type-commands-prefix
                          (symbol-name type))
                  cmd)))
 
-(defun projector-multi--project-triggers (project)
+(defun projection-multi--project-triggers (project)
   "Extract all `compile-multi' triggers for the PROJECT."
-  (when-let ((project-types (projector-project-types (project-root project))))
+  (when-let ((project-types (projection-project-types (project-root project))))
     (cl-loop
      for (type . config) in project-types
      with first = t
      when first
-       append (projector-multi--project-type-commands (cons type config))
+       append (projection-multi--project-type-commands (cons type config))
        and do (setq first nil)
      append (alist-get 'targets config))))
 
 ;;;###autoload
-(defun projector-multi-compile ()
+(defun projection-multi-compile ()
   "Variant of `compile-multi' which includes project specific targets."
   (interactive)
-  (let* ((project (projector--current-project 'no-error))
+  (let* ((project (projection--current-project 'no-error))
          ;; Run compilations and generators from the project root.
          (default-directory (or (and project
                                      (project-root project))))
@@ -69,10 +69,10 @@
          ;; Pre-pend the compile-multi triggers for the current project.
          (compile-multi-config
           (append `((t ,@(when project
-                           (projector-multi--project-triggers project))))
-                  (when projector-multi-extend-existing-config
+                           (projection-multi--project-triggers project))))
+                  (when projection-multi-extend-existing-config
                     compile-multi-config))))
     (call-interactively #'compile-multi)))
 
-(provide 'projector-multi)
-;;; projector-multi.el ends here
+(provide 'projection-multi)
+;;; projection-multi.el ends here

@@ -1,7 +1,7 @@
 (source gnu)
 (source melpa)
 
-(package-file "src/projector.el")
+(package-file "src/projection.el")
 (files "src/*.el")
 
 (development

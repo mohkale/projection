@@ -1,4 +1,4 @@
-;;; projector-utils.el --- Helper module for code shared between other projector modules. -*- lexical-binding: t; -*-
+;;; projection-utils.el --- Helper module for code shared between other projection modules. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -27,7 +27,7 @@
 
 ;; General
 
-(defun projector--command-or-shell (func shell-command)
+(defun projection--command-or-shell (func shell-command)
   "Generate a command function which will run either FUNC or SHELL-COMMAND.
 The result is a lambda which, if FUNC is bound and interactive returns FUNC,
 otherwise it will return SHELL-COMMAND."
@@ -36,11 +36,11 @@ otherwise it will return SHELL-COMMAND."
         func
       shell-command)))
 
-(defun projector--join-shell-command (argv)
+(defun projection--join-shell-command (argv)
   "Join quoted arguments from ARGV into a shell command."
   (string-join (mapcar #'shell-quote-argument argv) " "))
 
-(defun projector--all-files-exists (&rest files)
+(defun projection--all-files-exists (&rest files)
   "Generate a predicate function which is true if all files in FILES exist."
   (apply-partially #'cl-every #'file-exists-p files))
 
@@ -48,26 +48,26 @@ otherwise it will return SHELL-COMMAND."
 
 ;; CMake
 
-(defcustom projector-cmake-build-directory "build"
+(defcustom projection-cmake-build-directory "build"
   "Build directory for cmake project builds."
   :type 'string
-  :group 'projector)
+  :group 'projection)
 
-(defcustom projector-cmake-configure-options nil
-  "Default CMake options when configured with projector.
+(defcustom projection-cmake-configure-options nil
+  "Default CMake options when configured with projection.
 Place any -D options or extra flags you always want to use (for example
 -DCMAKE_EXPORT_COMPILE_COMMANDS) in this option variable."
   :type '(list (repeat string))
-  :group 'projector)
+  :group 'projection)
 
 ;; TODO: Support [[https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html][cmake-presets]].
 
-(defun projector--cmake-command (&optional target)
+(defun projection--cmake-command (&optional target)
   "Generate a CMake command optionally to run TARGET."
-  (projector--join-shell-command
+  (projection--join-shell-command
    `("cmake"
-     "--build" ,projector-cmake-build-directory
+     "--build" ,projection-cmake-build-directory
      ,@(when target (list "--target" target)))))
 
-(provide 'projector-utils)
-;;; projector-utils.el ends here
+(provide 'projection-utils)
+;;; projection-utils.el ends here

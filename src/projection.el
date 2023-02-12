@@ -1,4 +1,4 @@
-;;; projector.el --- Project specific compilation commands -*- lexical-binding: t; -*-
+;;; projection.el --- Project specific compilation commands -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022  Mohsin Kaleem
 
@@ -6,7 +6,7 @@
 ;; Keywords: project
 ;; Package-Requires: ((emacs "29.0") (project "0.8.1") (compile-multi "0.1"))
 ;; Version: 0.1
-;; Homepage: https://github.com/mohkale/projector
+;; Homepage: https://github.com/mohkale/projection
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -31,38 +31,38 @@
 
 ;;; Code:
 
-(require 'projector-core)
-(require 'projector-types)
+(require 'projection-core)
+(require 'projection-types)
 
-(defgroup projector nil
+(defgroup projection nil
   "Project specific helper commands."
   :group 'project
-  :link '(url-link :tag "GitHub" "https://github.com/mohkale/projector"))
+  :link '(url-link :tag "GitHub" "https://github.com/mohkale/projection"))
 
-(defvar-keymap projector-map
-  :doc "Keymap for projector project-management bindings."
-  ;; `projector-core'
-  "I" 'projector-show-project-info
-  "DEL" 'projector-reset-project-cache
-  ;; `projector-find'
-  "TAB" 'projector-find-other-file
-  "o"   'projector-find-other-file
-  ;; `projector-hook'
-  "h" 'projector-hook
-  "H" 'projector-hook-clear
-  ;; `projector-ibuffer'
-  "m" 'projector-ibuffer
-  ;; `projector-commands'.
-  "c" 'projector-build-project
-  "g" 'projector-configure-project
-  "t" 'projector-test-project
-  "r" 'projector-run-project
-  "p" 'projector-run-project
-  "k" 'projector-package-project
-  "i" 'projector-install-project
-  "RET" 'projector-project-command
-  ;; `projector-multi'
-  "SPC" 'projector-multi-compile)
+(defvar-keymap projection-map
+  :doc "Keymap for projection project-management bindings."
+  ;; `projection-core'
+  "I" 'projection-show-project-info
+  "DEL" 'projection-reset-project-cache
+  ;; `projection-find'
+  "TAB" 'projection-find-other-file
+  "o"   'projection-find-other-file
+  ;; `projection-hook'
+  "h" 'projection-hook
+  "H" 'projection-hook-clear
+  ;; `projection-ibuffer'
+  "m" 'projection-ibuffer
+  ;; `projection-commands'.
+  "c" 'projection-build-project
+  "g" 'projection-configure-project
+  "t" 'projection-test-project
+  "r" 'projection-run-project
+  "p" 'projection-run-project
+  "k" 'projection-package-project
+  "i" 'projection-install-project
+  "RET" 'projection-project-command
+  ;; `projection-multi'
+  "SPC" 'projection-multi-compile)
 
-(provide 'projector)
-;;; projector.el ends here
+(provide 'projection)
+;;; projection.el ends here

@@ -1,4 +1,4 @@
-;;; projector-multi-cmake.el --- projector integration for `compile-multi' and the CMake project type. -*- lexical-binding: t; -*-
+;;; projection-multi-cmake.el --- projection integration for `compile-multi' and the CMake project type. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -21,7 +21,7 @@
 
 ;;; Code:
 
-(require 'projector-utils)
+(require 'projection-utils)
 
 (defconst compile-multi-cmake--help-regex
   (rx
@@ -37,7 +37,7 @@
    eol)
   "Regexp to match targets from the CMake help output.")
 
-(defun projector-multi-cmake-targets (&optional project-type)
+(defun projection-multi-cmake-targets (&optional project-type)
   "`compile-multi' target generator function for CMake projects.
 When set the generated targets will be prefixed with PROJECT-TYPE."
   (setq project-type (or project-type "cmake"))
@@ -45,7 +45,7 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (with-temp-buffer
     (insert
      (shell-command-to-string
-      (projector--cmake-command "help")))
+      (projection--cmake-command "help")))
     (goto-char (point-min))
 
     (let (res)
@@ -53,9 +53,9 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
         (while (re-search-forward compile-multi-cmake--help-regex nil 'noerror)
           (let ((target (match-string 1)))
             (push (cons (concat project-type ":" target)
-                        (projector--cmake-command target))
+                        (projection--cmake-command target))
                   res))))
       (nreverse res))))
 
-(provide 'projector-multi-cmake)
-;;; projector-multi-cmake.el ends here
+(provide 'projection-multi-cmake)
+;;; projection-multi-cmake.el ends here

@@ -1,4 +1,4 @@
-;;; projector-core.el --- Core library for `projector' -*- lexical-binding: t; -*-
+;;; projection-core.el --- Core library for `projection' -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,8 +17,8 @@
 
 ;;; Commentary:
 
-;; Core functions for usage of `projector' including project registration, value
-;; caching and helper functions needed across multiple other `projector' Lisp
+;; Core functions for usage of `projection' including project registration, value
+;; caching and helper functions needed across multiple other `projection' Lisp
 ;; files.
 
 ;;; Code:
@@ -27,11 +27,11 @@
 (require 'subr-x)
 (require 'project)
 
-(defcustom projector-types nil
+(defcustom projection-types nil
   "Alist of defined project types and metadata for them.
 You shouldn't modify this variable directly, instead you should do so
-with `projector-register-type'."
-  :group 'projector
+with `projection-register-type'."
+  :group 'projection
   :type
   '(list
     (repeat
@@ -44,22 +44,22 @@ with `projector-register-type'."
                      ;; a shell command or a interactive function.
                      function))))))
 
-(defcustom projector-default-type
+(defcustom projection-default-type
   '((build   . "make")
     (test    . "make test")
     (run     . "make run")
     (install . "make install"))
   "Default project type.
 Used when no other registered type matches the current project."
-  :group 'projector
+  :group 'projection
   :type '(optional (alist :key-type symbol :value-type (choice string function))))
 
-(cl-defun projector-register-type
+(cl-defun projection-register-type
     (project &key predicate
              configure build test run package install
              src-dir test-dir test-prefix test-suffix
              targets)
-  "Register or update entries in `projector-types'.
+  "Register or update entries in `projection-types'.
 PROJECT should be the name of the project entry as a symbol.
 
 PREDICATE is used to assert whether the current project matches PROJECT.
@@ -110,46 +110,46 @@ SRC-DIR, and TEST-DIR are currently unused."
                                                        targets)))
                   when value
                     collect (cons key value))))
-    (if-let ((existing (assoc project projector-types)))
+    (if-let ((existing (assoc project projection-types)))
         (progn
           (cl-loop for (key . value) in alist
                    do (if-let ((pair (assq key (cdr existing))))
                           (setcdr pair value)
                         (push (cons key value) (cdr existing))))
-          (assoc project projector-types))
-      (push `(,project . ,alist) projector-types))))
-(put 'projector-register-type 'lisp-indent-function 1)
+          (assoc project projection-types))
+      (push `(,project . ,alist) projection-types))))
+(put 'projection-register-type 'lisp-indent-function 1)
 
 
 
-(defmacro projector--define-cache (symbol &optional docstring)
+(defmacro projection--define-cache (symbol &optional docstring)
   "Define a new project cache variable and bind to SYMBOL.
 Use DOCSTRING as the variable docstring when provided."
   (declare (indent defun))
   `(defvar ,symbol (make-hash-table :test #'equal)
      ,docstring))
 
-(projector--define-cache projector--project-cache
+(projection--define-cache projection--project-cache
   "Cache of previous various values per project.")
 
 ;;;###autoload
-(defun projector-reset-project-cache (&optional all-projects hash-table)
+(defun projection-reset-project-cache (&optional all-projects hash-table)
   "Reset the cached project-type and commands for the current project.
 With ALL-PROJECTS clear the cache for all projects and not just the current
-one. Clear HASH-TABLE when given instead of `projector--project-cache'."
+one. Clear HASH-TABLE when given instead of `projection--project-cache'."
   (interactive "P")
   (or hash-table
-      (setq hash-table projector--project-cache))
+      (setq hash-table projection--project-cache))
   (if all-projects
       (clrhash hash-table)
     (when-let ((project (project-current)))
       (remhash (project-root project) hash-table))))
 
-(defun projector--cache-get (project key &optional cache)
-  "Retrieve a value with KEY from the `projector' cache for PROJECT.
+(defun projection--cache-get (project key &optional cache)
+  "Retrieve a value with KEY from the `projection' cache for PROJECT.
 When CACHE is given retrieve the entry from CACHE instead of
-`projector--project-cache'."
-  (or cache (setq cache projector--project-cache))
+`projection--project-cache'."
+  (or cache (setq cache projection--project-cache))
 
   (alist-get
    key
@@ -159,11 +159,11 @@ When CACHE is given retrieve the entry from CACHE instead of
       (project-root project))
     cache)))
 
-(defun projector--cache-put (project key value &optional cache)
-  "Update the entry for KEY to VALUE in the `projector' cache for PROJECT.
+(defun projection--cache-put (project key value &optional cache)
+  "Update the entry for KEY to VALUE in the `projection' cache for PROJECT.
 When CACHE is given retrieve the entry from CACHE instead of
-`projector--project-cache'."
-  (or cache (setq cache projector--project-cache))
+`projection--project-cache'."
+  (or cache (setq cache projection--project-cache))
 
   (let ((root (if (stringp project)
                   project
@@ -178,7 +178,7 @@ When CACHE is given retrieve the entry from CACHE instead of
 
 
 
-(defun projector--project-matches-p (root-dir project-type project-config)
+(defun projection--project-matches-p (root-dir project-type project-config)
   "Assert whether project of type PROJECT-TYPE matches ROOT-DIR.
 PROJECT-CONFIG is the configuration for PROJECT-TYPE."
   (let ((default-directory root-dir))
@@ -200,58 +200,58 @@ PROJECT-CONFIG is the configuration for PROJECT-TYPE."
                           (user-error "Unknown project predicate type %s: %S" project-type it)))
                    return t
                    finally return nil))
-      (warn "Project with no predicate in `projector-types': %s" project-type))))
+      (warn "Project with no predicate in `projection-types': %s" project-type))))
 
-(defun projector--match-project-type (root-dir)
-  "Match project type for ROOT-DIR from `projector-types'."
+(defun projection--match-project-type (root-dir)
+  "Match project type for ROOT-DIR from `projection-types'."
   (cl-loop
-   for (project . config) in projector-types
-   when (projector--project-matches-p root-dir project config)
+   for (project . config) in projection-types
+   when (projection--project-matches-p root-dir project config)
      return (cons project config)))
 
-(defun projector--match-project-types (root-dir)
-  "Match all project types for ROOT-DIR from `projector-types'."
+(defun projection--match-project-types (root-dir)
+  "Match all project types for ROOT-DIR from `projection-types'."
   (cl-loop
-   for (project . config) in projector-types
-   when (projector--project-matches-p root-dir project config)
+   for (project . config) in projection-types
+   when (projection--project-matches-p root-dir project config)
      collect (cons project config)))
 
-(defun projector-project-type (root-dir &optional must-match)
+(defun projection-project-type (root-dir &optional must-match)
   "Determine the project type for ROOT-DIR.
 With MUST-MATCH an error will be raised if no project type could be matched."
   (or
-   (when-let ((type (projector--cache-get root-dir 'type)))
-     (assoc type projector-types))
-   (when-let ((config (projector--match-project-type root-dir)))
-     (projector--cache-put root-dir 'type (car config))
+   (when-let ((type (projection--cache-get root-dir 'type)))
+     (assoc type projection-types))
+   (when-let ((config (projection--match-project-type root-dir)))
+     (projection--cache-put root-dir 'type (car config))
      config)
    (when must-match
      (error "Could not determine current project type for %s" root-dir))
-   (cons t projector-default-type)))
+   (cons t projection-default-type)))
 
-(defun projector-project-types (root-dir &optional must-match)
+(defun projection-project-types (root-dir &optional must-match)
   "Determine all project types matching ROOT-DIR.
 With MUST-MATCH an error will be raised if no project types could be matched."
-  (list (projector-project-type root-dir must-match))
+  (list (projection-project-type root-dir must-match))
   (or
-   (when-let ((types (projector--cache-get root-dir 'types)))
+   (when-let ((types (projection--cache-get root-dir 'types)))
      (delq nil
            (mapcar (lambda (type)
-                     (assoc type projector-types))
+                     (assoc type projection-types))
                    types)))
 
-   (when-let ((config (projector--match-project-types root-dir)))
-     (projector--cache-put root-dir 'types (mapcar #'car config))
+   (when-let ((config (projection--match-project-types root-dir)))
+     (projection--cache-put root-dir 'types (mapcar #'car config))
      config)
 
    (when must-match
      (error "Could not determine any project types for %s" root-dir))
 
-   (list (cons t projector-default-type))))
+   (list (cons t projection-default-type))))
 
 
 
-(defun projector--current-project (&optional no-error)
+(defun projection--current-project (&optional no-error)
   "Retrieve the current project or raise an error.
 If NO-ERROR then don't raise an error if the project could not be resolved."
   ;; TODO: Maybe this is worth caching locally in the current buffer as well.
@@ -260,7 +260,7 @@ If NO-ERROR then don't raise an error if the project could not be resolved."
     (unless no-error
       (user-error "No project found relative to %s" default-directory))))
 
-(defun projector--prompt (prompt project &rest format-args)
+(defun projection--prompt (prompt project &rest format-args)
   "Generate a prompt string for PROJECT with PROMPT.
 FORMAT-ARGS will be used to format PROMPT if provided."
   (apply #'format
@@ -273,16 +273,16 @@ FORMAT-ARGS will be used to format PROMPT if provided."
 
 
 ;;;###autoload
-(defun projector-show-project-info ()
+(defun projection-show-project-info ()
   "Display info for the current project."
   (interactive)
-  (when-let* ((project (projector--current-project))
+  (when-let* ((project (projection--current-project))
               (project-root (project-root project)))
     (message
      "Project dir: %s ## Project type: %s"
      project-root
      (car
-      (projector-project-type project-root)))))
+      (projection-project-type project-root)))))
 
-(provide 'projector-core)
-;;; projector-core.el ends here
+(provide 'projection-core)
+;;; projection-core.el ends here

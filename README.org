@@ -1,11 +1,11 @@
-#+TITLE: projector
+#+TITLE: projection
 #+AUTHOR: Mohsin Kaleem
 # LocalWords: pluggable ibuffer
 
 #+html: <p align="right">
-#+html: <a href="https://github.com/mohkale/projector" alt="lint" style="margin-right: 4px;"><img src="https://github.com/mohkale/projector/actions/workflows/lint.yml/badge.svg" /></a>
-#+html: <a href="https://github.com/mohkale/projector" alt="test" style="margin-right: 4px;"><img src="https://github.com/mohkale/projector/actions/workflows/test.yml/badge.svg" /></a>
-#+html: <a href="https://melpa.org/#/projector"><img align="center" alt="MELPA" src="https://melpa.org/packages/projector.svg"/></a>
+#+html: <a href="https://github.com/mohkale/projection" alt="lint" style="margin-right: 4px;"><img src="https://github.com/mohkale/projection/actions/workflows/lint.yml/badge.svg" /></a>
+#+html: <a href="https://github.com/mohkale/projection" alt="test" style="margin-right: 4px;"><img src="https://github.com/mohkale/projection/actions/workflows/test.yml/badge.svg" /></a>
+#+html: <a href="https://melpa.org/#/projection"><img align="center" alt="MELPA" src="https://melpa.org/packages/projection.svg"/></a>
 #+html: </p>
 
 Project specific interaction library for Emacs builtin ~project.el~.
@@ -32,72 +32,72 @@ out-of-the-box project management experience for as many project types as possib
   over the minimum feature set I find valuable from Projectile for my personal use.
   Where possible I do also try to improve on features. For example Projectile doesn't
   support binding an interactive function as a compilation command (like
-  ~rustic-compile~) but Projector does.
+  ~rustic-compile~) but Projection does.
 
   *Note*: If any part of this description is no longer up-to-date please open a PR to
   discuss updating it :-).
 
 * Features
-** Projector Commands
+** Projection Commands
    This feature works just like projectiles ~projectile-compile-project~ family of
    commands, with projects being allowed to optionally define commands for
    configuring, building, running and testing the current project.
 
-   *Note*: Projector supports both shell-commands, interactive functions and helper
+   *Note*: Projection supports both shell-commands, interactive functions and helper
    functions which can return either of these as valid targets for each of these
    commands. This means, for example, we can support using rustic-modes builtin
    compilation commands and fallback to basic shell-commands when those aren't
-   defined. See [[file:src/projector-types.el][projector-types]] for how this is configured.
+   defined. See [[file:src/projection-types.el][projection-types]] for how this is configured.
 
    You can also customise these commands on a project-by-project basis by using a
    directory-local variable for each of them or by passing a prefix-argument to the
-   command (Example: ~C-u M-x projector-build-project~) which will result in projector
+   command (Example: ~C-u M-x projection-build-project~) which will result in projection
    prompting you for a command and then caching it to make sure it's used the next
    time you run that command.
 
    If a project-type doesn't define a default for one of these commands, for example
    if it doesn't support configuring as an independent step, then the respective
-   projector command will fail.
+   projection command will fail.
 
-** Projector Hook
+** Projection Hook
    Provides a more general purpose parallel to ~projectile-toggle-project-read-only~.
    With this you can hook certain functions (Example: ~read-only-mode~) into a project
    and retroactively apply it to both all the open buffers from that project and any
    new buffers that will be opened in it.
 
-** Projector Find
+** Projection Find
    Adds facilities for jumping to related files within a project. The most common use
    case for this would be jumping between C++ header ~.h~ and implementation ~.cpp~ files.
    This is already possible with Emacs's builtin =ff-find-other-file= command but
-   projector builds on top of it by supporting jumping to related files in other
+   projection builds on top of it by supporting jumping to related files in other
    directories or with alterations to the file-name beyond extensions. For example if
    you have header files in an include directory and implementation files in a src
-   directory then =projector-find-other-file= can still jump between them without any
+   directory then =projection-find-other-file= can still jump between them without any
    extra configuration. If you're working on a python project and define test files
-   with a ~test_BASENAME.py~ format then ~projector-find-other-file~ can also jump
-   between ~BASENAME.py~ and ~test_BASENAME.py~. ~projector-find-other-file~ is intended to
+   with a ~test_BASENAME.py~ format then ~projection-find-other-file~ can also jump
+   between ~BASENAME.py~ and ~test_BASENAME.py~. ~projection-find-other-file~ is intended to
    be a consistent and transitive command. You can invoke it repeatedly to cycle
    between related files and the order in which you cycle will be consistent
    independent of which file you're currently in.
 
    General associations between the current files extension and possible related file
-   extensions is configured in =projector-find-other-file-suffix=. Supported suffixes
+   extensions is configured in =projection-find-other-file-suffix=. Supported suffixes
    and prefixes for test files is configured by the project-type in
-   [[file:src/projector-types.el]].
+   [[file:src/projection-types.el]].
 
-** Projector ibuffer
+** Projection ibuffer
    Allows you to create an ibuffer window with a filter showing only the buffers in
    the current project.
 
 ** compile-multi
    Is a [[https://github.com/mohkale/compile-multi][package]] that supports auto extracting compilation commands from the current
    project (for example from Makefiles) and lets you interactively select one to run.
-   Projector is designed to be a generic frontend for numerous project types, not an
+   Projection is designed to be a generic frontend for numerous project types, not an
    extractor for the specific compilation targets a given project defines. However
-   projector does expose a ~projector-multi-compile~ command that wraps around
-   ~compile-multi~. It uses this to inject compilation target definitions for projector
-   itself (for example "project:build" is offered to run ~projector-build-project~ for
+   projection does expose a ~projection-multi-compile~ command that wraps around
+   ~compile-multi~. It uses this to inject compilation target definitions for projection
+   itself (for example "project:build" is offered to run ~projection-build-project~ for
    projects that have a configured build command) and also for build frameworks
-   projector is aware of (such as Make or CMake).
+   projection is aware of (such as Make or CMake).
 
 ** TODO project-recentf

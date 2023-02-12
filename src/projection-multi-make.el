@@ -1,4 +1,4 @@
-;;; projector-multi-make.el --- projector integration for `compile-multi' and the Make project type. -*- lexical-binding: t; -*-
+;;; projection-multi-make.el --- projection integration for `compile-multi' and the Make project type. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -22,32 +22,32 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'projector-core)
+(require 'projection-core)
 
-(defgroup projector-multi-make nil
+(defgroup projection-multi-make nil
   "Helpers for `compile-multi' and Makefile projects."
-  :group 'projector-multi)
+  :group 'projection-multi)
 
-(defcustom projector-multi-make-cache-targets t
+(defcustom projection-multi-make-cache-targets t
   "When true cache the Make targets of each project."
   :type 'boolean
-  :group 'projector-multi-make)
+  :group 'projection-multi-make)
 
 (defconst compile-multi-make--help-regex
   "^\\([^: \n]+\\) *:\\(?: \\|$\\)"
   "Regexp to match targets from a Makefile.")
 
-(defun projector-multi-make--targets-from-file (makefile)
+(defun projection-multi-make--targets-from-file (makefile)
   "Read makefile target from MAKEFILE."
   (let* (make-targets
-         (project (projector--current-project 'no-error))
-         (modtime (when projector-multi-make-cache-targets
+         (project (projection--current-project 'no-error))
+         (modtime (when projection-multi-make-cache-targets
                     (file-attribute-modification-time
                      (file-attributes makefile 'integer))))
-         (cached-targets (when (and projector-multi-make-cache-targets
+         (cached-targets (when (and projection-multi-make-cache-targets
                                     project)
-                           (projector--cache-get
-                            project 'projector-multi-make-targets))))
+                           (projection--cache-get
+                            project 'projection-multi-make-targets))))
     (if (and modtime
              cached-targets
              (time-less-p modtime (car cached-targets)))
@@ -62,13 +62,13 @@
             (unless (string-match "^\\." str)
               (push str make-targets)))))
       (setq make-targets (nreverse make-targets))
-      (when (and projector-multi-make-cache-targets modtime project)
-        (projector--cache-put
-         project 'projector-multi-make-targets (cons modtime make-targets))))
+      (when (and projection-multi-make-cache-targets modtime project)
+        (projection--cache-put
+         project 'projection-multi-make-targets (cons modtime make-targets))))
     make-targets))
 
 ;;;###autoload
-(defun projector-multi-make-targets (&optional project-type file-name)
+(defun projection-multi-make-targets (&optional project-type file-name)
   "`compile-multi' target generator function for Makefile projects.
 When set the generated targets will be prefixed with PROJECT-TYPE.
 When set this function will read targets from FILE-NAME instead of
@@ -80,9 +80,9 @@ the first Makefile it finds in the current directory."
 
   (when file-name
     (cl-loop
-     for target in (projector-multi-make--targets-from-file file-name)
+     for target in (projection-multi-make--targets-from-file file-name)
      collect (cons (concat project-type ":" target)
                    (concat "make " (shell-quote-argument target))))))
 
-(provide 'projector-multi-make)
-;;; projector-multi-make.el ends here
+(provide 'projection-multi-make)
+;;; projection-multi-make.el ends here

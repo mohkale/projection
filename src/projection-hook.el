@@ -1,4 +1,4 @@
-;;; projector-hook.el --- Hook functions directly into all buffers in a project. -*- lexical-binding: t; -*-
+;;; projection-hook.el --- Hook functions directly into all buffers in a project. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -23,13 +23,13 @@
 
 ;;; Code:
 
-(require 'projector-core)
+(require 'projection-core)
 
-(defgroup projector-hook nil
+(defgroup projection-hook nil
   "Setup hooks for all files in a project."
-  :group 'projector)
+  :group 'projection)
 
-(defcustom projector-hook-functions
+(defcustom projection-hook-functions
   (list #'read-only-mode)
   "List of possible functions that can be hooked into project buffers.
 Each entry should either be a mode-like function (enables when called and
@@ -39,27 +39,27 @@ and another function to disable it."
           (choice
            (cons function function)
            function))
-  :group 'projector-hook)
+  :group 'projection-hook)
 
-(defcustom projector-hook-predicate
+(defcustom projection-hook-predicate
     (apply-partially #'symbol-value 'buffer-file-name)
-  "Function used prior to enabling `projector-hook-mode' in the current buffer.
+  "Function used prior to enabling `projection-hook-mode' in the current buffer.
 By default it ensures hooks are only enabled in file buffers (not just any
 project buffer)."
   :type '(optional function)
-  :group 'projector-hook)
+  :group 'projection-hook)
 
-(defcustom projector-hook-lighter nil
-  "Mode line lighter for `projector-hook-mode'."
+(defcustom projection-hook-lighter nil
+  "Mode line lighter for `projection-hook-mode'."
   :type 'sexp
-  :group 'projector-hook)
+  :group 'projection-hook)
 
-(projector--define-cache projector-hook--cache
+(projection--define-cache projection-hook--cache
   "Cache of hooked functions per project.")
 
 
 
-(defun projector-hook--execute-hook-list (msg-string hook-list silent)
+(defun projection-hook--execute-hook-list (msg-string hook-list silent)
   "Run all hooks in HOOK-LIST for the current project.
 MSG-STRING should be a string explaining the kind of hooks in HOOK-LIST (ex:
 enabling or disabling). HOOK-LIST should be a list of function symbols to call
@@ -74,7 +74,7 @@ failed."
       (condition-case-unless-debug err
           (funcall it)
         (error
-         (with-current-buffer (get-buffer-create " *projector-hook*")
+         (with-current-buffer (get-buffer-create " *projection-hook*")
            (insert "%s :: error while %s hook %s in %s :: %S\n"
                    (current-time-string)
                    msg-string
@@ -84,29 +84,29 @@ failed."
          (setq error-count (1+ error-count)))))
     (when (and (not silent)
                (> error-count 0))
-      (message "Error while %s projector-hooks in this buffer" msg-string))
+      (message "Error while %s projection-hooks in this buffer" msg-string))
     error-count))
 
-(defun projector-hook--enable (&optional hook-list silent)
+(defun projection-hook--enable (&optional hook-list silent)
   "Enable all configured hooks for the current project.
 HOOK-LIST if given will be enabled instead of the entries configured
 for the current project. With SILENT no message will be printed if
 there was an error enabling the hooks."
   (or hook-list
-      (setq hook-list (projector--cache-get
-                       (projector--current-project)
-                       'hooks projector-hook--cache)))
+      (setq hook-list (projection--cache-get
+                       (projection--current-project)
+                       'hooks projection-hook--cache)))
 
-  (projector-hook--execute-hook-list "enabling" hook-list silent))
+  (projection-hook--execute-hook-list "enabling" hook-list silent))
 
-(defun projector-hook--disable (&optional hook-list silent)
+(defun projection-hook--disable (&optional hook-list silent)
   "Disable all configured hooks for the current project.
-See `projector-hook--enable' for a description of HOOK-LIST and SILENT."
-  (when-let ((project (projector--current-project 'no-error)))
+See `projection-hook--enable' for a description of HOOK-LIST and SILENT."
+  (when-let ((project (projection--current-project 'no-error)))
     (or hook-list
-        (setq hook-list (projector--cache-get
+        (setq hook-list (projection--cache-get
                          project
-                         'hooks projector-hook--cache)))
+                         'hooks projection-hook--cache)))
 
     ;; If there's a mapped disable function for each hook, use it instead
     ;; of the hook function again.
@@ -114,40 +114,40 @@ See `projector-hook--enable' for a description of HOOK-LIST and SILENT."
           (cl-loop for hook in hook-list
                    with disable-func = nil
                    do (setq disable-func
-                            (alist-get hook projector-hook-functions))
+                            (alist-get hook projection-hook-functions))
                    when disable-func
                      collect disable-func
                    else collect hook))
 
-    (projector-hook--execute-hook-list "disabling" hook-list silent)))
+    (projection-hook--execute-hook-list "disabling" hook-list silent)))
 
 ;;;###autoload
-(defun projector-hook (hook-entries &optional no-update)
+(defun projection-hook (hook-entries &optional no-update)
   "Update the hooked functions for the current project.
-HOOK-ENTRIES should be a list of entries from `projector-hook-functions'.
+HOOK-ENTRIES should be a list of entries from `projection-hook-functions'.
 Unless NO-UPDATE is given the changes to the hook functions will be
 retroactively applied to every buffer in the current project with
-`projector-hook-mode' enabled."
+`projection-hook-mode' enabled."
   (interactive
    (list
     (mapcar
      #'intern
      ;; TODO: Auto enable any functions that are already enabled.
      (completing-read-multiple
-      (projector--prompt "Project hook: " (projector--current-project))
+      (projection--prompt "Project hook: " (projection--current-project))
       (lambda (str pred action)
         (if (eq action 'metadata)
             '(metadata (category . function))
-          (complete-with-action action projector-hook-functions str pred)))
+          (complete-with-action action projection-hook-functions str pred)))
       nil t))
     current-prefix-arg))
 
-  (let* ((project (projector--current-project))
+  (let* ((project (projection--current-project))
          (existing-hook-entries
-          (projector--cache-get project 'hooks projector-hook--cache))
+          (projection--cache-get project 'hooks projection-hook--cache))
          (buffers
           (seq-filter
-           (apply-partially #'buffer-local-value 'projector-hook-mode)
+           (apply-partially #'buffer-local-value 'projection-hook-mode)
            (if no-update
                (list (current-buffer))
              (project-buffers project)))))
@@ -157,58 +157,58 @@ retroactively applied to every buffer in the current project with
                (+
                 (or (when (not existing-hook-entries)
                       0)
-                    (projector-hook--disable existing-hook-entries 'silent))
-                (projector-hook--enable hook-entries 'silent))))
+                    (projection-hook--disable existing-hook-entries 'silent))
+                (projection-hook--enable hook-entries 'silent))))
           (when (> error-count 0)
             (message "Encountered %d errors while processing new hook list"
                      error-count)))))
-    (projector--cache-put project 'hooks hook-entries projector-hook--cache)))
+    (projection--cache-put project 'hooks hook-entries projection-hook--cache)))
 
 ;;;###autoload
-(defun projector-hook-clear (&optional no-update)
+(defun projection-hook-clear (&optional no-update)
   "Clear all project hooks enabled for the current project.
-See `projector-hook' for a description of NO-UPDATE."
+See `projection-hook' for a description of NO-UPDATE."
   (interactive "P")
-  (projector-hook nil no-update))
+  (projection-hook nil no-update))
 
 
 
-(defun projector-hook--predicate (&optional skip-project-check)
-  "Assert whether current buffer satisfies `projector-hook-predicate'.
+(defun projection-hook--predicate (&optional skip-project-check)
+  "Assert whether current buffer satisfies `projection-hook-predicate'.
 With SKIP-PROJECT-CHECK do not ensure current buffer is within a project."
-  (and (or (not projector-hook-predicate)
-           (funcall projector-hook-predicate))
+  (and (or (not projection-hook-predicate)
+           (funcall projection-hook-predicate))
        (if skip-project-check
            t
-         (projector--current-project 'no-error))))
+         (projection--current-project 'no-error))))
 
 ;;;###autoload
-(define-minor-mode projector-hook-mode
+(define-minor-mode projection-hook-mode
   "Minor mode to enable any functions hooked into the current project."
-  :lighter projector-hook-lighter
+  :lighter projection-hook-lighter
   (cond
    ;; Disable when predicates invalidate the current buffer.
-   ((and projector-hook-mode
-         (not (projector-hook--predicate)))
-    (projector-hook-mode -1))
+   ((and projection-hook-mode
+         (not (projection-hook--predicate)))
+    (projection-hook-mode -1))
    ;; Enable or disable hooks for current buffer in project.
-   (projector-hook-mode
-    (projector-hook--enable))
+   (projection-hook-mode
+    (projection-hook--enable))
    (t
-    (projector-hook--disable))))
+    (projection-hook--disable))))
 
-(defun projector-hook--global-turn-on ()
-  "Turn on `projector-hook-mode' if predicates pass."
+(defun projection-hook--global-turn-on ()
+  "Turn on `projection-hook-mode' if predicates pass."
   (when (and
-         (not projector-hook-mode)
-         (projector-hook--predicate 'skip-project-check))
-    (projector-hook-mode +1)))
+         (not projection-hook-mode)
+         (projection-hook--predicate 'skip-project-check))
+    (projection-hook-mode +1)))
 
 ;;;###autoload
-(define-globalized-minor-mode global-projector-hook-mode
-  projector-hook-mode
-  projector-hook--global-turn-on
-  :group 'projector-hook-mode)
+(define-globalized-minor-mode global-projection-hook-mode
+  projection-hook-mode
+  projection-hook--global-turn-on
+  :group 'projection-hook-mode)
 
-(provide 'projector-hook)
-;;; projector-hook.el ends here
+(provide 'projection-hook)
+;;; projection-hook.el ends here

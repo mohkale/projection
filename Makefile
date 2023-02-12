@@ -1,6 +1,6 @@
 SRC   := $(wildcard src/*.el)
 BIN   := $(subst .el,.elc,$(SRC))
-EMACS ?= emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))'
+EMACS ?= emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))' --eval '(add-to-list (quote load-path) "/home/mohkale/.cache/emacs/straight/repos/compile-multi/")'
 
 .PHONY: ci/cd
 ci/cd: lint test

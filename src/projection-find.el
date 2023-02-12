@@ -1,4 +1,4 @@
-;;; projector-find.el --- Jump between related files in a project. -*- lexical-binding: t; -*-
+;;; projection-find.el --- Jump between related files in a project. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -19,19 +19,19 @@
 
 ;; Facilities for jumping to related files within a project. For example this can
 ;; be used to jump between C++ declaration and implementation files. It can also
-;; respect the project specific test configurations from `projector-types' to be
+;; respect the project specific test configurations from `projection-types' to be
 ;; able to jump from implementation to test files and vice versa.
 
 ;;; Code:
 
 (require 'project)
-(require 'projector-core)
+(require 'projection-core)
 
-(defgroup projector-find nil
+(defgroup projection-find nil
   "Project specific `find-file' helpers."
-  :group 'projector)
+  :group 'projection)
 
-(defcustom projector-find-other-file-suffix
+(defcustom projection-find-other-file-suffix
   '(;; handle C/C++ extensions
     ("cpp" "h" "hpp" "ipp")
     ("ipp" "h" "hpp" "cpp")
@@ -65,7 +65,7 @@
   "Alist associating related files in a project by extension.
 Configures relationships between files with similar base-names and different
 extensions. For example foo.h is related to foo.cpp and can be jumped between
-each other with `projector-find-other-file' by adding the following mappings
+each other with `projection-find-other-file' by adding the following mappings
 to this configuration:
 
     ((\"h\" \"cpp\")
@@ -73,29 +73,29 @@ to this configuration:
 
 In many cases the mapping between extensions should be reciprocal to ensure
 you can jump between them from either file but this isn't required."
-  :group 'projector-find
+  :group 'projection-find
   :type '(alist :key-type string :value-type (list string)))
 
-(defun projector-find--related-extensions (initial-extension)
+(defun projection-find--related-extensions (initial-extension)
   "Get list of file extensions related to INITIAL-EXTENSION.
-Looks for extensions based on `projector-find-other-file-suffix'."
+Looks for extensions based on `projection-find-other-file-suffix'."
   (let ((extensions (make-hash-table :test #'equal))
         (searched-extensions (make-hash-table :test #'equal)))
     (puthash initial-extension t searched-extensions)
-    (dolist (extention (cdr (assoc nil projector-find-other-file-suffix)))
+    (dolist (extention (cdr (assoc nil projection-find-other-file-suffix)))
       (puthash extention t extensions))
 
     (while (> (hash-table-count searched-extensions) 0)
       (let ((ext (car (hash-table-keys searched-extensions))))
         (remhash ext searched-extensions)
         (puthash ext t extensions)
-        (cl-loop for ext in (cdr (assoc ext projector-find-other-file-suffix #'string-equal))
+        (cl-loop for ext in (cdr (assoc ext projection-find-other-file-suffix #'string-equal))
                  when (and ext (not (gethash ext extensions)))
                    do (puthash ext t searched-extensions))))
 
     (sort (hash-table-keys extensions) #'string<)))
 
-(defun projector-find--related-file-basenames
+(defun projection-find--related-file-basenames
     (file-name test-prefixes test-suffixes)
   "Get list of basenames for other-files to FILE-NAME.
 TEST-PREFIXES and TEST-SUFFIXES are possible prefix and suffixes attached
@@ -106,7 +106,7 @@ file."
          (basename-no-ext
           (substring basename 0 (- (1+ (length extension)))))
          (related-extensions
-          (projector-find--related-extensions extension))
+          (projection-find--related-extensions extension))
          (related-basenames (make-hash-table :test #'equal)))
     ;; Prune out the test-prefix or test-suffix to ensure we have the original
     ;; base-name.
@@ -137,16 +137,16 @@ file."
           (puthash (concat prefix basename-no-ext extension) t related-basenames))))
     related-basenames))
 
-(defun projector-find--other-file-list (project file-name)
+(defun projection-find--other-file-list (project file-name)
   "Get list of other files for the FILE-NAME in PROJECT."
   (unless (file-name-absolute-p file-name)
     (expand-file-name file-name (project-root project)))
 
-  (let* ((project-config (projector-project-type (project-root project)))
+  (let* ((project-config (projection-project-type (project-root project)))
          (project-config (cdr project-config))
          ;; Determine related file-names for the target file-name.
          (other-file-basenames
-          (projector-find--related-file-basenames
+          (projection-find--related-file-basenames
            file-name
            (alist-get 'test-prefix project-config)
            (alist-get 'test-suffix project-config)))
@@ -162,11 +162,11 @@ file."
     ;; Return consistently ordered list of files.
     other-files))
 
-(defun projector-find--other-file (select-interactively)
-  "Select another file to jump to for `projector-find-other-file'.
+(defun projection-find--other-file (select-interactively)
+  "Select another file to jump to for `projection-find-other-file'.
 See related function for a description of SELECT-INTERACTIVELY."
-  (let* ((project (projector--current-project))
-         (files (projector-find--other-file-list
+  (let* ((project (projection--current-project))
+         (files (projection-find--other-file-list
                  project
                  (or buffer-file-name
                      (buffer-name))))
@@ -210,7 +210,7 @@ See related function for a description of SELECT-INTERACTIVELY."
 
         (expand-file-name
          (completing-read
-          (projector--prompt "Find other file: " project)
+          (projection--prompt "Find other file: " project)
           (lambda (str pred action)
             (if (eq action 'metadata)
                 `(metadata (category . file)
@@ -223,14 +223,14 @@ See related function for a description of SELECT-INTERACTIVELY."
       (nth other-file-pos files)))))
 
 ;;;###autoload
-(defun projector-find-other-file (&optional select-interactively)
+(defun projection-find-other-file (&optional select-interactively)
   "Switch between similar files to the current file in this project.
 This function will huerestically determine all files in the project similar
 to the current file and then `find-file' it. For example this can be used to
 switch between C++ header and implementation files assuming the two have the
 same basename and a different extension. Similarly this function also includes
 any files with test suffixes or prefixes associated with the current project
-type. See `projector-register-type' and `projector-find-other-file-suffix' for
+type. See `projection-register-type' and `projection-find-other-file-suffix' for
 some of the options that impact file resolution.
 
 The order of files cycled from this function is deterministic, and invoking it
@@ -241,8 +241,8 @@ possible files and the first match being the one you would've switched to if
 SELECT-INTERACTIVELY is not set."
   (interactive "P")
   (when-let ((file
-              (projector-find--other-file select-interactively)))
+              (projection-find--other-file select-interactively)))
     (funcall #'find-file file)))
 
-(provide 'projector-find)
-;;; projector-find.el ends here
+(provide 'projection-find)
+;;; projection-find.el ends here
