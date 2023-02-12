@@ -64,9 +64,25 @@ out-of-the-box project management experience for as many project types as possib
    and retroactively apply it to both all the open buffers from that project and any
    new buffers that will be opened in it.
 
-** TODO Projector Find
-   + [ ] Support for jumping to related files (example: .h -> .cpp) within the same project.
-   + [ ] Support for jumping to test cases from src files and vice-versa.
+** Projector Find
+   Adds facilities for jumping to related files within a project. The most common use
+   case for this would be jumping between C++ header ~.h~ and implementation ~.cpp~ files.
+   This is already possible with Emacs's builtin =ff-find-other-file= command but
+   projector builds on top of it by supporting jumping to related files in other
+   directories or with alterations to the file-name beyond extensions. For example if
+   you have header files in an include directory and implementation files in a src
+   directory then =projector-find-other-file= can still jump between them without any
+   extra configuration. If you're working on a python project and define test files
+   with a ~test_BASENAME.py~ format then ~projector-find-other-file~ can also jump
+   between ~BASENAME.py~ and ~test_BASENAME.py~. ~projector-find-other-file~ is intended to
+   be a consistent and transitive command. You can invoke it repeatedly to cycle
+   between related files and the order in which you cycle will be consistent
+   independent of which file you're currently in.
+
+   General associations between the current files extension and possible related file
+   extensions is configured in =projector-find-other-file-suffix=. Supported suffixes
+   and prefixes for test files is configured by the project-type in
+   [[file:src/projector-types.el]].
 
 * Related Projects
 ** [[https://github.com/mohkale/compile-multi][compile-multi]]

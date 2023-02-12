@@ -59,13 +59,16 @@ function which will be called interactively if it's a command (`commandp')
 or will be called as is and should return either of the other possible
 value types.
 
-SRC-DIR, TEST-DIR, TEST-SUFFIX and TEST-PREFIX are currently unused."
-;;   "SRC-DIR, TEST-DIR, TEST-SUFFIX and TEST-PREFIX are used to associate source
-;; code files with test files and vice-versa. When TEST-SUFFIX or TEST-PREFIX
-;; is given the current file will have these values prefixed or suffixed before
-;; the extension and then a file with a matching base name will be looked up.
-;; SRC-DIR and TEST-DIR similairly will be literal replaced in the file-paths
-;; to find a matching file. TODO: Implement Describe lookup algorithm."
+TEST-SUFFIX and TEST-PREFIX set the prefix and suffix that are associated
+test files. For example a source code file like foo.cpp could have a test
+file of foo.t.cpp with a test-suffix of \".t\". Similarly a python module
+like foo.py could have a test file of test_foo.py with a test-prefix of
+\"test_\". These options configure this for projects of type PROJECT and
+will be used for jumping between these related files or otherwise
+associating them to each other. This can be supplied as either a single
+value or a list of values but it will be saved as a list.
+
+SRC-DIR, and TEST-DIR are currently unused."
   (declare (indent defun))
   (let ((alist
          (cl-loop for (key . value) in `((predicate . ,predicate)
@@ -79,8 +82,8 @@ SRC-DIR, TEST-DIR, TEST-SUFFIX and TEST-PREFIX are currently unused."
                                          ;; Test file discovery
                                          (src-dir . ,src-dir)
                                          (test-dir . ,test-dir)
-                                         (test-suffix . ,test-suffix)
-                                         (test-prefix . ,test-prefix))
+                                         (test-suffix . ,(ensure-list test-suffix))
+                                         (test-prefix . ,(ensure-list test-prefix)))
                   when value
                     collect (cons key value))))
     (if-let ((existing (assoc project projector-types)))
