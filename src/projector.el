@@ -43,5 +43,28 @@
   :group 'project
   :link '(url-link :tag "GitHub" "https://github.com/mohkale/projector"))
 
+(defvar-keymap projector-map
+  :doc "Keymap for projector project-management bindings."
+  ;; `projector-core'
+  "I" 'projector-show-project-info
+  "DEL" 'projector-reset-project-cache
+  ;; `projector-find'
+  "TAB" 'projector-find-other-file
+  "o"   'projector-find-other-file
+  ;; `projector-hook'
+  "h" 'projector-hook
+  "H" 'projector-hook-clear
+  ;; `projector-ibuffer'
+  "m" 'projector-ibuffer
+  ;; `projector-commands'.
+  "c" 'projector-build-project
+  "g" 'projector-configure-project
+  "t" 'projector-test-project
+  "r" 'projector-run-project
+  "p" 'projector-run-project
+  "k" 'projector-package-project
+  "i" 'projector-install-project
+  "RET" 'projector-project-command)
+
 (provide 'projector)
 ;;; projector.el ends here
