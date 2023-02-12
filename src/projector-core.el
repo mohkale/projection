@@ -209,5 +209,19 @@ FORMAT-ARGS will be used to format PROMPT if provided."
            "/" (project-root project)))
          format-args))
 
+
+
+;;;###autoload
+(defun projector-show-project-info ()
+  "Display info for the current project."
+  (interactive)
+  (when-let* ((project (projector--current-project))
+              (project-root (project-root project)))
+    (message
+     "Project dir: %s ## Project type: %s"
+     project-root
+     (car
+      (projector-project-type project-root)))))
+
 (provide 'projector-core)
 ;;; projector-core.el ends here
