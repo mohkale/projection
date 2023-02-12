@@ -9,6 +9,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'subr-x)
 (require 'project)
 
 (defcustom projector-types nil
@@ -83,10 +84,12 @@ SRC-DIR, TEST-DIR, TEST-SUFFIX and TEST-PREFIX are currently unused."
                   when value
                     collect (cons key value))))
     (if-let ((existing (assoc project projector-types)))
-        (cl-loop for (key . value) in alist
-                 do (if-let ((pair (assq key (cdr existing))))
-                        (setcdr pair value)
-                      (push (cons key value) (cdr existing))))
+        (progn
+          (cl-loop for (key . value) in alist
+                   do (if-let ((pair (assq key (cdr existing))))
+                          (setcdr pair value)
+                        (push (cons key value) (cdr existing))))
+          (assoc project projector-types))
       (push `(,project . ,alist) projector-types))))
 (put 'projector-register-type 'lisp-indent-function 1)
 

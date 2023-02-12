@@ -10,6 +10,10 @@
 
 (require 'projector-core)
 
+(defgroup projector-hook nil
+  "Setup hooks for all files in a project."
+  :group 'projector)
+
 (defcustom projector-hook-functions
   (list #'read-only-mode)
   "List of possible functions that can be hooked into project buffers.

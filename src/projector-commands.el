@@ -9,6 +9,7 @@
 
 ;;; Code:
 
+(require 'subr-x)
 (require 'projector-core)
 
 (defun projector-commands--read-shell-command (project type)
@@ -145,6 +146,7 @@ Returns an alist mapping the command type to the shell command string."
        collect (alist-get (intern key) cands))
     (error "No shell commands configured for the current project type")))
 
+;;;###autoload
 (defun projector-project-command (cmds)
   "Interactively select and run one or command-types for the current project.
 CMDS should be a list of shell commands that should be run one after the other.
