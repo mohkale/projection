@@ -247,12 +247,15 @@
 
 
 
+(require 'projection-multi-poetry-poe)
+
 (projection-register-type 'python-poetry
   :predicate "poetry.lock"
   :build "poetry build"
   :test "poetry run python -m unittest discover"
   :test-prefix "test_"
-  :test-suffix "_test")
+  :test-suffix "_test"
+  :targets #'projection-multi-poetry-poe-targets)
 
 
 
