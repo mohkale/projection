@@ -33,6 +33,11 @@
   :type 'boolean
   :group 'projection-multi-make)
 
+(defcustom projection-multi-make-makefiles '("Makefile" "GNUMakefile")
+  "Collection of possible basenames for Makefiles to query targets from."
+  :type '(list string)
+  :group 'projection-multi-make)
+
 (defconst compile-multi-make--help-regex
   "^\\([^: \n]+\\) *:\\(?: \\|$\\)"
   "Regexp to match targets from a Makefile.")
@@ -68,7 +73,7 @@ the first Makefile it finds in the current directory."
   (setq project-type (or project-type "make"))
   (setq file-name
         (or file-name
-            (cl-find-if #'file-exists-p '("Makefile" "GNUMakefile"))))
+            (cl-find-if #'file-exists-p projection-multi-make-makefiles)))
 
   (when file-name
     (cl-loop
