@@ -176,6 +176,52 @@ When CACHE is given retrieve the entry from CACHE instead of
                             ,@(cdr existing)))))
       (puthash root `((,key . ,value)) cache))))
 
+(defun projection--cache-get-with-predicate (project key predicate body)
+  "Get a value from the `projection' cache and reset it if stale.
+This is a helper function to both retrieve and set a cache entry for KEY in
+the current PROJECT. If a cache entry for KEY exists in the current project
+and its newer than the PREDICATE value then it will be returned. Otherwise
+BODY will be called to determine a new value and it will be saved alongside
+PREDICATE for a later invocation.
+
+PREDICATE should be a comparable value that will change when the value
+in the cache is stale. For example PREDICATE could be the modification
+time of a file used by BODY. If the file is unchanged the cache is up to
+date. If the FILE is modified PREDICATE will be updated and the CACHE is
+stale. PREDICATE can be set to nil to bypass caching.
+
+PROJECT is an optional argument. When set to nil calling this function is
+essentially the same as just calling BODY directly."
+  (let ((cached-value (when project
+                        (projection--cache-get project key))))
+    (if (and predicate
+             cached-value
+             (<= predicate (car cached-value)))
+        (cdr cached-value)
+      (let ((resolved-value (funcall body)))
+        (when (and predicate project resolved-value)
+          (projection--cache-put
+           project key (cons predicate resolved-value)))
+        resolved-value))))
+
+(defun projection--cache-modtime-predicate (&rest files)
+  "Helper function to get the larget modtime of a series of files.
+Will loop through each file in FILES and return the one with the most recent
+modtime. If any files don't exist then they are expected to be regenerated
+and will be set to having a modtime of `current-time'."
+  (cl-assert (> (length files) 0) nil "Must supply at least one file. files=%s" files)
+
+  (cl-loop for file in files
+           with current-modtime = nil
+           if (file-exists-p file)
+               do (setq current-modtime
+                        (float-time
+                         (file-attribute-modification-time
+                          (file-attributes file 'integer))))
+           else
+               do (setq current-modtime (float-time (current-time)))
+           maximize current-modtime))
+
 
 
 (defun projection--project-matches-p (root-dir project-type project-config)

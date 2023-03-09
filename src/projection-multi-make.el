@@ -38,34 +38,26 @@
   "Regexp to match targets from a Makefile.")
 
 (defun projection-multi-make--targets-from-file (makefile)
-  "Read makefile target from MAKEFILE."
-  (let* (make-targets
-         (project (projection--current-project 'no-error))
-         (modtime (when projection-multi-make-cache-targets
-                    (file-attribute-modification-time
-                     (file-attributes makefile 'integer))))
-         (cached-targets (when (and projection-multi-make-cache-targets
-                                    project)
-                           (projection--cache-get
-                            project 'projection-multi-make-targets))))
-    (if (and modtime
-             cached-targets
-             (time-less-p modtime (car cached-targets)))
-        (setq make-targets (cdr cached-targets))
-      ;; Read and then maybe cache targets from the Makefile.
-      ;; Taken from [[https://github.com/abo-abo/helm-make/blob/ebd71e85046d59b37f6a96535e01993b6962c559/helm-make.el#L284][helm-make/helm--make-target-list-default]].
-      (with-temp-buffer
-        (insert-file-contents makefile)
-        (goto-char (point-min))
-        (while (re-search-forward compile-multi-make--help-regex nil t)
-          (let ((str (match-string 1)))
-            (unless (string-match "^\\." str)
-              (push str make-targets)))))
-      (setq make-targets (nreverse make-targets))
-      (when (and projection-multi-make-cache-targets modtime project)
-        (projection--cache-put
-         project 'projection-multi-make-targets (cons modtime make-targets))))
-    make-targets))
+  "Read makefile targets from MAKEFILE respecting project cache."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-multi-make-targets
+   (and projection-multi-make-cache-targets
+        (projection--cache-modtime-predicate makefile))
+   (apply-partially #'projection-multi-make--targets-from-file2 makefile)))
+
+(defun projection-multi-make--targets-from-file2 (makefile)
+  "Read makefile targets from MAKEFILE."
+  ;; Taken from [[https://github.com/abo-abo/helm-make/blob/ebd71e85046d59b37f6a96535e01993b6962c559/helm-make.el#L284][helm-make/helm--make-target-list-default]].
+  (let (make-targets)
+    (with-temp-buffer
+      (insert-file-contents makefile)
+      (goto-char (point-min))
+      (while (re-search-forward compile-multi-make--help-regex nil t)
+        (let ((str (match-string 1)))
+          (unless (string-match "^\\." str)
+            (push str make-targets)))))
+    (setq make-targets (nreverse make-targets))))
 
 ;;;###autoload
 (defun projection-multi-make-targets (&optional project-type file-name)
