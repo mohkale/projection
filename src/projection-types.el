@@ -229,12 +229,15 @@
 
 
 
+(require 'projection-multi-tox)
+
 (projection-register-type 'python-tox
   :predicate "tox.ini"
   :build "tox -r --notest"
   :test "tox"
   :test-prefix "test_"
-  :test-suffix "_test")
+  :test-suffix "_test"
+  :targets #'projection-multi-tox-targets)
 
 
 
