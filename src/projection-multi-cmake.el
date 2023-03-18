@@ -21,8 +21,6 @@
 
 ;;; Code:
 
-(require 'projection-utils)
-
 (defconst compile-multi-cmake--help-regex
   (rx
    bol
@@ -36,6 +34,8 @@
      (optional " (the default if no target is provided)")))
    eol)
   "Regexp to match targets from the CMake help output.")
+
+(autoload 'projection--cmake-command "projection-types-cmake.el")
 
 (defun projection-multi-cmake-targets (&optional project-type)
   "`compile-multi' target generator function for CMake projects.

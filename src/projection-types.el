@@ -125,25 +125,7 @@
 
 
 
-(require 'projection-multi-cmake)
-
-(projection-register-type 'cmake
-  :predicate "CMakeLists.txt"
-  ;; The configure step takes the source directory and the output build
-  ;; directory.
-  :configure (defun projection-cmake-run--configure ()
-               (projection--join-shell-command
-                `("cmake"
-                  "-S" "."
-                  "-B" ,projection-cmake-build-directory
-                  ,@projection-cmake-configure-options)))
-  ;; The remaining commands take the build directory and an optional target
-  ;; with it.
-  :build   (defun projection-cmake-run--build   () (projection--cmake-command))
-  :test    (defun projection-cmake-run--test    () (projection--cmake-command "ctest"))
-  :install (defun projection-cmake-run--install () (projection--cmake-command "install"))
-  :package (defun projection-cmake-run--package () (projection--cmake-command "package"))
-  :targets #'projection-multi-cmake-targets)
+(require 'projection-types-cmake)
 
 
 

@@ -25,7 +25,7 @@
 
 
 
-;; General
+;; Shell
 
 (defun projection--command-or-shell (func shell-command)
   "Generate a command function which will run either FUNC or SHELL-COMMAND.
@@ -40,34 +40,13 @@ otherwise it will return SHELL-COMMAND."
   "Join quoted arguments from ARGV into a shell command."
   (string-join (mapcar #'shell-quote-argument argv) " "))
 
+
+
+;; General
+
 (defun projection--all-files-exists (&rest files)
   "Generate a predicate function which is true if all files in FILES exist."
   (apply-partially #'cl-every #'file-exists-p files))
-
-
-
-;; CMake
-
-(defcustom projection-cmake-build-directory "build"
-  "Build directory for cmake project builds."
-  :type 'string
-  :group 'projection)
-
-(defcustom projection-cmake-configure-options nil
-  "Default CMake options when configured with projection.
-Place any -D options or extra flags you always want to use (for example
--DCMAKE_EXPORT_COMPILE_COMMANDS) in this option variable."
-  :type '(list (repeat string))
-  :group 'projection)
-
-;; TODO: Support [[https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html][cmake-presets]].
-
-(defun projection--cmake-command (&optional target)
-  "Generate a CMake command optionally to run TARGET."
-  (projection--join-shell-command
-   `("cmake"
-     "--build" ,projection-cmake-build-directory
-     ,@(when target (list "--target" target)))))
 
 (provide 'projection-utils)
 ;;; projection-utils.el ends here
