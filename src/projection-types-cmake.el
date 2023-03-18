@@ -36,31 +36,9 @@
   "List of files configuring CMake presets.")
 
 (defcustom projection-cmake-cache-presets t
-  "When true cache the list of CMake presets associated with this project."
+  "When true cache the list of CMake presets associated with each project."
   :type 'boolean
   :group 'projection-types)
-
-(defconst projection-cmake--preset-labels
-  '((install . buildPresets)
-    (package . packagePresets)
-    (test . testPresets)
-    (build . buildPresets)
-    (configure . configurePresets))
-  "Variable associating project build types with CMake preset configurations.")
-
-(defun projection-cmake--read-presets-from-file (preset-file)
-  "Read CMake presets from PRESET-FILE.
-Read presets from PRESET-FILE and group by the keys in
-`projection-cmake--preset-labels'."
-  (let ((preset-config (json-read-file preset-file)))
-    (cl-loop
-     for (preset-type . label) in projection-cmake--preset-labels
-     with presets = nil
-     do (setq presets
-              (mapcar (apply-partially #'alist-get 'name)
-                      (alist-get label preset-config)))
-     when presets
-       collect (cons preset-type presets))))
 
 (defun projection-cmake--list-presets-for-build-type (build-type)
   "Fetch the available CMake presets for BUILD-TYPE.
@@ -68,7 +46,9 @@ When BUILD-TYPE is nil fetch the presets for all build types."
   (when-let ((presets (projection-cmake--list-presets)))
     (if build-type
         (alist-get build-type presets)
-      (seq-uniq (apply #'append (mapcar #'cdr presets)) #'string-equal))))
+      (seq-uniq (apply #'append (mapcar #'cdr presets))
+                (lambda (it1 it2)
+                  (string-equal (car it1) (car it2)))))))
 
 (defun projection-cmake--list-presets ()
   "List CMake presets from preset config files respecting cache."
@@ -79,22 +59,38 @@ When BUILD-TYPE is nil fetch the presets for all build types."
      'projection-cmake-presets
      (and projection-cmake-cache-presets
           (apply #'projection--cache-modtime-predicate preset-files))
-     (apply-partially #'projection-cmake--list-presets2 preset-files))))
+     #'projection-cmake--list-presets2)))
 
-(defun projection-cmake--list-presets2 (preset-files)
+(defun projection-cmake--list-presets2 ()
   "List CMake presets from PRESET-FILES config files."
-  (let (result)
-    (dolist (it (reverse preset-files))
-      (when (file-exists-p it)
-        (cl-loop for (preset-type . presets) in
-                 (projection-cmake--read-presets-from-file it)
-                 with configured-value = nil
-                 do (setq configured-value (assoc preset-type result))
-                 if configured-value
-                   do (setcdr configured-value (append presets (cdr configured-value)))
-                 else
-                   do (push (cons preset-type presets) result))))
-    result))
+  (with-temp-buffer
+    (insert
+     (projection--shell-command-to-string
+      "cmake --list-presets=all"))
+    (goto-char (point-min))
+
+    (let (result
+          (build-type 'default)
+          (presets nil))
+      (save-match-data
+        (while (search-forward-regexp
+                (rx
+                 (or (and bol "Available " (group-n 1 (one-or-more any)) " presets:" )
+                     (and bol (+ space) "\"" (group-n 2 (+ (not "\""))) "\""
+                          (optional (+ space) "-" (+ space) (group-n 3 (+ any))))))
+                nil 'noerror)
+          (message "build-type: %s" build-type)
+          (cond
+           ((match-string 1)
+            (when presets
+              (push (cons build-type (nreverse presets)) result))
+            (setq build-type (intern (match-string 1))
+                  presets nil))
+           ((match-string 2)
+            (push (cons (match-string 2)
+                        (match-string 3))
+                  presets)))))
+      (nreverse result))))
 
 
 
@@ -119,18 +115,35 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
 
 (defun projection-cmake--preset-cache-var (build-type)
   "Fetch the project cache variable for the BUILD-TYPE CMake preset."
-  (if build-type
-      (intern (concat "projection-cmake-" (symbol-name build-type) "-preset"))
-    'projection-cmake-default-preset))
+  (or build-type (setq build-type 'default))
+  (intern (concat "projection-cmake-" (symbol-name build-type) "-preset")))
 
 (defun projection-cmake--read-preset (build-type presets)
   "Interactively select a preset from PRESETS for BUILD-TYPE."
-  (completing-read
-   (concat "CMake"
-           (when build-type
-             (concat " " (symbol-name build-type)))
-           " preset: ")
-   presets))
+  (let ((prompt (concat "CMake"
+                        (when build-type
+                          (concat " " (symbol-name build-type)))
+                        " preset: "))
+        (affixate (lambda (cands)
+                    (cl-loop
+                     for cand in cands
+                     with description = nil
+                     do (setq description
+                              (alist-get cand presets nil nil #'string-equal))
+                     when description
+                       do (setq description
+                                (concat (propertize
+                                         " " 'display
+                                         `(space :align-to (- right 1 ,(length description))))
+                                        (propertize description 'face 'completions-annotations)))
+                     collect (list cand "" description)))))
+    (completing-read
+     prompt
+     (lambda (str pred action)
+       (if (eq action 'metadata)
+           `(metadata
+             (affixation-function . ,affixate))
+         (complete-with-action action presets str pred))))))
 
 (defun projection-cmake--preset (&optional build-type)
   "Fetch the CMake preset for the current BUILD-TYPE respecting project cache."
@@ -170,12 +183,9 @@ If BUILD-TYPE is ommitted we determine the preset for all build-types."
      (when (and (equal (length presets) 1)
                 (member projection-cmake-preset
                         '(prompt-multi prompt-multi-cache)))
-       (car presets))
+       (caar presets))
 
-     (let ((user-choice
-            (projection-cmake--read-preset build-type presets)))
-       (unless (string-empty-p user-choice)
-         user-choice)))))
+     (projection-cmake--read-preset build-type presets))))
 
 (defun projection-cmake-set-preset (build-type preset)
   "Set CMake preset for BUILD-TYPE to PRESET for all projects.
@@ -187,7 +197,7 @@ types."
                        (intern
                         (completing-read
                          "Set CMake preset for build type: "
-                         (mapcar #'car projection-cmake--preset-labels)
+                         '(configure build test package)
                          nil 'require-match)))))
      (if-let* ((presets
                 (projection-cmake--list-presets-for-build-type build-type))
@@ -231,7 +241,7 @@ Place any -D options or extra flags you always want to use (for example
    `("cmake"
      "--build" ,projection-cmake-build-directory
      ,@(when-let ((preset (projection-cmake--preset build-type)))
-         (list "--preset" preset))
+         (concat "--preset=" preset))
      ,@(when target (list "--target" target)))))
 
 (projection-register-type 'cmake
