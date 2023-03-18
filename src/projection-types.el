@@ -65,6 +65,14 @@
 
 
 
+(projection-register-type 'go-task
+  :predicate "Taskfile.yml"
+  :build "task build"
+  :test "task test"
+  :install "task install")
+
+
+
 (projection-register-type 'scons
   :predicate "SConstruct"
   :build "scons"
