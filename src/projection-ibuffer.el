@@ -97,7 +97,7 @@ from ibuffer buffers created by `projection-ibuffer'."
     (let ((directory (if buffer-file-name
                          (file-name-directory buffer-file-name)
                        default-directory))
-          (project-root (project-root project)))
+          (project-root (file-truename (project-root project))))
       (and (not (string-prefix-p " " (buffer-name buffer)))
            (not (projection-ibuffer--ignored-buffer-p buffer))
            directory
