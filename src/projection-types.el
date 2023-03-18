@@ -447,6 +447,12 @@
 
 
 
+(projection-register-type 'elm
+  :predicate "elm.json"
+  :build "elm make")
+
+
+
 (projection-register-type 'ocaml-dune
   :predicate "dune-project"
   :build "dune build"
