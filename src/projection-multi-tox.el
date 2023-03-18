@@ -23,6 +23,7 @@
 
 (require 'cl-lib)
 (require 'projection-core)
+(require 'projection-utils)
 
 (defgroup projection-multi-tox nil
   "Helpers for `compile-multi' and tox projects."
@@ -49,7 +50,7 @@
 
 (defun projection-multi-tox--targets-from-file2 ()
   "Read tox targets."
-  (string-lines (shell-command-to-string "tox -l")))
+  (string-lines (projection--shell-command-to-string "tox -l")))
 
 ;;;###autoload
 (defun projection-multi-tox-targets (&optional project-type)

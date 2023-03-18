@@ -23,6 +23,7 @@
 
 (require 'cl-lib)
 (require 'projection-core)
+(require 'projection-utils)
 
 (defgroup projection-multi-poetry-poe nil
   "Helpers for `compile-multi' and Poetry projects using poe."
@@ -56,7 +57,7 @@
   "Read poetry-poe targets."
   (let ((targets))
     (with-temp-buffer
-      (insert (shell-command-to-string projection-multi-poetry-poe-command-prefix))
+      (insert (projection--shell-command-to-string projection-multi-poetry-poe-command-prefix))
       (goto-char (point-min))
       (save-match-data
         (when (search-forward-regexp (rx bol "CONFIGURED TASKS" eol) nil 'no-error)

@@ -40,6 +40,18 @@ otherwise it will return SHELL-COMMAND."
   "Join quoted arguments from ARGV into a shell command."
   (string-join (mapcar #'shell-quote-argument argv) " "))
 
+(defun projection--shell-command-to-string (command)
+  "Run COMMAND in a subshell and return the stdout.
+Discards STDERR."
+  (with-output-to-string
+    (with-current-buffer
+        standard-output
+      (process-file
+       shell-file-name
+       nil '(t nil)  nil
+       shell-command-switch
+       command))))
+
 
 
 ;; General

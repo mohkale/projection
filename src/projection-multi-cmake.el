@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(require 'projection-utils)
+
 (defconst compile-multi-cmake--help-regex
   (rx
    bol
@@ -44,7 +46,7 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
   (with-temp-buffer
     (insert
-     (shell-command-to-string
+     (projection--shell-command-to-string
       (projection--cmake-command nil "help")))
     (goto-char (point-min))
 
