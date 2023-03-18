@@ -45,7 +45,7 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (with-temp-buffer
     (insert
      (shell-command-to-string
-      (projection--cmake-command "help")))
+      (projection--cmake-command nil "help")))
     (goto-char (point-min))
 
     (let (res)
@@ -53,7 +53,7 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
         (while (re-search-forward compile-multi-cmake--help-regex nil 'noerror)
           (let ((target (match-string 1)))
             (push (cons (concat project-type ":" target)
-                        (projection--cmake-command target))
+                        (projection--cmake-command nil target))
                   res))))
       (nreverse res))))
 
