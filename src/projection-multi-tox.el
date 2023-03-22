@@ -1,4 +1,4 @@
-;;; projection-multi-tox.el --- projection integration for `compile-multi' and the Python Tox project type. -*- lexical-binding: t; -*-
+;;; projection-multi-tox.el --- Projection integration for `compile-multi' and the Python Tox project type. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,7 +17,8 @@
 
 ;;; Commentary:
 
-;; TODO
+;; This library exposes a target generation function for `compile-multi' which
+;; sources the list of available targets from a tox projects tox configuration.
 
 ;;; Code:
 

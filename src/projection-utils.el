@@ -1,4 +1,4 @@
-;;; projection-utils.el --- Helper module for code shared between other projection modules. -*- lexical-binding: t; -*-
+;;; projection-utils.el --- Helper module for code shared between other `projection' modules. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,7 +17,8 @@
 
 ;;; Commentary:
 
-;; TODO
+;; This library defines a bunch of common routines shared across other
+;; libraries in `projection'.
 
 ;;; Code:
 

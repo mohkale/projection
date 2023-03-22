@@ -1,4 +1,4 @@
-;;; projection-multi-poetry-poe.el --- projection integration for `compile-multi' and the Poetry project type with the poe command backend. -*- lexical-binding: t; -*-
+;;; projection-multi-poetry-poe.el --- Projection integration for `compile-multi' and the Poetry project type with the poe command backend. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,7 +17,9 @@
 
 ;;; Commentary:
 
-;; TODO
+;; This library exposes a target generation function for `compile-multi' which
+;; sources the list of available targets from a poetry projects poe the poet
+;; config. This assumes poe is invoked within the poetry venv.
 
 ;;; Code:
 
@@ -57,7 +59,8 @@
   "Read poetry-poe targets."
   (let ((targets))
     (with-temp-buffer
-      (insert (projection--shell-command-to-string projection-multi-poetry-poe-command-prefix))
+      (insert (projection--shell-command-to-string
+               projection-multi-poetry-poe-command-prefix))
       (goto-char (point-min))
       (save-match-data
         (when (search-forward-regexp (rx bol "CONFIGURED TASKS" eol) nil 'no-error)

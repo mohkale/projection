@@ -1,4 +1,4 @@
-;;; projection-multi-cmake.el --- projection integration for `compile-multi' and the CMake project type. -*- lexical-binding: t; -*-
+;;; projection-multi-cmake.el --- Projection integration for `compile-multi' and the CMake project type. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,7 +17,13 @@
 
 ;;; Commentary:
 
-;; TODO
+;; This library exposes a target generation function for `compile-multi' which
+;; sources the list of available targets from a CMake projects build config.
+;;
+;; This functionality is supported by parsing the set of available targets
+;; from the output of the help target (this assumes the project has already
+;; passed the configure stage). If invoked prior to this target resolution
+;; will return no targets.
 
 ;;; Code:
 

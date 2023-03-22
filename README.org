@@ -89,16 +89,16 @@ out-of-the-box project management experience for as many project types as possib
    Allows you to create an ibuffer window with a filter showing only the buffers in
    the current project.
 
-** compile-multi
-   Is a [[https://github.com/mohkale/compile-multi][package]] that supports auto extracting compilation commands from the current
-   project (for example from Makefiles) and lets you interactively select one to run.
-   Projection is designed to be a generic frontend for numerous project types, not an
-   extractor for the specific compilation targets a given project defines. However
-   projection does expose a ~projection-multi-compile~ command that wraps around
-   ~compile-multi~. It uses this to inject compilation target definitions for projection
-   itself (for example "project:build" is offered to run ~projection-build-project~ for
-   projects that have a configured build command) and also for build frameworks
-   projection is aware of (such as Make or CMake).
+** Projection multi-compile
+   compile-multi is a [[https://github.com/mohkale/compile-multi][package]] that supports auto extracting compilation commands from
+   the current project (for example from Makefiles) and lets you interactively select
+   one to run. Projection is designed to be a generic frontend for numerous project
+   types, not an extractor for the specific compilation targets a given project
+   defines. However projection does expose a ~projection-multi-compile~ command that
+   wraps around ~compile-multi~. It uses this to inject compilation target definitions
+   for projection itself (for example "project:build" is offered to run
+   ~projection-build-project~ for projects that have a configured build command) and
+   also for build frameworks projection is aware of (such as Make or CMake).
 
 ** Projection recentf
    A variant of =M-x recentf= for files exclusively in the current project.

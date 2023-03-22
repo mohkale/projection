@@ -17,7 +17,11 @@
 
 ;;; Commentary:
 
-;; TODO
+;; Projection project-type definition for CMake projects.
+;;
+;; This library defines a bunch of configuration options and helper functions
+;; for dealing with CMake projects. This also includes support for CMake
+;; presets.
 
 ;;; Code:
 

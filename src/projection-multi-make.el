@@ -1,4 +1,4 @@
-;;; projection-multi-make.el --- projection integration for `compile-multi' and the Make project type. -*- lexical-binding: t; -*-
+;;; projection-multi-make.el --- Projection integration for `compile-multi' and the Make project type. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,7 +17,10 @@
 
 ;;; Commentary:
 
-;; TODO
+;; This library exposes a target generation function for `compile-multi' which
+;; sources the list of available targets from a projects Makefile. This works
+;; by parsing the set of targets directly from the Makefile using the same
+;; algorithm as `helm-make'.
 
 ;;; Code:
 
