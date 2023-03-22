@@ -100,4 +100,5 @@ out-of-the-box project management experience for as many project types as possib
    projects that have a configured build command) and also for build frameworks
    projection is aware of (such as Make or CMake).
 
-** TODO project-recentf
+** Projection recentf
+   A variant of =M-x recentf= for files exclusively in the current project.
