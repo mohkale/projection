@@ -3,8 +3,8 @@
 ;; Copyright (C) 2022  Mohsin Kaleem
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
-;; Keywords: project
-;; Package-Requires: ((emacs "29.0") (project "0.8.1") (compile-multi "0.1"))
+;; Keywords: project, convenience
+;; Package-Requires: ((emacs "29.0") (project "0.9.8") (compile-multi "0.1"))
 ;; Version: 0.1
 ;; Homepage: https://github.com/mohkale/projection
 
