@@ -56,7 +56,8 @@ otherwise it will return SHELL-COMMAND."
           (projection--log
            :debug "Stderr for shell command='%s' was\n%s" command stderr)))
 
-    stdout))
+    (unless (string-empty-p stdout)
+      stdout)))
 
 (defun projection--shell-command-to-string-1 (command)
   "Run COMMAND in a subshell and return (stdout . stderr)."
@@ -71,6 +72,15 @@ otherwise it will return SHELL-COMMAND."
               (setq stderr
                     (buffer-substring-no-properties (point-min) (point-max))))))
     (cons stdout stderr)))
+
+(defmacro projection--with-shell-command-buffer (command &rest body)
+  "Run BODY in a temporary buffer with the output of COMMAND."
+  (declare (indent defun))
+  `(with-temp-buffer
+     (insert (or (projection--shell-command-to-string ,command) ""))
+     (goto-char (point-min))
+     (unless (string-empty-p (buffer-substring (point-min) (point-max)))
+       ,@body)))
 
 
 

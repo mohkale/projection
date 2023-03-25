@@ -50,12 +50,7 @@
   "Determine list of available CMake targets from the help target."
   (projection--log :debug "Resolving available CMake targets")
 
-  (with-temp-buffer
-    (insert
-     (projection--shell-command-to-string
-      (projection--cmake-command nil "help")))
-    (goto-char (point-min))
-
+  (projection--with-shell-command-buffer (projection--cmake-command nil "help")
     (let (res)
       (save-match-data
         (while (re-search-forward compile-multi-cmake--help-regex nil 'noerror)

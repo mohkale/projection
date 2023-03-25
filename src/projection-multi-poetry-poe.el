@@ -61,10 +61,8 @@
   (projection--log :debug "Resolving available Poetry Poe targets")
 
   (let ((targets))
-    (with-temp-buffer
-      (insert (projection--shell-command-to-string
-               projection-multi-poetry-poe-command-prefix))
-      (goto-char (point-min))
+    (projection--with-shell-command-buffer
+        projection-multi-poetry-poe-command-prefix
       (save-match-data
         (when (search-forward-regexp (rx bol "CONFIGURED TASKS" eol) nil 'no-error)
           (while (and

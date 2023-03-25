@@ -70,12 +70,7 @@ When BUILD-TYPE is nil fetch the presets for all build types."
   "List CMake presets from PRESET-FILES config files."
   (projection--log :debug "Resolving available CMake presets")
 
-  (with-temp-buffer
-    (insert
-     (projection--shell-command-to-string
-      "cmake --list-presets=all"))
-    (goto-char (point-min))
-
+  (projection--with-shell-command-buffer "cmake --list-presets=all"
     (let (result
           (build-type 'default)
           (presets nil))

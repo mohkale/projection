@@ -53,7 +53,10 @@
 (defun projection-multi-tox--targets-from-file2 ()
   "Read tox targets."
   (projection--log :debug "Resolving available tox targets")
-  (string-lines (projection--shell-command-to-string "tox -l")))
+  (when-let ((output
+              (or (projection--shell-command-to-string "tox --listenvs-all")
+                  (projection--shell-command-to-string "tox --listenvs"))))
+    (string-lines output)))
 
 ;;;###autoload
 (defun projection-multi-tox-targets (&optional project-type)
