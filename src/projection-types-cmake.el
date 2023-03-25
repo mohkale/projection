@@ -30,7 +30,6 @@
 (require 'projection-core)
 (require 'projection-core-log)
 (require 'projection-utils)
-(require 'projection-multi-cmake)
 
 
 
@@ -234,7 +233,7 @@ types."
   "Default CMake options when configured with projection.
 Place any -D options or extra flags you always want to use (for example
 -DCMAKE_EXPORT_COMPILE_COMMANDS) in this option variable."
-  :type '(list (repeat string))
+  :type '(list (repeat (string :tag "Argument")))
   :group 'projection-types)
 
 (defun projection--cmake-command (&optional build-type target)
@@ -245,6 +244,10 @@ Place any -D options or extra flags you always want to use (for example
      ,@(when-let ((preset (projection-cmake--preset build-type)))
          (concat "--preset=" preset))
      ,@(when target (list "--target" target)))))
+
+
+(autoload 'projection-multi-cmake-targets "projection-multi-cmake.el")
+(autoload 'projection-multi-ctest-targets "projection-multi-ctest.el")
 
 (projection-register-type 'cmake
   :predicate "CMakeLists.txt"
@@ -262,7 +265,8 @@ Place any -D options or extra flags you always want to use (for example
   :test    (defun projection-cmake-run--test    () (projection--cmake-command 'test    "ctest"))
   :install (defun projection-cmake-run--install () (projection--cmake-command 'install "install"))
   :package (defun projection-cmake-run--package () (projection--cmake-command 'package "package"))
-  :targets #'projection-multi-cmake-targets)
+  :targets (list #'projection-multi-cmake-targets
+                 #'projection-multi-ctest-targets))
 
 (provide 'projection-types-cmake)
 ;;; projection-types-cmake.el ends here

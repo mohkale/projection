@@ -29,6 +29,7 @@
 
 (require 'projection-utils)
 (require 'projection-core-log)
+(require 'projection-types-cmake)
 
 (defconst compile-multi-cmake--help-regex
   (rx
@@ -44,9 +45,7 @@
    eol)
   "Regexp to match targets from the CMake help output.")
 
-(autoload 'projection--cmake-command "projection-types-cmake.el")
-
-(defun projection-multi-cmake-targets--from-command ()
+(defun projection-multi-cmake--targets-from-command ()
   "Determine list of available CMake targets from the help target."
   (projection--log :debug "Resolving available CMake targets")
 
@@ -55,8 +54,7 @@
       (save-match-data
         (while (re-search-forward compile-multi-cmake--help-regex nil 'noerror)
           (let ((target (match-string 1)))
-            (push (projection--cmake-command nil target)
-                  res))))
+            (push target res))))
       (nreverse res))))
 
 ;;;###autoload
@@ -66,7 +64,7 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (setq project-type (or project-type "cmake"))
 
   (cl-loop
-   for target in (projection-multi-cmake-targets--from-command)
+   for target in (projection-multi-cmake--targets-from-command)
    collect (cons (concat project-type ":" target)
                  (projection--cmake-command nil target))))
 
