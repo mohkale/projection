@@ -86,8 +86,11 @@ out-of-the-box project management experience for as many project types as possib
    [[file:src/projection-types.el]].
 
 ** Projection ibuffer
-   Allows you to create an ibuffer window with a filter showing only the buffers in
-   the current project.
+   Offers variants of ~projectile-ibuffer~ and the [[https://github.com/purcell/ibuffer-projectile][ibuffer-projectile]] project in the
+   form of =ibuffer-projection-current-project= and =ibuffer-projection-set-filter-groups=.
+   The former creates and displays a dedicated ibuffer window for only buffers in the
+   current project. The latter pre-pends filters to group by a specific project for
+   all currently open projects.
 
 ** Projection multi-compile
    compile-multi is a [[https://github.com/mohkale/compile-multi][package]] that supports auto extracting compilation commands from

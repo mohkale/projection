@@ -51,7 +51,8 @@
   "h" 'projection-hook
   "H" 'projection-hook-clear
   ;; `projection-ibuffer'
-  "m" 'projection-ibuffer
+  "m" 'ibuffer-projection-current-project
+  "M" 'ibuffer-projection-toggle-filter-groups
   ;; `projection-commands'.
   "c" 'projection-build-project
   "g" 'projection-configure-project
