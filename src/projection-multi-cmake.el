@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'projection-utils)
+(require 'projection-core-log)
 
 (defconst compile-multi-cmake--help-regex
   (rx
@@ -45,10 +46,9 @@
 
 (autoload 'projection--cmake-command "projection-types-cmake.el")
 
-(defun projection-multi-cmake-targets (&optional project-type)
-  "`compile-multi' target generator function for CMake projects.
-When set the generated targets will be prefixed with PROJECT-TYPE."
-  (setq project-type (or project-type "cmake"))
+(defun projection-multi-cmake-targets--from-command ()
+  "Determine list of available CMake targets from the help target."
+  (projection--log :debug "Resolving available CMake targets")
 
   (with-temp-buffer
     (insert
@@ -60,10 +60,20 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
       (save-match-data
         (while (re-search-forward compile-multi-cmake--help-regex nil 'noerror)
           (let ((target (match-string 1)))
-            (push (cons (concat project-type ":" target)
-                        (projection--cmake-command nil target))
+            (push (projection--cmake-command nil target)
                   res))))
       (nreverse res))))
+
+;;;###autoload
+(defun projection-multi-cmake-targets (&optional project-type)
+  "`compile-multi' target generator function for CMake projects.
+When set the generated targets will be prefixed with PROJECT-TYPE."
+  (setq project-type (or project-type "cmake"))
+
+  (cl-loop
+   for target in (projection-multi-cmake-targets--from-command)
+   collect (cons (concat project-type ":" target)
+                 (projection--cmake-command nil target))))
 
 (provide 'projection-multi-cmake)
 ;;; projection-multi-cmake.el ends here

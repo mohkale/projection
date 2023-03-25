@@ -25,6 +25,7 @@
 
 (require 'cl-lib)
 (require 'projection-core)
+(require 'projection-core-log)
 (require 'projection-utils)
 
 (defgroup projection-multi-poetry-poe nil
@@ -57,6 +58,8 @@
 
 (defun projection-multi-poetry-poe--targets-from-file2 ()
   "Read poetry-poe targets."
+  (projection--log :debug "Resolving available Poetry Poe targets")
+
   (let ((targets))
     (with-temp-buffer
       (insert (projection--shell-command-to-string

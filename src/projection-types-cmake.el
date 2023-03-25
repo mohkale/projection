@@ -28,6 +28,7 @@
 (require 'json)
 
 (require 'projection-core)
+(require 'projection-core-log)
 (require 'projection-utils)
 (require 'projection-multi-cmake)
 
@@ -67,6 +68,8 @@ When BUILD-TYPE is nil fetch the presets for all build types."
 
 (defun projection-cmake--list-presets2 ()
   "List CMake presets from PRESET-FILES config files."
+  (projection--log :debug "Resolving available CMake presets")
+
   (with-temp-buffer
     (insert
      (projection--shell-command-to-string

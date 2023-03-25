@@ -23,6 +23,7 @@
 ;;; Code:
 
 (require 'cl-extra)
+(require 'projection-core-log)
 
 
 
@@ -42,12 +43,34 @@ otherwise it will return SHELL-COMMAND."
   (string-join (mapcar #'shell-quote-argument argv) " "))
 
 (defun projection--shell-command-to-string (command)
-  "Run COMMAND in a subshell and return the stdout.
-Discards STDERR."
-  (with-output-to-string
-    (with-temp-buffer
-      (shell-command command standard-output (current-buffer)))))
+  "Run COMMAND in a subshell and return the standard output."
+  (projection--log :warning "Running shell command='%s'" command)
+  (cl-destructuring-bind (stdout . stderr)
+      (projection--shell-command-to-string-1 command)
+    (cl-loop
+     for (label . output) in `(("stdout" . ,stdout)
+                               ("stderr" . ,stderr))
+     do (if (string-empty-p output)
+            (projection--log
+             :debug "Shell command='%s' produced no %s output" command label)
+          (projection--log
+           :debug "Stderr for shell command='%s' was\n%s" command stderr)))
 
+    stdout))
+
+(defun projection--shell-command-to-string-1 (command)
+  "Run COMMAND in a subshell and return (stdout . stderr)."
+  (let ((stderr nil)
+        (stdout nil))
+    (setq stdout
+          (with-output-to-string
+            (with-temp-buffer
+              (cl-letf (((symbol-function #'display-buffer)
+                         (symbol-function #'ignore)))
+                (shell-command command standard-output (current-buffer)))
+              (setq stderr
+                    (buffer-substring-no-properties (point-min) (point-max))))))
+    (cons stdout stderr)))
 
 
 

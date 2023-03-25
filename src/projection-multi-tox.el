@@ -24,6 +24,7 @@
 
 (require 'cl-lib)
 (require 'projection-core)
+(require 'projection-core-log)
 (require 'projection-utils)
 
 (defgroup projection-multi-tox nil
@@ -51,6 +52,7 @@
 
 (defun projection-multi-tox--targets-from-file2 ()
   "Read tox targets."
+  (projection--log :debug "Resolving available tox targets")
   (string-lines (projection--shell-command-to-string "tox -l")))
 
 ;;;###autoload

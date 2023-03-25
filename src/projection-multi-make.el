@@ -26,6 +26,7 @@
 
 (require 'cl-lib)
 (require 'projection-core)
+(require 'projection-core-log)
 
 (defgroup projection-multi-make nil
   "Helpers for `compile-multi' and Makefile projects."
@@ -57,6 +58,9 @@
 (defun projection-multi-make--targets-from-file2 (makefile)
   "Read makefile targets from MAKEFILE."
   ;; Taken from [[https://github.com/abo-abo/helm-make/blob/ebd71e85046d59b37f6a96535e01993b6962c559/helm-make.el#L284][helm-make/helm--make-target-list-default]].
+  (projection--log
+   :debug "Resolving available Makefile targets from file=%s" makefile)
+
   (let (make-targets)
     (with-temp-buffer
       (insert-file-contents makefile)

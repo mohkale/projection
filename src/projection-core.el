@@ -26,6 +26,7 @@
 (require 'cl-lib)
 (require 'subr-x)
 (require 'project)
+(require 'projection-core-log)
 
 (defcustom projection-types nil
   "Alist of defined project types and metadata for them.
@@ -112,11 +113,15 @@ SRC-DIR, and TEST-DIR are currently unused."
                     collect (cons key value))))
     (if-let ((existing (assoc project projection-types)))
         (progn
+          (projection--log
+           :debug "Updating project of type=%s with conf=%s" project alist)
           (cl-loop for (key . value) in alist
                    do (if-let ((pair (assq key (cdr existing))))
                           (setcdr pair value)
                         (push (cons key value) (cdr existing))))
           (assoc project projection-types))
+      (projection--log
+       :debug "Defining project of type=%s with conf=%s" project alist)
       (push `(,project . ,alist) projection-types))))
 (put 'projection-register-type 'lisp-indent-function 1)
 
@@ -329,10 +334,6 @@ FORMAT-ARGS will be used to format PROMPT if provided."
      project-root
      (car
       (projection-project-type project-root)))))
-
-
-
-(require 'projection-core-log)
 
 (provide 'projection-core)
 ;;; projection-core.el ends here

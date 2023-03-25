@@ -26,6 +26,7 @@
 
 (require 'subr-x)
 (require 'projection-core)
+(require 'projection-core-log)
 
 (defun projection-commands--read-shell-command (project type)
   "Interactively read a shell command for the command TYPE in PROJECT."
@@ -82,6 +83,8 @@ if no command is configured for the current project."
   (let ((var-symbol (intern (concat "projection-project-" (symbol-name type) "-cmd")))
         (cmd-symbol (intern (concat "projection-" (symbol-name type) "-project"))))
     `(progn
+       (projection--log :debug "Defining project command of type=%s" ',type)
+
        (defvar ,var-symbol nil
          ,(format "The command to use with `%s'.
 It takes precedence over the default command for the project type when set.
