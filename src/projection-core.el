@@ -330,5 +330,9 @@ FORMAT-ARGS will be used to format PROMPT if provided."
      (car
       (projection-project-type project-root)))))
 
+
+
+(require 'projection-core-log)
+
 (provide 'projection-core)
 ;;; projection-core.el ends here
