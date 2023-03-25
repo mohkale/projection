@@ -45,13 +45,9 @@ otherwise it will return SHELL-COMMAND."
   "Run COMMAND in a subshell and return the stdout.
 Discards STDERR."
   (with-output-to-string
-    (with-current-buffer
-        standard-output
-      (process-file
-       shell-file-name
-       nil '(t nil)  nil
-       shell-command-switch
-       command))))
+    (with-temp-buffer
+      (shell-command command standard-output (current-buffer)))))
+
 
 
 
