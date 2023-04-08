@@ -1,6 +1,11 @@
 SRC   := $(wildcard src/*.el)
-BIN   := $(subst .el,.elc,$(SRC))
-EMACS ?= emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))' --eval '(add-to-list (quote load-path) "/home/mohkale/.cache/emacs/straight/repos/compile-multi/")'
+ELC   := $(subst .el,.elc,$(SRC))
+ELCHKDOC := $(subst .el,.checkdoc,$(SRC))
+BIN   := $(ELC) $(ELCHKDOC)
+EMACS ?= cask emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))'
+EMACS_VERSION := master
+
+$(V).SILENT:
 
 .PHONY: ci/cd
 ci/cd: lint test
@@ -9,32 +14,43 @@ ci/cd: lint test
 lint: compile checkdoc
 
 .PHONY: checkdoc
-checkdoc: ## Check for missing or poorly formatted docstrings
-	@for file in $(SRC); do \
-	    echo "[checkdoc] $$file" ;\
-	    $(EMACS) -Q --batch \
-	        --eval "(or (fboundp 'checkdoc-file) (kill-emacs))" \
-	        --eval "(setq sentence-end-double-space nil)" \
-	        --eval "(checkdoc-file \"$$file\")" 2>&1 \
-	        | grep . && exit 1 || true ;\
-	done
+checkdoc: $(ELCHKDOC) ## Check for missing or poorly formatted docstrings
+
+%.checkdoc: %.el
+	@echo "[checkdoc] $^"
+	$(EMACS) -Q --batch \
+	    --eval "(or (fboundp 'checkdoc-file) (kill-emacs 1))" \
+	    --eval "(setq sentence-end-double-space nil)" \
+	    --eval "(checkdoc-file \"$^\")" 2>&1 \
+		| tee "$@" \
+	    | grep . && exit 1 || true
 
 .PHONY: compile
-compile: ## Check for byte-compiler errors
-	@for file in $(SRC); do \
-	    echo "[compile] $$file" ;\
-	    [ -e "$${file}c" ] && rm -f "$${file}c" ;\
-	    $(EMACS) -Q --batch -L . -f batch-byte-compile $$file 2>&1 \
-	        | grep -v "^Wrote" \
-	        | grep . && exit 1 || true ;\
-	done
+compile: $(BIN) ## Check for byte-compiler errors
+
+%.elc: %.el
+	@echo "[compile] $^"
+	if [ -e "$@" ]; then rm -f "$@"; fi
+	$(EMACS) -Q --batch -L . -f batch-byte-compile "$^" 2>&1 \
+		| grep -v "^Wrote" \
+		| grep . && exit 1 || true ;\
 
 .PHONY: clean
 clean: ## Remove build artifacts
-	@echo "[clean]" $(BIN)
-	@rm -f $(BIN)
+	@printf "[clean] %s\n" $(BIN)
+	rm -f $(BIN)
 
 .PHONY: test
 test:
 	@echo "[test] buttercup-run-discover"
-	@cask $(EMACS) -batch -f package-initialize -L . -f buttercup-run-discover
+	$(EMACS) -batch -f package-initialize -L . -f buttercup-run-discover
+
+.PHONY: docker-build
+docker-build:
+	@echo "[docker] build"
+	docker-compose build --build-arg VERSION=$(EMACS_VERSION)
+
+.PHONY: docker
+docker:
+	@echo "[docker] shell"
+	docker-compose run --rm dev

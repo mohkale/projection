@@ -107,7 +107,7 @@
         ;;   I get an error because projection doesn't know how to run the
         ;;   invalid run command.
         (expect (cadr err) :to-equal
-                "Don’t know how to run run command foo")))
+                "Do not know how to run run command foo")))
 
     (it "Uses configured command for initial-input when prompting for a registered command and cache is empty"
       ;; GIVEN

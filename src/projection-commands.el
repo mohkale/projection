@@ -110,7 +110,7 @@ Should be set via .dir-locals.el."
               ((commandp command)
                (call-interactively command))
               (t
-               (user-error "Don't know how to run %s command %s" ',type command)))))))))
+               (user-error "Do not know how to run %s command %s" ',type command)))))))))
 
 ;;;###autoload (autoload 'projection-configure-project "projection-commands")
 (projection-commands--register 'configure)
