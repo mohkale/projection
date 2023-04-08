@@ -20,5 +20,8 @@ jobs:
       - uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
+      - uses: cask/setup-cask@master
+        with:
+          version: 'snapshot'
       - name: Lint elisp
         run: make lint
