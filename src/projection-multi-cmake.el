@@ -31,7 +31,7 @@
 (require 'projection-core-log)
 (require 'projection-types-cmake)
 
-(defconst compile-multi-cmake--help-regex
+(defconst projection-multi-cmake--help-regex
   (rx
    bol
    (or
@@ -52,7 +52,7 @@
   (projection--with-shell-command-buffer (projection--cmake-command nil "help")
     (let (res)
       (save-match-data
-        (while (re-search-forward compile-multi-cmake--help-regex nil 'noerror)
+        (while (re-search-forward projection-multi-cmake--help-regex nil 'noerror)
           (let ((target (match-string 1)))
             (push target res))))
       (nreverse res))))

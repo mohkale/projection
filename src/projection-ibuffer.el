@@ -157,7 +157,7 @@ BUFFER. This function returns the final project for buffer when true."
         (string-lessp
          (project-name project1)
          (project-name project2))
-      (not (null project1)))))
+      project1)))
 
 ;;;###autoload (autoload 'ibuffer-make-column-projection-relative-file "projection-ibuffer.el")
 (define-ibuffer-column projection-relative-file

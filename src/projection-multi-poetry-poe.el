@@ -38,7 +38,7 @@
   :group 'projection-multi-poetry-poe)
 
 (defcustom projection-multi-poetry-poe-project-file '("pyproject.toml")
-  "Collection of possible basenames for project-files to query targets from."
+  "Collection of possible basenames for project files to query targets from."
   :type '(list string)
   :group 'projection-multi-poetry-poe)
 
@@ -66,7 +66,7 @@
       (save-match-data
         (when (search-forward-regexp (rx bol "CONFIGURED TASKS" eol) nil 'no-error)
           (while (and
-                  (not (eq (point) (point-max)))
+                  (not (eobp))
                   (progn (forward-line 1) t)
                   (search-forward-regexp
                    (rx bol (+ space) (group alnum (+ (not space))))
