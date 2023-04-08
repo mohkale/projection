@@ -182,7 +182,9 @@ See related function for a description of SELECT-INTERACTIVELY."
          ;; Other-files not including the current file.
          (files-not-current
           (if current-file-pos
-              (seq-remove-at-position files current-file-pos)
+              (append
+               (seq-take files current-file-pos)
+               (nthcdr   (1+ current-file-pos) files))
             (seq-copy files))))
     (cond
      ((not files-not-current)
@@ -199,8 +201,8 @@ See related function for a description of SELECT-INTERACTIVELY."
         ;; root.
         (setq files-not-current
               (cl-loop for file in
-                       (append (nthcdr current-file-pos files-not-current)
-                               (take   current-file-pos files-not-current))
+                       (append (nthcdr   current-file-pos files-not-current)
+                               (seq-take files-not-current current-file-pos))
                        with relative-file = nil
                        do (setq relative-file (file-relative-name file))
                        if (string-prefix-p ".." relative-file)

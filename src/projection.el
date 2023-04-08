@@ -4,7 +4,7 @@
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
-;; Package-Requires: ((emacs "29.0") (project "0.9.8") (compile-multi "0.1"))
+;; Package-Requires: ((emacs "28.1") (project "0.9.8") (compile-multi "0.1"))
 ;; Version: 0.1
 ;; Homepage: https://github.com/mohkale/projection
 
@@ -39,31 +39,33 @@
   :group 'project
   :link '(url-link :tag "GitHub" "https://github.com/mohkale/projection"))
 
-(defvar-keymap projection-map
-  :doc "Keymap for projection project-management bindings."
-  ;; `projection-core'
-  "I" 'projection-show-project-info
-  "DEL" 'projection-reset-project-cache
-  ;; `projection-find'
-  "TAB" 'projection-find-other-file
-  "o"   'projection-find-other-file
-  ;; `projection-hook'
-  "h" 'projection-hook
-  "H" 'projection-hook-clear
-  ;; `projection-ibuffer'
-  "m" 'ibuffer-projection-current-project
-  "M" 'ibuffer-projection-toggle-filter-groups
-  ;; `projection-commands'.
-  "c" 'projection-build-project
-  "g" 'projection-configure-project
-  "t" 'projection-test-project
-  "r" 'projection-run-project
-  "p" 'projection-run-project
-  "k" 'projection-package-project
-  "i" 'projection-install-project
-  "RET" 'projection-project-command
-  ;; `projection-multi'
-  "SPC" 'projection-multi-compile)
+(defvar projection-map
+  (let ((map (make-sparse-keymap)))
+    ;; `projection-core'
+    (define-key map "I" 'projection-show-project-info)
+    (define-key map "DEL" 'projection-reset-project-cache)
+    ;; `projection-find'
+    (define-key map "TAB" 'projection-find-other-file)
+    (define-key map "o"   'projection-find-other-file)
+    ;; `projection-hook'
+    (define-key map "h" 'projection-hook)
+    (define-key map "H" 'projection-hook-clear)
+    ;; `projection-ibuffer'
+    (define-key map "m" 'ibuffer-projection-current-project)
+    (define-key map "M" 'ibuffer-projection-toggle-filter-groups)
+    ;; `projection-commands'.
+    (define-key map "c" 'projection-build-project)
+    (define-key map "g" 'projection-configure-project)
+    (define-key map "t" 'projection-test-project)
+    (define-key map "r" 'projection-run-project)
+    (define-key map "p" 'projection-run-project)
+    (define-key map "k" 'projection-package-project)
+    (define-key map "i" 'projection-install-project)
+    (define-key map "RET" 'projection-project-command)
+    ;; `projection-multi'
+    (define-key map "SPC" 'projection-multi-compile)
+    map)
+  "Keymap for projection project-management bindings.")
 
 (provide 'projection)
 ;;; projection.el ends here

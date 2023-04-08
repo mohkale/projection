@@ -64,7 +64,10 @@
 Will call `recentf-open' with FILE."
   (interactive
    (list (projection-recentf--read-file)))
-  (recentf-open file))
+  (if (functionp 'recentf-open)
+      (recentf-open file)
+    (when file
+      (funcall recentf-menu-action file))))
 
 (provide 'projection-recentf)
 ;;; projection-recentf.el ends here
