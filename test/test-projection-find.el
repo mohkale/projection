@@ -27,9 +27,16 @@ of BASE and the cdr is the FILE-TREE of that sub-directory."
   "Test helper to setup a project file-tree and then create a git project from it.
 See `projection-find-test--setup-project-tree' for a description of FILE-TREE."
   (projection-find-test--setup-project-tree file-tree)
-  (expect
-   (call-process-shell-command "git init && git add -A && git commit -m \"Initial commit\"")
-   :to-equal 0))
+  (with-temp-buffer
+    (let ((exit-code
+           (save-excursion
+             (call-process
+              shell-file-name nil (current-buffer) nil shell-command-switch
+              "git init && git add -A && git commit -m \"Initial commit\""))))
+      (display-warning :debug
+                       (format "Output of git init is: %s"
+                               (buffer-substring (point-min) (point-max))) )
+      (expect exit-code :to-equal 0))))
 
 (describe "Projection find other file"
   :var (original-directory
