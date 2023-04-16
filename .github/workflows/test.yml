@@ -26,4 +26,7 @@ jobs:
       - name: Install cask dependencies
         run: cask install
       - name: Run test suite
-        run: make test
+        run: |
+          git config --global user.name "Github Actions"
+          git config --global user.email "githubactions@github.com"
+          make test

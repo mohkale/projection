@@ -23,5 +23,9 @@ jobs:
       - uses: cask/setup-cask@master
         with:
           version: 'snapshot'
+      - name: Install cask dependencies
+        run: cask install
       - name: Lint elisp
-        run: make lint
+        # For some reason the first run sometimes fails when installing
+        # packages.
+        run: make lint || make lint
