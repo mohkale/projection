@@ -42,7 +42,7 @@
   :type '(list string)
   :group 'projection-multi-make)
 
-(defconst compile-multi-make--help-regex
+(defconst projection-multi-make--help-regex
   "^\\([^: \n]+\\) *:\\(?: \\|$\\)"
   "Regexp to match targets from a Makefile.")
 
@@ -65,7 +65,7 @@
     (with-temp-buffer
       (insert-file-contents makefile)
       (goto-char (point-min))
-      (while (re-search-forward compile-multi-make--help-regex nil t)
+      (while (re-search-forward projection-multi-make--help-regex nil t)
         (let ((str (match-string 1)))
           (unless (string-match "^\\." str)
             (push str make-targets)))))
