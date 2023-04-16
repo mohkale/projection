@@ -2,7 +2,6 @@
 #+AUTHOR: Mohsin Kaleem
 # LocalWords: pluggable ibuffer
 
-
 #+html: <p align="right">
 #+html: <a href="https://github.com/mohkale/projection" alt="lint" style="margin-right: 4px;"><img src="https://github.com/mohkale/projection/actions/workflows/lint.yml/badge.svg" /></a>
 #+html: <a href="https://github.com/mohkale/projection" alt="test" style="margin-right: 4px;"><img src="https://github.com/mohkale/projection/actions/workflows/test.yml/badge.svg" /></a>
