@@ -17,6 +17,9 @@ jobs:
         emacs_version: [28.1, snapshot]
     steps:
       - uses: actions/checkout@v2
+        run: |
+          git config --global user.name "Github Actions"
+          git config --global user.email "githubactions@github.com"
       - uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
