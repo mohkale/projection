@@ -87,6 +87,10 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
      collect (cons (concat project-type ":" target)
                    (concat projection-multi-poetry-poe-command-prefix
                            " " (shell-quote-argument target))))))
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (projection-register-type 'python-poetry
+    :targets 'projection-multi-poetry-poe-targets))
 
 (provide 'projection-multi-poetry-poe)
 ;;; projection-multi-poetry-poe.el ends here

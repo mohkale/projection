@@ -4,7 +4,7 @@
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
-;; Package-Requires: ((emacs "29") (project "0.9.8") (compat "29.1.4.1") (compile-multi "0.1"))
+;; Package-Requires: ((emacs "29") (project "0.9.8") (compat "29.1.4.1"))
 ;; Version: 0.1
 ;; Homepage: https://github.com/mohkale/projection
 
@@ -63,8 +63,6 @@
     (define-key map "k" 'projection-package-project)
     (define-key map "i" 'projection-install-project)
     (define-key map "RET" 'projection-project-command)
-    ;; `projection-multi'
-    (define-key map "SPC" 'projection-multi-compile)
     map)
   "Keymap for projection project-management bindings.")
 

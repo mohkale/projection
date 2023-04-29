@@ -56,7 +56,9 @@ if no command is configured for the current project."
            (projection-project-type (project-root project)))
           (project-type (car project-config))
           (project-config (cdr project-config))
-          (type-command (alist-get cmd-type project-config)))
+          (type-command
+           (alist-get (intern (concat ":" (symbol-name cmd-type)))
+                      project-config)))
      (unless no-error
        (when (and (eq project-type t)
                   (not project-config))
@@ -79,7 +81,6 @@ if no command is configured for the current project."
 
 (defmacro projection-commands--register (type)
   "Define an interactive function to run a TYPE command on the current project."
-  (setq type (eval type))
   (let ((var-symbol (intern (concat "projection-project-" (symbol-name type) "-cmd")))
         (cmd-symbol (intern (concat "projection-" (symbol-name type) "-project"))))
     `(progn
@@ -113,17 +114,17 @@ Should be set via .dir-locals.el."
                (user-error "Do not know how to run %s command %s" ',type command)))))))))
 
 ;;;###autoload (autoload 'projection-configure-project "projection-commands")
-(projection-commands--register 'configure)
+(projection-commands--register configure)
 ;;;###autoload (autoload 'projection-build-project "projection-commands")
-(projection-commands--register 'build)
+(projection-commands--register build)
 ;;;###autoload (autoload 'projection-test-project "projection-commands")
-(projection-commands--register 'test)
+(projection-commands--register test)
 ;;;###autoload (autoload 'projection-run-project "projection-commands")
-(projection-commands--register 'run)
+(projection-commands--register run)
 ;;;###autoload (autoload 'projection-package-project "projection-commands")
-(projection-commands--register 'package)
+(projection-commands--register package)
 ;;;###autoload (autoload 'projection-install-project "projection-commands")
-(projection-commands--register 'install)
+(projection-commands--register install)
 
 
 

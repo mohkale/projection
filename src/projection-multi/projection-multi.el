@@ -1,5 +1,11 @@
 ;;; projection-multi.el --- Projection integration for `compile-multi'. -*- lexical-binding: t; -*-
 
+;; Author: Mohsin Kaleem <mohkale@kisara.moe>
+;; Keywords: project, convenience
+;; Package-Requires: ((projection "0.1") (compile-multi "0.1"))
+;; Version: 0.1
+;; Homepage: https://github.com/mohkale/projection
+
 ;; Copyright (C) 2023  Mohsin Kaleem
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -65,7 +71,7 @@
      when first
        append (projection-multi--project-type-commands (cons type config))
        and do (setq first nil)
-     append (alist-get 'targets config))))
+     append (ensure-list (alist-get :targets config)))))
 
 ;;;###autoload
 (defun projection-multi-compile ()
@@ -83,6 +89,12 @@
                   (when projection-multi-extend-existing-config
                     compile-multi-config))))
     (call-interactively #'compile-multi)))
+
+;;;###autoload
+(with-eval-after-load 'projection-types-cmake
+  (projection-register-type 'cmake
+    :targets (list 'projection-multi-cmake-targets
+                   'projection-multi-ctest-targets)))
 
 (provide 'projection-multi)
 ;;; projection-multi.el ends here

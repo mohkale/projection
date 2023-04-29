@@ -1,8 +1,10 @@
-SRC   := $(wildcard src/*.el)
+SRC   := $(wildcard src/*.el src/projection-multi/*.el)
 ELC   := $(subst .el,.elc,$(SRC))
 ELCHKDOC := $(subst .el,.checkdoc,$(SRC))
-BIN   := $(ELC) $(ELCHKDOC)
-EMACS ?= cask emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))'
+BIN   := $(ELC)
+EMACS ?= cask emacs \
+    --eval '(push (concat default-directory "src/") load-path)' \
+	--eval '(push (concat default-directory "src/projection-multi") load-path)'
 
 $(V).SILENT:
 

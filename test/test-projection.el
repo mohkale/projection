@@ -26,19 +26,19 @@
     ;;   `projection-types' now contains the new project entry.
     (expect projection-types :to-equal
             '((foo
-               (predicate . "foobar")
-               (configure . "configure")
-               (build . "build")
-               (test . "test")
-               (run . "run")
-               (package . "package")
-               (install . "install")))))
+               (:predicate . "foobar")
+               (:configure . "configure")
+               (:build . "build")
+               (:test . "test")
+               (:run . "run")
+               (:package . "package")
+               (:install . "install")))))
 
   (it "Can update an existing project"
     ;; GIVEN
     ;;   An existing project definition for 'foo.
     (projection-register-type 'foo :predicate "foobar" :test "test")
-    (expect projection-types :to-equal '((foo (predicate . "foobar") (test . "test"))))
+    (expect projection-types :to-equal '((foo (:predicate . "foobar") (:test . "test"))))
     ;; WHEN
     ;;   I update the existing definition with a new :test value and
     ;;   an initial value for the build field.
@@ -48,9 +48,41 @@
     ;;   field values.
     (expect projection-types :to-equal
             '((foo
-               (build . "build")
-               (predicate . "foobar")
-               (test . "test2"))))))
+               (:build . "build")
+               (:predicate . "foobar")
+               (:test . "test2")))))
+
+  (it "Always saves test-prefix or test-suffix as a list"
+    ;; GIVEN
+    ;;   An empty collection of project types.
+    (expect projection-types :to-be nil)
+    ;; WHEN
+    ;;   I register a project type with :test-prefix and :test-suffix.
+    ;;   One being a list and the other not.
+    (projection-register-type 'foo
+      :predicate "foobar"
+      :test-prefix "prefix"
+      :test-suffix (list "suffix"))
+    ;; THEN
+    ;;   The properties I registered are saved correctly as lists.
+    (expect projection-types :to-equal
+            '((foo
+               (:predicate . "foobar")
+               (:test-prefix . ("prefix"))
+               (:test-suffix . ("suffix")))))
+    ;; WHEN
+    ;;   I register a project type with :test-prefix and :test-suffix.
+    ;;   Alternating the list status of each compared to before.
+    (projection-register-type 'foo
+      :test-prefix (list "prefix2")
+      :test-suffix "suffix2")
+    ;; THEN
+    ;;   The properties I registered are saved correctly as lists.
+    (expect projection-types :to-equal
+            '((foo
+               (:predicate . "foobar")
+               (:test-prefix . ("prefix2"))
+               (:test-suffix . ("suffix2")))))))
 
 (describe "Projection determine project type"
   :var (projection-types config dir default-directory)

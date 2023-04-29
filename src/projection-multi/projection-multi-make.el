@@ -88,5 +88,10 @@ the first Makefile it finds in the current directory."
      collect (cons (concat project-type ":" target)
                    (concat "make " (shell-quote-argument target))))))
 
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (projection-register-type 'make
+    :targets 'projection-multi-make-targets))
+
 (provide 'projection-multi-make)
 ;;; projection-multi-make.el ends here

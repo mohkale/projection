@@ -73,5 +73,10 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
       collect (cons (concat project-type ":" target)
                     (concat "tox -e " (shell-quote-argument target)))))))
 
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (projection-register-type 'python-tox
+    :targets 'projection-multi-tox-targets))
+
 (provide 'projection-multi-tox)
 ;;; projection-multi-tox.el ends here

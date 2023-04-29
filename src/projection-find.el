@@ -148,8 +148,8 @@ file."
          (other-file-basenames
           (projection-find--related-file-basenames
            file-name
-           (alist-get 'test-prefix project-config)
-           (alist-get 'test-suffix project-config)))
+           (alist-get :test-prefix project-config)
+           (alist-get :test-suffix project-config)))
          other-files)
     (dolist (file (project-files project))
       (when (gethash (file-name-nondirectory file) other-file-basenames)
