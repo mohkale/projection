@@ -14,19 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        emacs_version: [28.1, snapshot]
+        emacs_version: [28, master]
     steps:
       - uses: actions/checkout@v2
-      - uses: purcell/setup-emacs@master
-        with:
-          version: ${{ matrix.emacs_version }}
-      - uses: cask/setup-cask@master
-        with:
-          version: snapshot
-      - name: Install cask dependencies
-        run: cask install
-      - name: Run test suite
-        run: |
-          git config --global user.name "Github Actions"
-          git config --global user.email "githubactions@github.com"
-          make test
+      - name: Build test container
+        run: docker-compose build --build-arg EMACS_VERSION=${{ matrix.emacs_version }}
+      - name: Run tests
+        run: docker-compose run --rm dev sh -c 'cask install && make test'

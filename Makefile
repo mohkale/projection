@@ -3,7 +3,6 @@ ELC   := $(subst .el,.elc,$(SRC))
 ELCHKDOC := $(subst .el,.checkdoc,$(SRC))
 BIN   := $(ELC) $(ELCHKDOC)
 EMACS ?= cask emacs --eval '(add-to-list (quote load-path) (concat default-directory "src/"))'
-EMACS_VERSION := master
 
 $(V).SILENT:
 
@@ -44,13 +43,3 @@ clean: ## Remove build artifacts
 test:
 	@echo "[test] buttercup-run-discover"
 	$(EMACS) -batch -f package-initialize -L . -f buttercup-run-discover
-
-.PHONY: docker-build
-docker-build:
-	@echo "[docker] build"
-	docker-compose build --build-arg VERSION=$(EMACS_VERSION)
-
-.PHONY: docker
-docker:
-	@echo "[docker] shell"
-	docker-compose run --rm dev

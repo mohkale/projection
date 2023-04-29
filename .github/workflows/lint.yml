@@ -14,18 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        emacs_version: [28.1]
+        emacs_version: [28, master]
     steps:
       - uses: actions/checkout@v2
-      - uses: purcell/setup-emacs@master
-        with:
-          version: ${{ matrix.emacs_version }}
-      - uses: cask/setup-cask@master
-        with:
-          version: 'snapshot'
-      - name: Install cask dependencies
-        run: cask install
-      - name: Lint elisp
-        # For some reason the first run sometimes fails when installing
-        # packages.
-        run: make lint || make lint
+      - name: Build test container
+        run: docker-compose build --build-arg EMACS_VERSION=${{ matrix.emacs_version }}
+      - name: Run linters
+        run: docker-compose run --rm dev sh -c 'cask install && make lint'
