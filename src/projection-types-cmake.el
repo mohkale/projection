@@ -246,9 +246,6 @@ Place any -D options or extra flags you always want to use (for example
      ,@(when target (list "--target" target)))))
 
 
-(autoload 'projection-multi-cmake-targets "projection-multi-cmake.el")
-(autoload 'projection-multi-ctest-targets "projection-multi-ctest.el")
-
 (projection-register-type 'cmake
   :predicate "CMakeLists.txt"
   ;; The configure step takes the source directory and the output build
@@ -264,9 +261,7 @@ Place any -D options or extra flags you always want to use (for example
   :build   (defun projection-cmake-run--build   () (projection--cmake-command 'build))
   :test    (defun projection-cmake-run--test    () (projection--cmake-command 'test    "ctest"))
   :install (defun projection-cmake-run--install () (projection--cmake-command 'install "install"))
-  :package (defun projection-cmake-run--package () (projection--cmake-command 'package "package"))
-  :targets (list #'projection-multi-cmake-targets
-                 #'projection-multi-ctest-targets))
+  :package (defun projection-cmake-run--package () (projection--cmake-command 'package "package")))
 
 (provide 'projection-types-cmake)
 ;;; projection-types-cmake.el ends here

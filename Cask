@@ -4,7 +4,9 @@
 (source melpa)
 
 (package-file "src/projection.el")
-(files "src/*.el")
+(files "src/*.el" "src/projection-multi/*.el")
+
+(depends-on "compile-multi")
 
 (development
  (depends-on "f")

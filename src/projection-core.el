@@ -56,10 +56,11 @@ Used when no other registered type matches the current project."
   :type '(optional (alist :key-type symbol :value-type (choice string function))))
 
 (cl-defun projection-register-type
-    (project &key predicate
+    (project &rest extra-keys
+             &key predicate
              configure build test run package install
              src-dir test-dir test-prefix test-suffix
-             targets)
+             &allow-other-keys)
   "Register or update entries in `projection-types'.
 PROJECT should be the name of the project entry as a symbol.
 
@@ -85,44 +86,36 @@ will be used for jumping between these related files or otherwise
 associating them to each other. This can be supplied as either a single
 value or a list of values but it will be saved as a list.
 
-TARGETS specifies a collection of `compile-multi' targets for this project
-type. See `compile-multi-config' for a description of the supported value.
-
-SRC-DIR, and TEST-DIR are currently unused."
+SRC-DIR, and TEST-DIR are currently unused. EXTRA-KEYS is part of the
+call signature but will contain all key value arguments. It's usage is
+internal to project registration."
   (declare (indent defun))
-  (let ((alist
-         (cl-loop for (key . value) in `((predicate . ,predicate)
-                                         ;; Compilation commands
-                                         (configure . ,configure)
-                                         (build . ,build)
-                                         (test . ,test)
-                                         (run . ,run)
-                                         (package . ,package)
-                                         (install . ,install)
-                                         ;; Test file discovery
-                                         (src-dir . ,src-dir)
-                                         (test-dir . ,test-dir)
-                                         (test-suffix . ,(ensure-list test-suffix))
-                                         (test-prefix . ,(ensure-list test-prefix))
-                                         ;; Compilation target generation
-                                         (targets . ,(if (and targets
-                                                              (symbolp targets))
-                                                         (list targets)
-                                                       targets)))
-                  when value
-                    collect (cons key value))))
+
+  ;; All of the standard keys arguments are in extra-keys. Their kept
+  ;; as part of the caller interface so the docstring mentions it.
+  (ignore predicate configure build test run package install src-dir
+          test-dir test-prefix test-suffix)
+
+  (let ((config
+         (let ((extra-keys extra-keys) result)
+           (while extra-keys
+             (let ((key (car extra-keys))
+                   (val (cadr extra-keys)))
+               (when (member key '(:test-prefix :test-suffix))
+                 (setq val (ensure-list val)))
+               (push (cons key val) result))
+             (setq extra-keys (cddr extra-keys)))
+           (nreverse result))))
     (if-let ((existing (assoc project projection-types)))
         (progn
           (projection--log
-           :debug "Updating project of type=%s with conf=%s" project alist)
-          (cl-loop for (key . value) in alist
-                   do (if-let ((pair (assq key (cdr existing))))
-                          (setcdr pair value)
-                        (push (cons key value) (cdr existing))))
-          (assoc project projection-types))
+           :debug "Updating project of type=%s with config=%s" project config)
+          (dolist (it config)
+            (setf (alist-get (car it) (cdr existing)) (cdr it)))
+          existing)
       (projection--log
-       :debug "Defining project of type=%s with conf=%s" project alist)
-      (push `(,project . ,alist) projection-types))))
+       :debug "Defining project of type=%s with conf=%s" project config)
+      (push (cons project config) projection-types))))
 (put 'projection-register-type 'lisp-indent-function 1)
 
 
@@ -233,7 +226,7 @@ and will be set to having a modtime of `current-time'."
   "Assert whether project of type PROJECT-TYPE matches ROOT-DIR.
 PROJECT-CONFIG is the configuration for PROJECT-TYPE."
   (let ((default-directory root-dir))
-    (if-let ((predicate (alist-get 'predicate project-config)))
+    (if-let ((predicate (alist-get :predicate project-config)))
         (progn
           (setq predicate
                 (if (and (consp predicate)
