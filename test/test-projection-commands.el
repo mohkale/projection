@@ -1,6 +1,7 @@
 ;; -*- lexical-binding: t -*-
 
 (require 'f)
+(require 'vc)
 (require 'projection-commands)
 
 (describe "Projection registered commands"
@@ -56,10 +57,11 @@
 
     ;; Note: This is failing on snapshot emacs with github ci/cd for reasons I don't
     ;; understand. Will investigate later.
-    (xit "Fails early if no project could be found relative to current directory"
+    (it "Fails early if no project could be found relative to current directory"
       ;; GIVEN
       ;;   There's no project dominating the current directory.
       (f-delete ".git")
+      (vc-clear-context)
 
       ;; WHEN
       ;;   I try to run the run command for the current project.
