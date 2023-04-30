@@ -3,7 +3,7 @@
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
 ;; Package-Requires: ((projection "0.1") (compile-multi "0.1"))
-;; Version: 0.1
+;; Version: 0.1.0
 ;; Homepage: https://github.com/mohkale/projection
 
 ;; Copyright (C) 2023  Mohsin Kaleem

@@ -1,11 +1,11 @@
-;;; projection.el --- Project specific compilation commands -*- lexical-binding: t; -*-
+;;; projection.el --- Project type support for project.el -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022  Mohsin Kaleem
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
 ;; Package-Requires: ((emacs "29") (project "0.9.8") (compat "29.1.4.1"))
-;; Version: 0.1
+;; Version: 0.1.0
 ;; Homepage: https://github.com/mohkale/projection
 
 ;; Copyright (C) 2023  Mohsin Kaleem
