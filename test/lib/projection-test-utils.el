@@ -31,9 +31,9 @@ See `projection-find-test--setup-project-tree' for a description of FILE-TREE."
              (call-process
               shell-file-name nil (current-buffer) nil shell-command-switch
               "git init && git add -A && git commit -m \"Initial commit\""))))
-      (display-warning :debug
-                       (format "Output of git init is: %s"
-                               (buffer-substring (point-min) (point-max))) )
+      ;; (display-warning :debug
+      ;;                  (format "Output of git init is: %s"
+      ;;                          (buffer-substring (point-min) (point-max))) )
       (expect exit-code :to-equal 0))))
 
 (provide 'projection-test-utils)
