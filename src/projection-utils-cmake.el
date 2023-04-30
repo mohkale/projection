@@ -1,4 +1,4 @@
-;;; projection-types-cmake.el --- Projection project type definition for CMake. -*- lexical-binding: t; -*-
+;;; projection-utils-cmake.el --- Helpers for supporting CMake projects. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -17,11 +17,7 @@
 
 ;;; Commentary:
 
-;; Projection project-type definition for CMake projects.
-;;
-;; This library defines a bunch of configuration options and helper functions
-;; for dealing with CMake projects. This also includes support for CMake
-;; presets.
+;; Projection project-type helpers for CMake projects.
 
 ;;; Code:
 
@@ -95,7 +91,7 @@ When BUILD-TYPE is nil fetch the presets for all build types."
 
 
 
-;; CMake preset.
+;; CMake presets.
 
 (defcustom projection-cmake-preset 'prompt-always-cache
   "Set which CMake preset to use for the current project.
@@ -224,6 +220,8 @@ types."
 
 
 
+;; CMake command utils.
+
 (defcustom projection-cmake-build-directory "build"
   "Build directory for cmake project builds."
   :type 'string
@@ -245,23 +243,39 @@ Place any -D options or extra flags you always want to use (for example
          (concat "--preset=" preset))
      ,@(when target (list "--target" target)))))
 
+
 
-(projection-register-type 'cmake
-  :predicate "CMakeLists.txt"
-  ;; The configure step takes the source directory and the output build
-  ;; directory.
-  :configure (defun projection-cmake-run--configure ()
-               (projection--join-shell-command
-                `("cmake"
-                  "-S" "."
-                  "-B" ,projection-cmake-build-directory
-                  ,@projection-cmake-configure-options)))
-  ;; The remaining commands take the build directory and an optional target
-  ;; with it.
-  :build   (defun projection-cmake-run--build   () (projection--cmake-command 'build))
-  :test    (defun projection-cmake-run--test    () (projection--cmake-command 'test    "ctest"))
-  :install (defun projection-cmake-run--install () (projection--cmake-command 'install "install"))
-  :package (defun projection-cmake-run--package () (projection--cmake-command 'package "package")))
+;; CMake compilation commands.
 
-(provide 'projection-types-cmake)
-;;; projection-types-cmake.el ends here
+;; The configure step takes the source directory and the output build
+;; directory.
+
+(defun projection-cmake-run-configure ()
+  "Configure command generator for CMake projects."
+  (projection--join-shell-command
+   `("cmake"
+     "-S" "."
+     "-B" ,projection-cmake-build-directory
+     ,@projection-cmake-configure-options)))
+
+;; The remaining commands take the build directory and an optional target
+;; with it.
+
+(defun projection-cmake-run-build ()
+  "Build command generator for CMake projects."
+  (projection--cmake-command 'build))
+
+(defun projection-cmake-run-test ()
+  "Test command generator for CMake projects."
+  (projection--cmake-command 'test "ctest"))
+
+(defun projection-cmake-run-install ()
+  "Install command generator for CMake projects."
+  (projection--cmake-command 'install "install"))
+
+(defun projection-cmake-run-package ()
+  "Package command generator for CMake projects."
+  (projection--cmake-command 'package "package"))
+
+(provide 'projection-utils-cmake)
+;;; projection-utils-cmake.el ends here

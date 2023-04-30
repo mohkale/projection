@@ -29,7 +29,7 @@
 
 (require 'projection-utils)
 (require 'projection-core-log)
-(require 'projection-types-cmake)
+(require 'projection-utils-cmake)
 
 (defconst projection-multi-cmake--help-regex
   (rx

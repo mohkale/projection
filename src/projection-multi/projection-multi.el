@@ -91,7 +91,7 @@
     (call-interactively #'compile-multi)))
 
 ;;;###autoload
-(with-eval-after-load 'projection-types-cmake
+(with-eval-after-load 'projection-types
   (projection-register-type 'cmake
     :targets (list 'projection-multi-cmake-targets
                    'projection-multi-ctest-targets)))

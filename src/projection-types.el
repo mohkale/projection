@@ -130,7 +130,19 @@
 
 
 
-(require 'projection-types-cmake)
+(autoload 'projection-cmake-run-configure "projection-utils-cmake.el")
+(autoload 'projection-cmake-run-build     "projection-utils-cmake.el")
+(autoload 'projection-cmake-run-test      "projection-utils-cmake.el")
+(autoload 'projection-cmake-run-install   "projection-utils-cmake.el")
+(autoload 'projection-cmake-run-package   "projection-utils-cmake.el")
+
+(projection-register-type 'cmake
+  :predicate "CMakeLists.txt"
+  :configure #'projection-cmake-run-configure
+  :build     #'projection-cmake-run-build
+  :test      #'projection-cmake-run-test
+  :install   #'projection-cmake-run-install
+  :package   #'projection-cmake-run-package)
 
 
 
