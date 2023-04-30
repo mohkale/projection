@@ -56,4 +56,6 @@ clean: ## Remove build artifacts
 .PHONY: test
 test:
 	@echo "[test] buttercup-run-discover"
-	$(EMACS) -batch -f package-initialize -L . -f buttercup-run-discover
+	$(EMACS) \
+        --eval '(push (concat default-directory "test/lib/") load-path)' \
+	    -batch -f package-initialize -L . -f buttercup-run-discover
