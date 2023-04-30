@@ -307,12 +307,14 @@ If NO-ERROR then don't raise an error if the project could not be resolved."
 (defun projection--prompt (prompt project &rest format-args)
   "Generate a prompt string for PROJECT with PROMPT.
 FORMAT-ARGS will be used to format PROMPT if provided."
-  (apply #'format
-         (concat "[%s] " prompt)
-         (file-name-nondirectory
-          (string-remove-suffix
-           "/" (project-root project)))
-         format-args))
+  (if project
+      (apply #'format
+             (concat "[%s] " prompt)
+             (file-name-nondirectory
+              (string-remove-suffix
+               "/" (project-root project)))
+             format-args)
+    (apply #'format prompt format-args)))
 
 
 
