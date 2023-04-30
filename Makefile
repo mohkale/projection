@@ -1,12 +1,18 @@
-SRC   := $(wildcard src/*.el src/projection-multi/*.el)
-ELC   := $(subst .el,.elc,$(SRC))
-ELCHKDOC := $(subst .el,.checkdoc,$(SRC))
-BIN   := $(ELC)
+SRC_DIR = src
+BIN_DIR = bin
+
+SRC      := $(wildcard $(SRC_DIR)/*.el $(SRC_DIR)/projection-multi/*.el)
+ELC      := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.elc,$(SRC))
+ELCHKDOC := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.checkdoc,$(SRC))
+
 EMACS ?= cask emacs \
-    --eval '(push (concat default-directory "src/") load-path)' \
-	--eval '(push (concat default-directory "src/projection-multi") load-path)'
+    --eval '(push (concat default-directory "$(SRC_DIR)/") load-path)' \
+	--eval '(push (concat default-directory "$(SRC_DIR)/projection-multi") load-path)'
 
 $(V).SILENT:
+
+foo:
+	echo $(ELC)
 
 .PHONY: ci/cd
 ci/cd: lint test
@@ -17,7 +23,8 @@ lint: compile checkdoc
 .PHONY: checkdoc
 checkdoc: $(ELCHKDOC) ## Check for missing or poorly formatted docstrings
 
-%.checkdoc: %.el
+$(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
+	mkdir -p "$$(dirname "$@")"
 	@echo "[checkdoc] $^"
 	$(EMACS) -Q --batch \
 	    --eval "(or (fboundp 'checkdoc-file) (kill-emacs 1))" \
@@ -27,19 +34,24 @@ checkdoc: $(ELCHKDOC) ## Check for missing or poorly formatted docstrings
 	    | grep . && exit 1 || true
 
 .PHONY: compile
-compile: $(BIN) ## Check for byte-compiler errors
+compile: $(ELC) ## Check for byte-compiler errors
 
-%.elc: %.el
+$(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
+	mkdir -p "$$(dirname "$@")"
 	@echo "[compile] $^"
-	if [ -e "$@" ]; then rm -f "$@"; fi
 	$(EMACS) -Q --batch -L . -f batch-byte-compile "$^" 2>&1 \
 		| grep -v "^Wrote" \
 		| grep . && exit 1 || true ;\
+	mv -f "$^c" "$@"
 
 .PHONY: clean
 clean: ## Remove build artifacts
-	@printf "[clean] %s\n" $(BIN)
-	rm -f $(BIN)
+	for file in $(ELC) $(ELCHKDOC); do \
+	    if [ -e "$$file" ]; then \
+			echo "[clean] $$file"; \
+	        rm -f "$$file"; \
+	    fi; \
+	done
 
 .PHONY: test
 test:
