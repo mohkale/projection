@@ -220,6 +220,55 @@ types."
 
 
 
+;; CMake build type.
+
+(defcustom projection-cmake-build-type nil
+  "Build type for a CMake project.
+Supplied as the default CMAKE_BUILD_TYPE definition when set."
+  :type '(choice (const nil :tag "Do not supply")
+                 (string :tag "Build type value"))
+  :group 'projection-types)
+
+(defconst projection-cmake--build-types
+  '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+  "Common build types supported by CMake.")
+
+(defvar projection-cmake--build-type-history nil
+  "History variable for `projection-cmake-set-build-type'.")
+
+;;;###autoload
+(defun projection-cmake-set-build-type (project build-type)
+  "Set the CMake build-type for PROJECT to BUILD-TYPE."
+  (interactive
+   (let ((project (projection--current-project))
+         build-type)
+     (setq build-type
+           (completing-read
+            (projection--prompt "Set CMake build type: " project)
+            (seq-uniq
+             (append
+              (ensure-list (projection-cmake--build-type project))
+              projection-cmake--build-types)
+             #'string-equal)
+            nil nil nil 'projection-cmake--build-type-history))
+     (when (string-empty-p build-type)
+       (setq build-type nil))
+     (list project build-type)))
+  (projection--cache-put project 'projection-cmake-build-type build-type))
+
+(defun projection-cmake--build-type (&optional project)
+  "Fetch the configured build-type for the PROJECT.
+This accesses the value set in the project cache first and falls
+back to the value in `projection-cmake-build-type'. When unset
+PROJECT defaults to the current project."
+  (or
+   (when-let ((project (or project
+                           (projection--current-project 'no-error))))
+     (projection--cache-get project 'projection-cmake-build-type))
+   projection-cmake-build-type))
+
+
+
 ;; CMake command utils.
 
 (defcustom projection-cmake-build-directory "build"
@@ -256,6 +305,8 @@ Place any -D options or extra flags you always want to use (for example
    `("cmake"
      "-S" "."
      "-B" ,projection-cmake-build-directory
+     ,@(when-let ((build-type (projection-cmake--build-type)))
+         (concat "-DCMAKE_BUILD_TYPE=" build-type))
      ,@projection-cmake-configure-options)))
 
 ;; The remaining commands take the build directory and an optional target
