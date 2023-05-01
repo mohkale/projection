@@ -28,6 +28,20 @@
 (require 'projection-core)
 (require 'projection-core-log)
 
+(defcustom projection-cache-dynamic-commands nil
+  "When true cache the result of dynamic compilation commands.
+Some projects require dynamically generating a compilation command based
+on the project configuration. When this is disabled the function to generate
+that command is always called. When enabled the function is called once and
+the result cached such that subsequent invocations do not refresh the command.
+
+You'll likely want to leave this disabled. If you notice some projects are
+slow to generate commands (most likely on remote machines) you may want to
+enable this. The only impact is occasionally you'll run the cached command
+and have to refresh it by calling `projection-reset-project-cache'."
+  :type 'boolean
+  :group 'projection)
+
 (defun projection-commands--read-shell-command (project type)
   "Interactively read a shell command for the command TYPE in PROJECT."
   (read-shell-command
@@ -50,7 +64,10 @@ instead of picking one automatically. When NO-ERROR don't throw an error
 if no command is configured for the current project."
   (or
    (and prompt
-        (projection-commands--read-shell-command project cmd-type))
+        (let ((command
+               (projection-commands--read-shell-command project cmd-type)))
+          (projection--cache-put project cmd-type command)
+          command))
    (projection--cache-get project cmd-type)
    (let* ((project-config
            (projection-project-type (project-root project)))
@@ -69,11 +86,18 @@ if no command is configured for the current project."
                     "default"
                   (symbol-name project-type))
                 cmd-type)))
-     ;; When the command is a function, but not a command, the function should
-     ;; return a shell command or interactive function to run instead.
-     (when (and (functionp type-command)
-                (not (commandp type-command)))
-       (setq type-command (funcall type-command)))
+     (cond
+      ((or (stringp type-command)
+           (commandp type-command))
+       (projection--cache-put project cmd-type type-command))
+      ((functionp type-command)
+       ;; When the command is a function, but not a command, the function should
+       ;; return a shell command or interactive function to run instead. To let
+       ;; the function adapt to external configuration changes it will not be
+       ;; cached by default.
+       (setq type-command (funcall type-command))
+       (when projection-cache-dynamic-commands
+         (projection--cache-put project cmd-type type-command))))
      type-command)))
 
 (defvar projection-commands--registered-cmd-types nil
@@ -101,10 +125,9 @@ Should be set via .dir-locals.el."
          (interactive "P")
          (when-let ((project (projection--current-project)))
            (let* ((default-directory (project-root project))
-                  (command            ; (project-type . type-command)
+                  (command
                    (or ,var-symbol
                        (projection-commands--get-command project ',type prompt))))
-             (projection--cache-put project ',type command)
              (cond
               ((stringp command)
                (compile command))
