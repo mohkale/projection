@@ -15,5 +15,20 @@ RUN git config --global user.email "$UNAME@nowhere.com" \
 #  && cask install \
 #  && rm -rvf /tmp/projection-build
 
+# Install all build/test dependencies.
+RUN apt-get update \
+ && apt-get install -y software-properties-common wget \
+ && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
+  | gpg --dearmor - \
+  | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+ && apt-add-repository "deb https://apt.kitware.com/ubuntu/ focal main" \
+ && apt-get update \
+ && apt-get install -y kitware-archive-keyring \
+ && rm /etc/apt/trusted.gpg.d/kitware.gpg \
+ && apt-get update \
+ && apt-get install -y cmake \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /workarea
 CMD bash

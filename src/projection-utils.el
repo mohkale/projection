@@ -44,7 +44,7 @@ otherwise it will return SHELL-COMMAND."
 
 (defun projection--shell-command-to-string (command)
   "Run COMMAND in a subshell and return the standard output."
-  (projection--log :warning "Running shell command='%s'" command)
+  (projection--log :debug "Running shell command='%s'" command)
   (cl-destructuring-bind (stdout . stderr)
       (projection--shell-command-to-string-1 command)
     (cl-loop
