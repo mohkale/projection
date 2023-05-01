@@ -15,9 +15,12 @@ of BASE and the cdr is the FILE-TREE of that sub-directory."
              do (f-touch (f-join base file))
            else
              if (consp file)
-               do (let ((sub (f-join base (car file))))
-                    (mkdir sub)
-                    (projection-find-test--setup-project-tree (cdr file) sub))
+               if (stringp (cdr file))
+                 do (f-write (cdr file) 'utf-8 (f-join base (car file)))
+               else
+                 do (let ((sub (f-join base (car file))))
+                      (mkdir sub)
+                      (projection-find-test--setup-project-tree (cdr file) sub))
              else
                do (error "Unexpected argument type" file)))
 
