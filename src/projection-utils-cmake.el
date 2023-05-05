@@ -27,6 +27,10 @@
 (require 'projection-core-log)
 (require 'projection-utils)
 
+(defgroup projection-type-cmake nil
+  "Projection CMake project type."
+  :group 'projection-types)
+
 
 
 ;; CMake reading presets.
@@ -40,7 +44,7 @@
   :type '(choice
           (const auto :tag "Cache presets and invalidate cache automatically")
           (boolean :tag "Always/Never cache presets"))
-  :group 'projection-types)
+  :group 'projection-type-cmake)
 
 (defun projection-cmake--list-presets-for-build-type (build-type)
   "Fetch the available CMake presets for BUILD-TYPE.
@@ -121,7 +125,7 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
            :tag "Prompt when multiple presets available and then reuse the chosen preset.")
     (alist :key-type (symbol :tag "Build type.")
            :value-type (string :tag "CMake preset.")))
-  :group 'projection-types)
+  :group 'projection-type-cmake)
 
 (defun projection-cmake--preset-cache-var (&optional build-type)
   "Fetch the project cache variable for the BUILD-TYPE CMake preset."
@@ -255,7 +259,7 @@ Prompt for the `completing-read' session will be PROMPT."
 Supplied as the default CMAKE_BUILD_TYPE definition when set."
   :type '(choice (const nil :tag "Do not supply")
                  (string :tag "Build type value"))
-  :group 'projection-types)
+  :group 'projection-type-cmake)
 
 (defconst projection-cmake--build-types
   '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
@@ -302,14 +306,14 @@ PROJECT defaults to the current project."
 (defcustom projection-cmake-build-directory "build"
   "Build directory for cmake project builds."
   :type 'string
-  :group 'projection-types)
+  :group 'projection-type-cmake)
 
 (defcustom projection-cmake-configure-options nil
   "Default CMake options when configured with projection.
 Place any -D options or extra flags you always want to use (for example
 -DCMAKE_EXPORT_COMPILE_COMMANDS) in this option variable."
   :type '(list (repeat (string :tag "Argument")))
-  :group 'projection-types)
+  :group 'projection-type-cmake)
 
 (defun projection--cmake-command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
