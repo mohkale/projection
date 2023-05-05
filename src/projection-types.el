@@ -25,6 +25,10 @@
 (require 'projection-core)
 (require 'projection-utils)
 
+(defgroup projection-types nil
+  "Projection project type definitions."
+  :group 'projection)
+
 ;; NOTE: Project type detection happens in reverse order to registration. As
 ;; function based project type detection is considerably slower than simple
 ;; file based matching, such project types are defined near the top of this
@@ -96,15 +100,17 @@
 
 
 
-;; TODO: This is the only project type that specifies a :compilation-dir option.
-;; is it really necessary, shouldn't the command take an option for this instead.
+(autoload 'projection-meson-get-configure-command "projection-utils-meson")
+(autoload 'projection-meson-get-build-command     "projection-utils-meson")
+(autoload 'projection-meson-get-test-command      "projection-utils-meson")
+(autoload 'projection-meson-get-install-command   "projection-utils-meson")
 
-;; (projection-register-type 'meson
-;;   :predicate "meson.build"
-;;   :compilation-dir "build"
-;;   :configure "meson %s"
-;;   :build "ninja"
-;;   :test "ninja test")
+(projection-register-type 'meson
+  :predicate "meson.build"
+  :configure #'projection-meson-get-configure-command
+  :build #'projection-meson-get-build-command
+  :test #'projection-meson-get-test-command
+  :install #'projection-meson-get-install-command)
 
 
 
