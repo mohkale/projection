@@ -33,9 +33,11 @@
   "Helpers for `compile-multi' and Poetry projects using poe."
   :group 'projection-multi)
 
-(defcustom projection-multi-poetry-poe-cache-targets t
+(defcustom projection-multi-poetry-poe-cache-targets 'auto
   "When true cache the Poetry poe targets of each project."
-  :type 'boolean
+  :type '(choice
+          (const auto :tag "Cache targets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-poetry-poe)
 
 (defcustom projection-multi-poetry-poe-project-file '("pyproject.toml")
@@ -53,8 +55,10 @@
   (projection--cache-get-with-predicate
    (projection--current-project 'no-error)
    'projection-multi-poetry-poe-targets
-   (and projection-multi-poetry-poe-cache-targets
-        (projection--cache-modtime-predicate project-file))
+   (cond
+    ((eq projection-multi-poetry-poe-cache-targets 'auto)
+     (projection--cache-modtime-predicate project-file))
+    (t projection-multi-poetry-poe-cache-targets))
    #'projection-multi-poetry-poe--targets-from-file2))
 
 (defun projection-multi-poetry-poe--targets-from-file2 ()

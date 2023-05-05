@@ -37,7 +37,7 @@
 
 (defcustom projection-cmake-cache-presets t
   "When true cache the list of CMake presets associated with each project."
-  :type 'boolean
+  :type '(boolean :tag "Always/Never cache CMake presets")
   :group 'projection-types)
 
 (defun projection-cmake--list-presets-for-build-type (build-type)

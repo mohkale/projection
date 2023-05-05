@@ -33,9 +33,11 @@
   "Helpers for `compile-multi' and Makefile projects."
   :group 'projection-multi)
 
-(defcustom projection-multi-make-cache-targets t
+(defcustom projection-multi-make-cache-targets 'auto
   "When true cache the Make targets of each project."
-  :type 'boolean
+  :type '(choice
+          (const auto :tag "Cache targets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-make)
 
 (defcustom projection-multi-make-makefiles '("Makefile" "GNUMakefile")
@@ -52,8 +54,10 @@
   (projection--cache-get-with-predicate
    (projection--current-project 'no-error)
    'projection-multi-make-targets
-   (and projection-multi-make-cache-targets
-        (projection--cache-modtime-predicate makefile))
+   (cond
+    ((eq projection-multi-make-cache-targets 'auto)
+     (projection--cache-modtime-predicate makefile))
+    (t projection-multi-make-cache-targets))
    (apply-partially #'projection-multi-make--targets-from-file2 makefile)))
 
 (defun projection-multi-make--targets-from-file2 (makefile)

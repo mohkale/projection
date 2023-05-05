@@ -186,7 +186,8 @@ PREDICATE should be a comparable value that will change when the value
 in the cache is stale. For example PREDICATE could be the modification
 time of a file used by BODY. If the file is unchanged the cache is up to
 date. If the FILE is modified PREDICATE will be updated and the CACHE is
-stale. PREDICATE can be set to nil to bypass caching.
+stale. PREDICATE can be set to nil to never cache the result and always
+call BODY. It can instead be set to t to always cache.
 
 PROJECT is an optional argument. When set to nil calling this function is
 essentially the same as just calling BODY directly."
@@ -194,7 +195,11 @@ essentially the same as just calling BODY directly."
                         (projection--cache-get project key))))
     (if (and predicate
              cached-value
-             (<= predicate (car cached-value)))
+             (if (and (numberp predicate)
+                      (numberp (car cached-value)))
+                 (<= predicate (car cached-value))
+               ;; Value is to always be cached.
+               predicate))
         (cdr cached-value)
       (let ((resolved-value (funcall body)))
         (when (and predicate project resolved-value)

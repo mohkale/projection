@@ -33,9 +33,11 @@
   "Helpers for `compile-multi' and tox projects."
   :group 'projection-multi)
 
-(defcustom projection-multi-tox-cache-targets t
+(defcustom projection-multi-tox-cache-targets 'auto
   "When true cache the Tox targets of each project."
-  :type 'boolean
+  :type '(choice
+          (const auto :tag "Cache targets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-tox)
 
 (defcustom projection-multi-tox-include-default-target t
@@ -48,8 +50,10 @@
   (projection--cache-get-with-predicate
    (projection--current-project 'no-error)
    'projection-multi-tox-targets
-   (and projection-multi-tox-cache-targets
-        (projection--cache-modtime-predicate project-file))
+   (cond
+    ((eq projection-multi-tox-cache-targets 'auto)
+     (projection--cache-modtime-predicate project-file))
+    (t projection-multi-tox-cache-targets))
    #'projection-multi-tox--targets-from-file2))
 
 (defun projection-multi-tox--targets-from-file2 ()
