@@ -136,17 +136,17 @@ Should be set via .dir-locals.el."
               (t
                (user-error "Do not know how to run %s command %s" ',type command)))))))))
 
-;;;###autoload (autoload 'projection-configure-project "projection-commands")
+;;;###autoload (autoload 'projection-configure-project "projection-commands" nil t)
 (projection-commands--register configure)
-;;;###autoload (autoload 'projection-build-project "projection-commands")
+;;;###autoload (autoload 'projection-build-project "projection-commands" nil t)
 (projection-commands--register build)
-;;;###autoload (autoload 'projection-test-project "projection-commands")
+;;;###autoload (autoload 'projection-test-project "projection-commands" nil t)
 (projection-commands--register test)
-;;;###autoload (autoload 'projection-run-project "projection-commands")
+;;;###autoload (autoload 'projection-run-project "projection-commands" nil t)
 (projection-commands--register run)
-;;;###autoload (autoload 'projection-package-project "projection-commands")
+;;;###autoload (autoload 'projection-package-project "projection-commands" nil t)
 (projection-commands--register package)
-;;;###autoload (autoload 'projection-install-project "projection-commands")
+;;;###autoload (autoload 'projection-install-project "projection-commands" nil t)
 (projection-commands--register install)
 
 

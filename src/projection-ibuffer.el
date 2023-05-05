@@ -133,21 +133,21 @@ BUFFER. This function returns the final project for buffer when true."
 
 
 
-;;;###autoload (autoload 'ibuffer-make-column-projection-name "projection-ibuffer.el")
+;;;###autoload (autoload 'ibuffer-make-column-projection-name "projection-ibuffer")
 (define-ibuffer-column projection-name
   (:name "Project")
   (when-let ((project
               (projection-ibuffer--project-buffer-p (current-buffer))))
     (project-name project)))
 
-;;;###autoload (autoload 'ibuffer-filter-by-projection-files "projection-ibuffer.el")
+;;;###autoload (autoload 'ibuffer-filter-by-projection-files "projection-ibuffer" nil t)
 (define-ibuffer-filter projection-root
     "Ibuffer filter to only show buffers in a given project QUALIFIER."
   (:reader (project-current 'prompt)
    :description nil)
   (projection-ibuffer--project-buffer-p buf qualifier))
 
-;;;###autoload (autoload 'ibuffer-do-sort-by-projection-name "projection-ibuffer.el")
+;;;###autoload (autoload 'ibuffer-do-sort-by-projection-name "projection-ibuffer" nil t)
 (define-ibuffer-sorter projection-name
   "Ibuffer sorter to sort the buffers by their project name."
   (:description "Project")
@@ -159,7 +159,7 @@ BUFFER. This function returns the final project for buffer when true."
          (project-name project2))
       project1)))
 
-;;;###autoload (autoload 'ibuffer-make-column-projection-relative-file "projection-ibuffer.el")
+;;;###autoload (autoload 'ibuffer-make-column-projection-relative-file "projection-ibuffer")
 (define-ibuffer-column projection-relative-file
   (:name "Filename")
   (when-let ((file-name (ibuffer-buffer-file-name))
