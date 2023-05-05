@@ -1,17 +1,14 @@
-#+TITLE: projection
+#+TITLE: Projection
 #+AUTHOR: Mohsin Kaleem
 # LocalWords: pluggable ibuffer
 
 #+html: <p align="right">
 #+html: <a href="https://github.com/mohkale/projection" alt="lint" style="margin-right: 4px;"><img src="https://github.com/mohkale/projection/actions/workflows/lint.yml/badge.svg" /></a>
 #+html: <a href="https://github.com/mohkale/projection" alt="test" style="margin-right: 4px;"><img src="https://github.com/mohkale/projection/actions/workflows/test.yml/badge.svg" /></a>
-#+html: <a href="https://melpa.org/#/projection"><img align="center" alt="MELPA" src="https://melpa.org/packages/projection.svg"/></a>
+#+html: <a href="https://melpa.org/#/projection"><img alt="MELPA" src="https://melpa.org/packages/projection-badge.svg"/></a>
 #+html: </p>
 
-Project specific interaction library for Emacs builtin ~project.el~.
-
-*NOTE: This project does not have feature parity with the main features of projectile
-yet.*
+Project type support for Emacs builtin ~project.el~.
 
 This Emacs package provides a [[https://github.com/bbatsov/projectile][Projectile]] like project management library built atop
 Emacs built-in ~project.el~. The end goal is to provide a stable and reliable
