@@ -38,8 +38,8 @@
   :type 'boolean
   :group 'projection-multi-tox)
 
-(defcustom projection-multi-tox-include-all-target t
-  "When true include a compilation target to run all tox environments."
+(defcustom projection-multi-tox-include-default-target t
+  "When true include a compilation target to run the default tox environments."
   :type 'boolean
   :group 'projection-multi-tox)
 
@@ -68,8 +68,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
   (when (file-exists-p "tox.ini")
     (append
-     (when projection-multi-tox-include-all-target
-       (list `(,(concat project-type ":all") . "tox")))
+     (when projection-multi-tox-include-default-target
+       (list `(,(concat project-type "default") . "tox")))
      (cl-loop
       for target in (projection-multi-tox--targets-from-file "tox.ini")
       collect (cons (concat project-type ":" target)
