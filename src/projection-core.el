@@ -323,17 +323,50 @@ FORMAT-ARGS will be used to format PROMPT if provided."
 
 
 
+(cl-defmethod projection--project-info (project (_project-type (eql t)))
+  "Determine an alist of configurations for the PROJECT-TYPE in PROJECT."
+  ;; The default list just contains the project directory.
+  `(("Project dir" . ,(project-root project))))
+
 ;;;###autoload
-(defun projection-show-project-info ()
-  "Display info for the current project."
-  (interactive)
-  (when-let* ((project (projection--current-project))
-              (project-root (project-root project)))
-    (message
-     "Project dir: %s ## Project type: %s"
-     project-root
-     (car
-      (projection-project-type project-root)))))
+(defun projection-show-project-info (project project-types)
+  "Display info for the PROJECT with respect to PROJECT-TYPES."
+  (interactive
+   (let ((project (projection--current-project)))
+     (list
+      project
+      (mapcar #'car (projection-project-types (project-root project))))))
+
+  (when (member t project-types)
+    (setq project-types (delq t project-types)))
+
+  (message
+   (cl-loop
+    for (key . value) in
+    (append
+     (projection--project-info project t)
+     (if project-types
+         `(("Project type" . ,(symbol-name (car project-types)))
+           ,@(when (cdr project-types)
+               `(("Extra project types" .
+                  ,(string-join
+                    (mapcar #'symbol-name (cdr project-types))
+                    ",")))))
+       '(("Project type" . "Unknown")))
+     (cl-loop
+      for project-type in project-types
+      append (condition-case err
+                 (projection--project-info (project-current) project-type)
+               (error (unless (eq (car err) 'cl-no-applicable-method)
+                        (signal (car err) (cdr err)))))))
+    with first = t
+    if first
+      do (setq first nil)
+    else
+      concat " ## "
+    concat key
+    concat ": "
+    concat value)))
 
 (provide 'projection-core)
 ;;; projection-core.el ends here
