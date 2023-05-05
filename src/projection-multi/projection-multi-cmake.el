@@ -81,10 +81,11 @@
 When set the generated targets will be prefixed with PROJECT-TYPE."
   (setq project-type (or project-type "cmake"))
 
-  (cl-loop
-   for target in (projection-multi-cmake--targets-from-command)
-   collect (cons (concat project-type ":" target)
-                 (projection--cmake-command nil target))))
+  (let ((projection-cmake-preset 'silent))
+    (cl-loop
+     for target in (projection-multi-cmake--targets-from-command)
+     collect (cons (concat project-type ":" target)
+                   (projection--cmake-command nil target)))))
 
 ;;;###autoload
 (defun projection-multi-compile-cmake ()

@@ -87,23 +87,24 @@ value. Supported target types include test for tests and label for labels."
 When set the generated targets will be prefixed with PROJECT-TYPE."
   (setq project-type (or project-type "ctest"))
 
-  (cl-loop
-   for (type . target) in (projection-multi-ctest--resolve-targets)
-   with target-regex = nil
-   do (setq target-regex (concat "^" target "$"))
+  (let ((projection-cmake-preset 'silent))
+    (cl-loop
+     for (type . target) in (projection-multi-ctest--resolve-targets)
+     with target-regex = nil
+     do (setq target-regex (concat "^" target "$"))
 
-   if (eq type :test)
-     collect (cons (concat project-type ":" target)
-                   (projection-multi-ctest--command "-R" target-regex))
-   else if (eq type :label)
-     collect (cons (concat project-type ":label:" target)
-                   (projection-multi-ctest--command "-L" target-regex))
-     and if projection-multi-ctest-add-exclude-label-targets
-       collect (cons (concat project-type ":label:not:" target)
-                     (projection-multi-ctest--command "-LE" target-regex))
-     end
-   else
-     do (error "Unexpected ctest target type=%s" type)))
+     if (eq type :test)
+       collect (cons (concat project-type ":" target)
+                     (projection-multi-ctest--command "-R" target-regex))
+     else if (eq type :label)
+       collect (cons (concat project-type ":label:" target)
+                     (projection-multi-ctest--command "-L" target-regex))
+       and if projection-multi-ctest-add-exclude-label-targets
+         collect (cons (concat project-type ":label:not:" target)
+                       (projection-multi-ctest--command "-LE" target-regex))
+       end
+     else
+       do (error "Unexpected ctest target type=%s" type))))
 
 ;;;###autoload
 (defun projection-multi-compile-ctest ()
