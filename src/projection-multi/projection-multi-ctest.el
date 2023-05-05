@@ -28,6 +28,11 @@
 (require 'projection-utils-cmake)
 (require 'projection-multi)
 
+(defcustom projection-multi-ctest-cache-targets nil
+  "When true cache the CMake ctest targets of each project permanently."
+  :type '(boolean :tag "Always/Never cache targets")
+  :group 'projection-multi-cmake)
+
 (defun projection-multi-ctest--command (&rest argv)
   "Helper function to  generate a ctest command.
 ARGV if provided will be appended to the command."
@@ -41,6 +46,14 @@ ARGV if provided will be appended to the command."
   :group 'projection-multi)
 
 (defun projection-multi-ctest--resolve-targets ()
+  "Resolve available ctest targets for a project respecting the project cache."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-multi-ctest-targets
+   projection-multi-ctest-cache-targets
+   #'projection-multi-ctest--resolve-targets2))
+
+(defun projection-multi-ctest--resolve-targets2 ()
   "Resolve available ctest targets for a project.
 Returns a list of cons cells containing the kind of target and the target
 value. Supported target types include test for tests and label for labels."

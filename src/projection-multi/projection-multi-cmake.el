@@ -32,6 +32,15 @@
 (require 'projection-utils-cmake)
 (require 'projection-multi)
 
+(defgroup projection-multi-cmake nil
+  "Helpers for `compile-multi' and CMake projects."
+  :group 'projection-multi)
+
+(defcustom projection-multi-cmake-cache-targets nil
+  "When true cache the CMake targets of each project permanently."
+  :type '(boolean :tag "Always/Never cache targets")
+  :group 'projection-multi-cmake)
+
 (defconst projection-multi-cmake--help-regex
   (rx
    bol
@@ -47,6 +56,14 @@
   "Regexp to match targets from the CMake help output.")
 
 (defun projection-multi-cmake--targets-from-command ()
+  "Determine list of available CMake targets respecting project cache."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-multi-cmake-targets
+   projection-multi-cmake-cache-targets
+   #'projection-multi-cmake--targets-from-command2))
+
+(defun projection-multi-cmake--targets-from-command2 ()
   "Determine list of available CMake targets from the help target."
   (projection--log :debug "Resolving available CMake targets")
 

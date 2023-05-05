@@ -35,9 +35,11 @@
   '("CMakePresets.json" "CMakeUserPresets.json")
   "List of files configuring CMake presets.")
 
-(defcustom projection-cmake-cache-presets t
+(defcustom projection-cmake-cache-presets 'auto
   "When true cache the list of CMake presets associated with each project."
-  :type '(boolean :tag "Always/Never cache CMake presets")
+  :type '(choice
+          (const auto :tag "Cache presets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache presets"))
   :group 'projection-types)
 
 (defun projection-cmake--list-presets-for-build-type (build-type)
@@ -57,8 +59,10 @@ When BUILD-TYPE is nil fetch the presets for all build types."
     (projection--cache-get-with-predicate
      (projection--current-project 'no-error)
      'projection-cmake-presets
-     (and projection-cmake-cache-presets
-          (apply #'projection--cache-modtime-predicate preset-files))
+     (cond
+      ((eq projection-cmake-cache-presets 'auto)
+       (apply #'projection--cache-modtime-predicate preset-files))
+      (t projection-cmake-cache-presets))
      #'projection-cmake--list-presets2)))
 
 (defun projection-cmake--list-presets2 ()
