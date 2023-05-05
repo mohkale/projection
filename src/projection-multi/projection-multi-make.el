@@ -27,6 +27,7 @@
 (require 'cl-lib)
 (require 'projection-core)
 (require 'projection-core-log)
+(require 'projection-multi)
 
 (defgroup projection-multi-make nil
   "Helpers for `compile-multi' and Makefile projects."
@@ -87,6 +88,14 @@ the first Makefile it finds in the current directory."
      for target in (projection-multi-make--targets-from-file file-name)
      collect (cons (concat project-type ":" target)
                    (concat "make " (shell-quote-argument target))))))
+
+;;;###autoload
+(defun projection-multi-compile-make ()
+  "`compile-multi' wrapper for only Make targets."
+  (interactive)
+  (projection-multi-compile--run
+   (projection--current-project 'no-error)
+   `((t ,#'projection-multi-make-targets))))
 
 ;;;###autoload
 (with-eval-after-load 'projection-types

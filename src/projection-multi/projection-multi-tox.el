@@ -23,9 +23,11 @@
 ;;; Code:
 
 (require 'cl-lib)
+
 (require 'projection-core)
 (require 'projection-core-log)
 (require 'projection-utils)
+(require 'projection-multi)
 
 (defgroup projection-multi-tox nil
   "Helpers for `compile-multi' and tox projects."
@@ -72,6 +74,14 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
       for target in (projection-multi-tox--targets-from-file "tox.ini")
       collect (cons (concat project-type ":" target)
                     (concat "tox -e " (shell-quote-argument target)))))))
+
+;;;###autoload
+(defun projection-multi-compile-tox ()
+  "`compile-multi' wrapper for only tox targets."
+  (interactive)
+  (projection-multi-compile--run
+   (projection--current-project 'no-error)
+   `((t ,#'projection-multi-tox-targets))))
 
 ;;;###autoload
 (with-eval-after-load 'projection-types

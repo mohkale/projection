@@ -26,6 +26,7 @@
 (require 'projection-utils)
 (require 'projection-core-log)
 (require 'projection-utils-cmake)
+(require 'projection-multi)
 
 (defun projection-multi-ctest--command (&rest argv)
   "Helper function to  generate a ctest command.
@@ -90,6 +91,14 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
      end
    else
      do (error "Unexpected ctest target type=%s" type)))
+
+;;;###autoload
+(defun projection-multi-compile-ctest ()
+  "`compile-multi' wrapper for only CMake ctest targets."
+  (interactive)
+  (projection-multi-compile--run
+   (projection--current-project 'no-error)
+   `((t ,#'projection-multi-ctest-targets))))
 
 (provide 'projection-multi-ctest)
 ;;; projection-multi-ctest.el ends here

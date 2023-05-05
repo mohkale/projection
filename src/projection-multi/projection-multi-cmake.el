@@ -30,6 +30,7 @@
 (require 'projection-utils)
 (require 'projection-core-log)
 (require 'projection-utils-cmake)
+(require 'projection-multi)
 
 (defconst projection-multi-cmake--help-regex
   (rx
@@ -67,6 +68,14 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    for target in (projection-multi-cmake--targets-from-command)
    collect (cons (concat project-type ":" target)
                  (projection--cmake-command nil target))))
+
+;;;###autoload
+(defun projection-multi-compile-cmake ()
+  "`compile-multi' wrapper for only CMake targets."
+  (interactive)
+  (projection-multi-compile--run
+   (projection--current-project 'no-error)
+   `((t ,#'projection-multi-cmake-targets))))
 
 (provide 'projection-multi-cmake)
 ;;; projection-multi-cmake.el ends here

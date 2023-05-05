@@ -73,22 +73,27 @@
        and do (setq first nil)
      append (ensure-list (alist-get :targets config)))))
 
+(cl-defun projection-multi-compile--run (project triggers)
+  "Run `compile-multi' TRIGGERS for PROJECT."
+  (let* (;; Run compilations and generators from the project root.
+         (default-directory (or (when project
+                                  (project-root project))
+                                default-directory))
+         (compile-multi-default-directory #'ignore)
+         (compile-multi-config triggers))
+    (call-interactively #'compile-multi)))
+
 ;;;###autoload
 (defun projection-multi-compile ()
   "Variant of `compile-multi' which includes project specific targets."
   (interactive)
-  (let* ((project (projection--current-project 'no-error))
-         ;; Run compilations and generators from the project root.
-         (default-directory (or (and project
-                                     (project-root project))))
-         (compile-multi-default-directory #'ignore)
-         ;; Pre-pend the compile-multi triggers for the current project.
-         (compile-multi-config
-          (append `((t ,@(when project
-                           (projection-multi--project-triggers project))))
-                  (when projection-multi-extend-existing-config
-                    compile-multi-config))))
-    (call-interactively #'compile-multi)))
+  (let ((project (projection--current-project 'no-error)))
+    (projection-multi-compile--run
+     project
+     (append `((t ,@(when project
+                      (projection-multi--project-triggers project))))
+             (when projection-multi-extend-existing-config
+               compile-multi-config)))))
 
 ;;;###autoload
 (with-eval-after-load 'projection-types

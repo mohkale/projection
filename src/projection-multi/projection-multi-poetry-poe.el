@@ -27,6 +27,7 @@
 (require 'projection-core)
 (require 'projection-core-log)
 (require 'projection-utils)
+(require 'projection-multi)
 
 (defgroup projection-multi-poetry-poe nil
   "Helpers for `compile-multi' and Poetry projects using poe."
@@ -87,6 +88,15 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
      collect (cons (concat project-type ":" target)
                    (concat projection-multi-poetry-poe-command-prefix
                            " " (shell-quote-argument target))))))
+
+;;;###autoload
+(defun projection-multi-compile-poetry-poe ()
+  "`compile-multi' wrapper for only poetry-poe targets."
+  (interactive)
+  (projection-multi-compile--run
+   (projection--current-project 'no-error)
+   `((t ,#'projection-multi-poetry-poe-targets))))
+
 ;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-register-type 'python-poetry
