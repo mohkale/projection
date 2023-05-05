@@ -55,6 +55,21 @@
 
 
 
+(projection-register-type 'nim-nimble
+  :predicate (defun projection-nimble-project-p ()
+               (file-expand-wildcards "?*.nimble"))
+  :build   "nimble --noColor build --colors:off"
+  :test    "nimble --noColor test -d:nimUnittestColor:off --colors:off"
+  :install "nimble --noColor install --colors:off"
+  :run     "nimble --noColor run --colors:off"
+  :src-dir "src"
+  :test-dir "tests")
+
+
+
+;; Go should take higher precedence than Make because Go projects often have a
+;; Makefile.
+
 (projection-register-type 'golang
   :predicate (defun projection-golang-project-p ()
                (or (file-exists-p "go.mod")
@@ -228,6 +243,15 @@
 
 
 
+(projection-register-type 'python-toml
+  :predicate "pyproject.toml"
+  :build "python -m build"
+  :test "python -m unittest discover"
+  :test-prefix "test_"
+  :test-suffix "_test")
+
+
+
 (projection-register-type 'python-tox
   :predicate "tox.ini"
   :build "tox -r --notest"
@@ -302,7 +326,9 @@
   :predicate "build.sc"
   :build "mill all __.compile"
   :test "mill all __.test"
-  :test-suffix "Test")
+  :test-suffix "Test"
+  :src-dir "src/"
+  :test-dir "test/src/")
 
 
 
@@ -453,6 +479,15 @@
 (projection-register-type 'elm
   :predicate "elm.json"
   :build "elm make")
+
+
+
+(projection-register-type 'julia
+  :predicate "Project.toml"
+  :build "julia --project=@. -e 'import Pkg; Pkg.precompile(); Pkg.build()'"
+  :test "julia --project=@. -e 'import Pkg; Pkg.test()' --check-bounds=yes"
+  :src-dir "src"
+  :test-dir "test")
 
 
 
