@@ -1,8 +1,8 @@
-;;; projection-multi.el --- Projection integration for `compile-multi'. -*- lexical-binding: t; -*-
+;;; projection-multi.el --- Projection integration for `compile-multi' -*- lexical-binding: t; -*-
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
-;; Package-Requires: ((projection "0.1") (compile-multi "0.1"))
+;; Package-Requires: ((emacs "29") (projection "0.1") (compile-multi "0.1"))
 ;; Version: 0.1
 ;; Homepage: https://github.com/mohkale/projection
 
