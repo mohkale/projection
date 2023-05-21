@@ -46,10 +46,10 @@ with `projection-register-type'."
                      function))))))
 
 (defcustom projection-default-type
-  '((build   . "make")
-    (test    . "make test")
-    (run     . "make run")
-    (install . "make install"))
+  '((:build   . "make")
+    (:test    . "make test")
+    (:run     . "make run")
+    (:install . "make install"))
   "Default project type.
 Used when no other registered type matches the current project."
   :group 'projection
