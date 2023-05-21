@@ -5,7 +5,7 @@
 (require 'projection-commands)
 
 (describe "Projection registered commands"
-  :var (projection-types dir default-directory)
+  :var (projection-project-types dir default-directory)
   ;; Create a temporary project directory that will be re-used across each run.
   (before-all
     (setq dir (make-temp-file "buttercup-test-" t)
@@ -14,7 +14,7 @@
 
   ;; Register a new project type that matches the current project directory.
   (before-each
-    (setq projection-types nil)
+    (setq projection-project-types nil)
     (projection-register-type 'foo :predicate ".foo" :run "foo")
     (f-touch ".git")
     (f-touch ".foo"))
@@ -74,7 +74,7 @@
     (it "Fails if no project-type could be matched and no default-commands configured"
       ;; GIVEN
       ;;   No project types have been configured.
-      (let (projection-types projection-default-type)
+      (let (projection-project-types projection-default-type)
         ;; WHEN
         ;;   I try to run the run command for the current project.
         ;; THEN
@@ -158,7 +158,7 @@
       ;;   I run the run command for the current project and have the
       ;;   current project type cached.
       (spy-on #'projection--match-project-type :and-return-value
-              (assoc 'foo projection-types))
+              (assoc 'foo projection-project-types))
 
       (expect (projection--cache-get (project-current) 'type) :to-be nil)
       (projection-run-project)

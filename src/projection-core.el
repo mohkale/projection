@@ -28,7 +28,9 @@
 (require 'project)
 (require 'projection-core-log)
 
-(defcustom projection-types nil
+(define-obsolete-variable-alias 'projection-types 'projection-project-types "0.1")
+
+(defcustom projection-project-types nil
   "Alist of defined project types and metadata for them.
 You shouldn't modify this variable directly, instead you should do so
 with `projection-register-type'."
@@ -61,7 +63,7 @@ Used when no other registered type matches the current project."
              configure build test run package install
              src-dir test-dir test-prefix test-suffix
              &allow-other-keys)
-  "Register or update entries in `projection-types'.
+  "Register or update entries in `projection-project-types'.
 PROJECT should be the name of the project entry as a symbol.
 
 PREDICATE is used to assert whether the current project matches PROJECT.
@@ -106,7 +108,7 @@ internal to project registration."
                (push (cons key val) result))
              (setq extra-keys (cddr extra-keys)))
            (nreverse result))))
-    (if-let ((existing (assoc project projection-types)))
+    (if-let ((existing (assoc project projection-project-types)))
         (progn
           (projection--log
            :debug "Updating project of type=%s with config=%s" project config)
@@ -115,7 +117,7 @@ internal to project registration."
           existing)
       (projection--log
        :debug "Defining project of type=%s with conf=%s" project config)
-      (push (cons project config) projection-types))))
+      (push (cons project config) projection-project-types))))
 (put 'projection-register-type 'lisp-indent-function 1)
 
 
@@ -249,19 +251,19 @@ PROJECT-CONFIG is the configuration for PROJECT-TYPE."
                           (user-error "Unknown project predicate type %s: %S" project-type it)))
                    return t
                    finally return nil))
-      (warn "Project with no predicate in `projection-types': %s" project-type))))
+      (warn "Project with no predicate in `projection-project-types': %s" project-type))))
 
 (defun projection--match-project-type (root-dir)
-  "Match project type for ROOT-DIR from `projection-types'."
+  "Match project type for ROOT-DIR from `projection-project-types'."
   (cl-loop
-   for (project . config) in projection-types
+   for (project . config) in projection-project-types
    when (projection--project-matches-p root-dir project config)
      return (cons project config)))
 
 (defun projection--match-project-types (root-dir)
-  "Match all project types for ROOT-DIR from `projection-types'."
+  "Match all project types for ROOT-DIR from `projection-project-types'."
   (cl-loop
-   for (project . config) in projection-types
+   for (project . config) in projection-project-types
    when (projection--project-matches-p root-dir project config)
      collect (cons project config)))
 
@@ -270,7 +272,7 @@ PROJECT-CONFIG is the configuration for PROJECT-TYPE."
 With MUST-MATCH an error will be raised if no project type could be matched."
   (or
    (when-let ((type (projection--cache-get root-dir 'type)))
-     (assoc type projection-types))
+     (assoc type projection-project-types))
    (when-let ((config (projection--match-project-type root-dir)))
      (projection--cache-put root-dir 'type (car config))
      config)
@@ -286,7 +288,7 @@ With MUST-MATCH an error will be raised if no project types could be matched."
    (when-let ((types (projection--cache-get root-dir 'types)))
      (delq nil
            (mapcar (lambda (type)
-                     (assoc type projection-types))
+                     (assoc type projection-project-types))
                    types)))
 
    (when-let ((config (projection--match-project-types root-dir)))

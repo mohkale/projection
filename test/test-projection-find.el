@@ -26,10 +26,10 @@
 
   (before-each
     ;; Note: buttercup doesn't process lexical vars correctly so modifications to
-    ;; `projection-types' from other tests will impact the tests in this module. To
+    ;; `projection-project-types' from other tests will impact the tests in this module. To
     ;; work around this I just copied the relevant project definitions from the
     ;; related file. See https://github.com/jorgenschaefer/emacs-buttercup/issues/127
-    (setq projection-types nil)
+    (setq projection-project-types nil)
     (projection-register-type 'python-pip
       :predicate "requirements.txt"
       :test-prefix "test_"

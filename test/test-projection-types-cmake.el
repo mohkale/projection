@@ -68,7 +68,7 @@
       (delete-directory test-directory t)))
 
   (before-each
-    (setq projection-types nil)
+    (setq projection-project-types nil)
     (projection-register-type 'cmake
       :predicate "CMakeLists.txt"
       :configure #'projection-cmake-run-configure

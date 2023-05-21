@@ -60,7 +60,7 @@ and have to refresh it by calling `projection-reset-project-cache'."
   "Retrieve a command to do CMD-TYPE in PROJECT from PROJECT-CONFIG.
 Returns a cons cell of the form (PROJECT-TYPE . COMMAND-FOR-TYPE) where
 PROJECT-TYPE is (car project-config). PROJECT-CONFIG should be the
-configuration for the current project type in `projection-types'.
+configuration for the current project type in `projection-project-types'.
 
 When PROMPT is non-nil then interactively prompt the user for a command
 instead of picking one automatically. When NO-ERROR don't throw an error

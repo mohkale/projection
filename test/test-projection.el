@@ -4,14 +4,14 @@
 (require 'projection-core)
 
 (describe "Projection register type"
-  :var (projection-types)
+  :var (projection-project-types)
   (before-each
-    (setq projection-types nil))
+    (setq projection-project-types nil))
 
   (it "Registers new projects"
     ;; GIVEN
     ;;   An empty project type list.
-    (expect projection-types :to-be nil)
+    (expect projection-project-types :to-be nil)
     ;; WHEN
     ;;   I register a new project of type 'foo.
     (projection-register-type 'foo
@@ -23,8 +23,8 @@
       :package   "package"
       :install   "install")
     ;; THEN
-    ;;   `projection-types' now contains the new project entry.
-    (expect projection-types :to-equal
+    ;;   `projection-project-types' now contains the new project entry.
+    (expect projection-project-types :to-equal
             '((foo
                (:predicate . "foobar")
                (:configure . "configure")
@@ -38,7 +38,7 @@
     ;; GIVEN
     ;;   An existing project definition for 'foo.
     (projection-register-type 'foo :predicate "foobar" :test "test")
-    (expect projection-types :to-equal '((foo (:predicate . "foobar") (:test . "test"))))
+    (expect projection-project-types :to-equal '((foo (:predicate . "foobar") (:test . "test"))))
     ;; WHEN
     ;;   I update the existing definition with a new :test value and
     ;;   an initial value for the build field.
@@ -46,7 +46,7 @@
     ;; THEN
     ;;   The final project definition for 'foo includes the updated
     ;;   field values.
-    (expect projection-types :to-equal
+    (expect projection-project-types :to-equal
             '((foo
                (:build . "build")
                (:predicate . "foobar")
@@ -55,7 +55,7 @@
   (it "Always saves test-prefix or test-suffix as a list"
     ;; GIVEN
     ;;   An empty collection of project types.
-    (expect projection-types :to-be nil)
+    (expect projection-project-types :to-be nil)
     ;; WHEN
     ;;   I register a project type with :test-prefix and :test-suffix.
     ;;   One being a list and the other not.
@@ -65,7 +65,7 @@
       :test-suffix (list "suffix"))
     ;; THEN
     ;;   The properties I registered are saved correctly as lists.
-    (expect projection-types :to-equal
+    (expect projection-project-types :to-equal
             '((foo
                (:predicate . "foobar")
                (:test-prefix . ("prefix"))
@@ -78,14 +78,14 @@
       :test-suffix "suffix2")
     ;; THEN
     ;;   The properties I registered are saved correctly as lists.
-    (expect projection-types :to-equal
+    (expect projection-project-types :to-equal
             '((foo
                (:predicate . "foobar")
                (:test-prefix . ("prefix2"))
                (:test-suffix . ("suffix2")))))))
 
 (describe "Projection determine project type"
-  :var (projection-types config dir default-directory)
+  :var (projection-project-types config dir default-directory)
   ;; Create and start running each test in a temporary directory.
   (before-each
     (setq dir (make-temp-file "buttercup-test-" t)
@@ -94,7 +94,7 @@
 
   ;; Reset defined project-types list for each test.
   (before-each
-    (setq projection-types nil config nil))
+    (setq projection-project-types nil config nil))
 
   (describe "With some defined project types"
     ;; Register a few basic project types to test against.
@@ -114,7 +114,7 @@
 
       ;; THEN
       ;;   The current project matches the definition for 'bar.
-      (expect config :to-equal (assoc 'bar projection-types)))
+      (expect config :to-equal (assoc 'bar projection-project-types)))
 
     (it "Can match using any entry in a list of predicates"
       ;; GIVEN
@@ -129,7 +129,7 @@
 
       ;; THEN
       ;;   The current project matches the definition for 'bar.
-      (expect config :to-equal (assoc 'bar projection-types)))
+      (expect config :to-equal (assoc 'bar projection-project-types)))
 
     (it "Can match using a function entry in a list of predicates"
       ;; GIVEN
@@ -143,7 +143,7 @@
 
       ;; THEN
       ;;   The current project matches the definition for 'bar.
-      (expect config :to-equal (assoc 'bar projection-types)))
+      (expect config :to-equal (assoc 'bar projection-project-types)))
 
     (it "Can determine project type using function predicate"
       ;; GIVEN
@@ -157,15 +157,15 @@
 
       ;; THEN
       ;;   The current project matches the definition for 'bar.
-      (expect config :to-equal (assoc 'bar projection-types)))
+      (expect config :to-equal (assoc 'bar projection-project-types)))
 
-    (it "Picks earliest entry in `projection-types' when multiple project types are valid"
+    (it "Picks earliest entry in `projection-project-types' when multiple project types are valid"
       ;; GIVEN
       ;;   2 Marker files matching both the 'foo and 'baz
       ;;   project types.
       (f-touch ".foo")
       (setq config (projection-project-type default-directory))
-      (expect config :to-equal (assoc 'foo projection-types))
+      (expect config :to-equal (assoc 'foo projection-project-types))
       (projection-reset-project-cache t)
 
       (f-touch ".baz")
@@ -178,7 +178,7 @@
       ;;   The current project matches the definition for 'bar
       ;;   because it appears earlier in the project type list
       ;;   compared to 'foo.
-      (expect config :to-equal (assoc 'baz projection-types)))
+      (expect config :to-equal (assoc 'baz projection-project-types)))
 
     (it "Falls back to default project type when project type cannot be matched"
       ;; GIVEN
@@ -194,7 +194,7 @@
   (it "Falls back to default project type when no project types are defined"
     ;; GIVEN
     ;;   No defined project-types.
-    (expect projection-types :to-be nil)
+    (expect projection-project-types :to-be nil)
 
     ;; WHEN
     ;;   I determine the project-type for the current directory.

@@ -4,14 +4,14 @@
 (require 'projection-hook)
 
 (describe "Projection hook"
-  :var (projection-types dir default-directory projection-hook--cache)
+  :var (projection-project-types dir default-directory projection-hook--cache)
   (before-all
     (setq dir (make-temp-file "buttercup-test-" t)
           default-directory dir))
   (after-all (delete-directory dir t))
 
   (before-each
-    (setq projection-types nil)
+    (setq projection-project-types nil)
     (projection-reset-project-cache projection-hook--cache)
     (projection-register-type 'foo :predicate ".foo")
     (dolist (it (list ".foo" "foo" "bar" "baz"))
