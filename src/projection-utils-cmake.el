@@ -325,7 +325,7 @@ Place any -D options or extra flags you always want to use (for example
      ,@(when target (list "--target" target)))))
 
 (defun projection--cmake-annotation (build-type target)
-  "Generate an annotation for a cmake command to run TARGET."
+  "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
   (format "cmake build:%s %s%s"
           projection-cmake-build-directory
           (if-let ((preset (projection-cmake--preset build-type)))

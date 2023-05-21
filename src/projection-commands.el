@@ -48,30 +48,34 @@ and have to refresh it by calling `projection-reset-project-cache'."
    (projection--prompt "%s project: " project
                       (capitalize (symbol-name type)))
    (when-let ((command
-               (projection-commands--get-command project type nil 'no-error)))
+               (projection-commands--get-command
+                project (projection-project-type (project-root project))
+                type nil 'no-error)))
      (and (stringp command)
           command))
    'compile-history))
 
 (defun projection-commands--get-command
-    (project cmd-type &optional prompt no-error)
-  "Retrieve a command to do CMD-TYPE in PROJECT.
+    (project project-config cmd-type &optional prompt no-error no-cache)
+  "Retrieve a command to do CMD-TYPE in PROJECT from PROJECT-CONFIG.
 Returns a cons cell of the form (PROJECT-TYPE . COMMAND-FOR-TYPE) where
-PROJECT-TYPE is the key of the current project type in `projection-types'.
+PROJECT-TYPE is (car project-config). PROJECT-CONFIG should be the
+configuration for the current project type in `projection-types'.
 
 When PROMPT is non-nil then interactively prompt the user for a command
 instead of picking one automatically. When NO-ERROR don't throw an error
-if no command is configured for the current project."
+if no command is configured for the current project. When NO-CACHE is
+truthy do not query or place the command into the cache for PROJECT."
   (or
-   (and prompt
-        (let ((command
-               (projection-commands--read-shell-command project cmd-type)))
-          (projection--cache-put project cmd-type command)
-          command))
-   (projection--cache-get project cmd-type)
-   (let* ((project-config
-           (projection-project-type (project-root project)))
-          (project-type (car project-config))
+   (when prompt
+     (let ((command
+            (projection-commands--read-shell-command project cmd-type)))
+       (unless no-cache
+         (projection--cache-put project cmd-type command))
+       command))
+   (unless no-cache
+     (projection--cache-get project cmd-type))
+   (let* ((project-type (car project-config))
           (project-config (cdr project-config))
           (type-command
            (alist-get (intern (concat ":" (symbol-name cmd-type)))
@@ -89,14 +93,16 @@ if no command is configured for the current project."
      (cond
       ((or (stringp type-command)
            (commandp type-command))
-       (projection--cache-put project cmd-type type-command))
+       (unless no-cache
+         (projection--cache-put project cmd-type type-command)))
       ((functionp type-command)
        ;; When the command is a function, but not a command, the function should
        ;; return a shell command or interactive function to run instead. To let
        ;; the function adapt to external configuration changes it will not be
        ;; cached by default.
        (setq type-command (funcall type-command))
-       (when projection-cache-dynamic-commands
+       (when (and projection-cache-dynamic-commands
+                  (not no-cache))
          (projection--cache-put project cmd-type type-command))))
      type-command)))
 
@@ -127,7 +133,9 @@ Should be set via .dir-locals.el."
            (let* ((default-directory (project-root project))
                   (command
                    (or ,var-symbol
-                       (projection-commands--get-command project ',type prompt))))
+                       (projection-commands--get-command
+                        project (projection-project-type (project-root project))
+                        ',type prompt))))
              (cond
               ((stringp command)
                (compile command))

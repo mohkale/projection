@@ -52,26 +52,53 @@
 
 
 
-(defconst projection-multi--project-type-commands-prefix "project:")
-(defun projection-multi--project-type-commands (project-type)
-  "Extract `projection-commands' `compile-multi' targets for PROJECT-TYPE."
-  (cl-loop
-   for (type _ cmd) in projection-commands--registered-cmd-types
-   when (alist-get type (cdr project-type))
-   collect (cons (concat projection-multi--project-type-commands-prefix
-                         (symbol-name type))
-                 cmd)))
+;;;###autoload
+(defun projection-multi-projection-targets (&optional project-type-prefix project)
+  "`compile-multi' target generator function for `projection-commands' in PROJECT.
+When set the generated targets will be prefixed with PROJECT-TYPE-PREFIX. If
+not set PROJECT will be determined automatically.
+
+The generated candidates will be of the form
+prefix:project-type:project-command."
+  (setq project-type-prefix (or project-type-prefix "project"))
+
+  (when-let* ((project (or project (projection--current-project 'no-error)))
+              (current-project-types
+               (projection-project-types (project-root project))))
+    (let (result)
+      (dolist (project-config current-project-types)
+        (dolist (cmd-type (mapcar #'car projection-commands--registered-cmd-types))
+          (when-let ((cmd
+                      (projection-commands--get-command
+                       project project-config cmd-type nil 'no-error 'no-cache)))
+            (push (cons (concat project-type-prefix ":"
+                                (symbol-name (car project-config)) ":"
+                                (symbol-name cmd-type))
+                        cmd)
+                  result))))
+      (nreverse result))))
+
+;;;###autoload
+(defun projection-multi-projection ()
+  "`compile-multi' wrapper for only projection targets."
+  (interactive)
+  (projection-multi-compile--run
+   (projection--current-project 'no-error)
+   `((t ,#'projection-multi-projection-targets))))
+
+
 
 (defun projection-multi--project-triggers (project)
   "Extract all `compile-multi' triggers for the PROJECT."
-  (when-let ((project-types (projection-project-types (project-root project))))
-    (cl-loop
-     for (type . config) in project-types
-     with first = t
-     when first
-       append (projection-multi--project-type-commands (cons type config))
-       and do (setq first nil)
-     append (ensure-list (alist-get :targets config)))))
+  (append
+   (list #'projection-multi-projection-targets)
+   (when-let ((project-types (projection-project-types (project-root project))))
+     (cl-loop
+      for (_ . config) in project-types
+      with targets = nil
+      do (setq targets (ensure-list (alist-get :targets config)))
+      when targets
+        append targets))))
 
 (cl-defun projection-multi-compile--run (project triggers)
   "Run `compile-multi' TRIGGERS for PROJECT."
