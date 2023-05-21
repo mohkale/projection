@@ -37,78 +37,58 @@
 
 
 
-(defvar projection-project-type-haskell-cabal
-  (projection-project-type
-   :predicate (defun projection-haskell-cabal-project-p ()
-                (and (file-expand-wildcards "?*.cabal")
-                     (not (file-exists-p "stack.yml"))))
-   :build "cabal build"
-   :test  "cabal test"
-   :run   "cabal run"
-   :test-suffix "Spec"))
-
-(push (cons 'haskell-cabal projection-project-type-haskell-cabal)
-      projection-project-types2)
+(projection-register-type 'haskell-cabal
+  :predicate (defun projection-haskell-cabal-project-p ()
+               (and (file-expand-wildcards "?*.cabal")
+                    (not (file-exists-p "stack.yml"))))
+  :build "cabal build"
+  :test  "cabal test"
+  :run   "cabal run"
+  :test-suffix "Spec")
 
 
 
-(defvar projection-project-type-dotnet
-  (projection-project-type
-   :predicate (defun projection-dotnet-project-p ()
-                (or (file-expand-wildcards "?*.csproj")
-                    (file-expand-wildcards "?*.fsproj")
-                    (file-expand-wildcards "?*.sln")))
-   :build "dotnet build"
-   :test  "dotnet run"
-   :run   "dotnet test"))
-
-(push (cons 'dotnet projection-project-type-dotnet)
-      projection-project-types2)
+(projection-register-type 'dotnet
+  :predicate (defun projection-dotnet-project-p ()
+               (or (file-expand-wildcards "?*.csproj")
+                   (file-expand-wildcards "?*.fsproj")
+                   (file-expand-wildcards "?*.sln")))
+  :build "dotnet build"
+  :test  "dotnet run"
+  :run   "dotnet test")
 
 
 
-(defvar projection-project-type-nim-nimble
-  (projection-project-type
-   :predicate (defun projection-nimble-project-p ()
-                (file-expand-wildcards "?*.nimble"))
-   :build   "nimble --noColor build --colors:off"
-   :test    "nimble --noColor test -d:nimUnittestColor:off --colors:off"
-   :install "nimble --noColor install --colors:off"
-   :run     "nimble --noColor run --colors:off"
-   :src-dir "src"
-   :test-dir "tests"))
-
-(push (cons 'nim-nimble projection-project-type-nim-nimble)
-      projection-project-types2)
+(projection-register-type 'nim-nimble
+  :predicate (defun projection-nimble-project-p ()
+               (file-expand-wildcards "?*.nimble"))
+  :build   "nimble --noColor build --colors:off"
+  :test    "nimble --noColor test -d:nimUnittestColor:off --colors:off"
+  :install "nimble --noColor install --colors:off"
+  :run     "nimble --noColor run --colors:off"
+  :src-dir "src"
+  :test-dir "tests")
 
 
 
 ;; Go should take higher precedence than Make because Go projects often have a
 ;; Makefile.
 
-(defvar projection-project-type-golang
-  (projection-project-type
-   :predicate (defun projection-golang-project-p ()
-                (or (file-exists-p "go.mod")
-                    (file-expand-wildcards "*.go")))
-   :build "go build"
-   :test "go test ./..."
-   :test-suffix "_test"))
-
-(push (cons 'golang projection-project-type-golang)
-      projection-project-types2)
+(projection-register-type 'golang
+  :predicate (defun projection-golang-project-p ()
+               (or (file-exists-p "go.mod")
+                   (file-expand-wildcards "*.go")))
+  :build "go build"
+  :test "go test ./..."
+  :test-suffix "_test")
 
 
 
-(defvar projection-project-type-go-task
-  (projection-project-type
-    :predicate "Taskfile.yml"
-    :build "task build"
-    :test "task test"
-    :install "task install"))
-
-(push (cons 'go-task projection-project-type-go-task)
-      projection-project-types2)
+(projection-register-type 'go-task
+  :predicate "Taskfile.yml"
+  :build "task build"
+  :test "task test"
+  :install "task install")
 
 
 

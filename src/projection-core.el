@@ -28,6 +28,87 @@
 (require 'project)
 (require 'projection-core-log)
 
+(defclass projection-project-type ()
+  ((predicate
+    :initarg :predicate
+    :custom (choice
+             (const t :tag "Always supported")
+             (function :tag "Predicate function")
+             (string :tag "Marker file for project")
+             (repeat (string :tag "Marker files for project")))
+    :documentation "Predicate used to assert whether the current project matches this project type.")
+   ;; Possible compilation commands
+   (configure
+    :initarg :configure
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support configure.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to configure project.")
+   (build
+    :initarg :build
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support build.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to build project.")
+   (test
+    :initarg :test
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support test.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to test project.")
+   (run
+    :initarg :run
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support run.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to run project.")
+   (package
+    :initarg :package
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support package.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to package project.")
+   (install
+    :initarg :install
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support install.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to install project.")
+   ;; File navigation
+   (src-dir  :initarg :src-dir  :initform nil :documentation "Currently unused.")
+   (test-dir :initarg :test-dir :initform nil :documentation "Currently unused.")
+   (test-prefix
+    :initarg :test-prefix
+    :initform nil
+    :custom (choice
+             (string :tag "Test file prefix")
+             (repeat (string :tag "Test file prefixes")))
+    :documentation "TODO")
+   (test-suffix
+    :initarg :test-suffix
+    :initform nil
+    :custom (choice
+             (string :tag "Test file prefix")
+             (repeat (string :tag "Test file prefixes")))
+    :documentation "TODO")
+   ;; (extra-props :initform nil)
+   )
+  "TODO")
+
+(defcustom projection-project-types2 nil)
+
 (define-obsolete-variable-alias 'projection-types 'projection-project-types "0.1")
 
 (defcustom projection-project-types nil
@@ -39,10 +120,10 @@ with `projection-register-type'."
   '(list
     (repeat
      (cons
-      symbol                                                 ; Project identifier
-      (alist :key-type symbol                                ; Command type name
-             :value-type                                     ; Command value
-             (choice string                                  ; Shell command
+      symbol                            ; Project identifier
+      (alist :key-type symbol           ; Command type name
+             :value-type                ; Command value
+             (choice string             ; Shell command
                      ;; Either a command or a function returning
                      ;; a shell command or a interactive function.
                      function))))))
