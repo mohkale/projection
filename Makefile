@@ -11,9 +11,6 @@ EMACS ?= cask emacs \
 
 $(V).SILENT:
 
-foo:
-	echo $(ELC)
-
 .PHONY: ci/cd
 ci/cd: lint test
 
