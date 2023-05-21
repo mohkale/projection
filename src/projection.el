@@ -74,7 +74,6 @@
     (define-key map "p" 'projection-run-project)
     (define-key map "k" 'projection-package-project)
     (define-key map "i" 'projection-install-project)
-    (define-key map "RET" 'projection-project-command)
     map)
   "Keymap for projection project-management bindings.")
 

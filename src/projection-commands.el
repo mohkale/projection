@@ -151,49 +151,7 @@ Should be set via .dir-locals.el."
 
 
 
-(defun projection-project-command--candidates ()
-  "Retrieve all shell-commands configured for the current project.
-Returns an alist mapping the command type to the shell command string."
-  (let ((project (projection--current-project)))
-    (cl-loop for (cmd-type override-var _cmd-function) in
-             projection-commands--registered-cmd-types
-             with value = nil
-             do (setq value (or
-                             (symbol-value override-var)
-                             (ignore-errors
-                               (projection-commands--get-command project cmd-type))))
-             when (stringp value)
-               collect (cons cmd-type value))))
-
-(defun projection-project-command--read-commands ()
-  "Read one-or-more shell-commands configured for the current project."
-  (if-let ((cands (projection-project-command--candidates)))
-      (cl-loop
-       for key in
-       (thread-first
-         ;; Select keys from cands interactively (note they will be casted to strings).
-         (completing-read-multiple
-          (projection--prompt "Run commands: " (projection--current-project))
-          cands nil t)
-         ;; Ensure their ordered in the same way as the original cands list.
-         (cl-sort #'< :key
-                  (lambda (it)
-                    (cl-position
-                     (intern it) projection-commands--registered-cmd-types :key #'car))))
-       ;; Collect the mapped command, not the key.
-       collect (alist-get (intern key) cands))
-    (error "No shell commands configured for the current project type")))
-
-;;;###autoload
-(defun projection-project-command (cmds)
-  "Interactively select and run one or command-types for the current project.
-CMDS should be a list of shell commands that should be run one after the other.
-If at least one of the commands fails then all the commands failed.
-
-WARN At the moment this function only prompts and works with shell-commands."
-  (interactive
-   (list (projection-project-command--read-commands)))
-  (compile (string-join cmds " &&\n  ")))
+(make-obsolete 'projection-project-command nil "0.1")
 
 (provide 'projection-commands)
 ;;; projection-commands.el ends here
