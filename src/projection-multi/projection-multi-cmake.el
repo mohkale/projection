@@ -84,8 +84,11 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (let ((projection-cmake-preset 'silent))
     (cl-loop
      for target in (projection-multi-cmake--targets-from-command)
-     collect (cons (concat project-type ":" target)
-                   (projection--cmake-command nil target)))))
+     collect `(,(concat project-type ":" target)
+               :command
+               ,(projection--cmake-command nil target)
+               :annotation
+               ,(projection--cmake-annotation nil target)))))
 
 ;;;###autoload
 (defun projection-multi-compile-cmake ()

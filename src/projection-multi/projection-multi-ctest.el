@@ -94,14 +94,17 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
      do (setq target-regex (concat "^" target "$"))
 
      if (eq type :test)
-       collect (cons (concat project-type ":" target)
-                     (projection-multi-ctest--command "-R" target-regex))
+       collect `(,(concat project-type ":" target)
+                 :command ,(projection-multi-ctest--command "-R" target-regex)
+                 :annotation ,(concat "ctest " target))
      else if (eq type :label)
-       collect (cons (concat project-type ":label:" target)
-                     (projection-multi-ctest--command "-L" target-regex))
+       collect `((concat project-type ":label:" target)
+                 :command (projection-multi-ctest--command "-L" target-regex)
+                 :annotation ,(concat "ctest label:" target))
        and if projection-multi-ctest-add-exclude-label-targets
-         collect (cons (concat project-type ":label:not:" target)
-                       (projection-multi-ctest--command "-LE" target-regex))
+         collect `((concat project-type ":label:not:" target)
+                   :command (projection-multi-ctest--command "-LE" target-regex)
+                   :annotation ,(concat "ctest except-label:" target))
        end
      else
        do (error "Unexpected ctest target type=%s" type))))
