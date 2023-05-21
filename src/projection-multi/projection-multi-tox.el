@@ -73,7 +73,7 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (when (file-exists-p "tox.ini")
     (append
      (when projection-multi-tox-include-default-target
-       (list `(,(concat project-type "default") . "tox")))
+       (list `(,(concat project-type ":default") . "tox")))
      (cl-loop
       for target in (projection-multi-tox--targets-from-file "tox.ini")
       collect (cons (concat project-type ":" target)
