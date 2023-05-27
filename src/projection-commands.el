@@ -59,8 +59,9 @@ and have to refresh it by calling `projection-reset-project-cache'."
     (project project-config cmd-type &optional prompt no-error no-cache)
   "Retrieve a command to do CMD-TYPE in PROJECT from PROJECT-CONFIG.
 Returns a cons cell of the form (PROJECT-TYPE . COMMAND-FOR-TYPE) where
-PROJECT-TYPE is (car project-config). PROJECT-CONFIG should be the
-configuration for the current project type in `projection-project-types'.
+PROJECT-TYPE is (projection-type-name project-config). PROJECT-CONFIG
+should be the configuration for the current project type in
+`projection-project-types'.
 
 When PROMPT is non-nil then interactively prompt the user for a command
 instead of picking one automatically. When NO-ERROR don't throw an error
@@ -75,20 +76,12 @@ truthy do not query or place the command into the cache for PROJECT."
        command))
    (unless no-cache
      (projection--cache-get project cmd-type))
-   (let* ((project-type (car project-config))
-          (project-config (cdr project-config))
-          (type-command
-           (alist-get (intern (concat ":" (symbol-name cmd-type)))
-                      project-config)))
+   (let* ((type-command
+           (eieio-oref project-config cmd-type)))
      (unless no-error
-       (when (and (eq project-type t)
-                  (not project-config))
-         (error "No project type matching project %s found" (project-root project)))
        (unless type-command
          (error "Project of type %s does not support the command: %s"
-                (if (eq project-type t)
-                    "default"
-                  (symbol-name project-type))
+                (symbol-name (oref project-config name))
                 cmd-type)))
      (cond
       ((or (stringp type-command)

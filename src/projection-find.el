@@ -143,13 +143,12 @@ file."
     (expand-file-name file-name (project-root project)))
 
   (let* ((project-config (projection-project-type (project-root project)))
-         (project-config (cdr project-config))
          ;; Determine related file-names for the target file-name.
          (other-file-basenames
           (projection-find--related-file-basenames
            file-name
-           (alist-get :test-prefix project-config)
-           (alist-get :test-suffix project-config)))
+           (oref project-config test-prefix)
+           (oref project-config test-suffix)))
          other-files)
     (dolist (file (project-files project))
       (when (gethash (file-name-nondirectory file) other-file-basenames)
@@ -232,7 +231,7 @@ to the current file and then `find-file' it. For example this can be used to
 switch between C++ header and implementation files assuming the two have the
 same basename and a different extension. Similarly this function also includes
 any files with test suffixes or prefixes associated with the current project
-type. See `projection-register-type' and `projection-find-other-file-suffix' for
+type. See `projection-type' and `projection-find-other-file-suffix' for
 some of the options that impact file resolution.
 
 The order of files cycled from this function is deterministic, and invoking it

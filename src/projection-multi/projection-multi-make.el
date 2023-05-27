@@ -103,8 +103,11 @@ the first Makefile it finds in the current directory."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (projection-register-type 'make
-    :targets 'projection-multi-make-targets))
+  (oset projection-project-type-make compile-multi-targets
+        (seq-uniq
+         (append
+          (oref projection-project-type-make compile-multi-targets)
+          (list #'projection-multi-make-targets)))))
 
 (provide 'projection-multi-make)
 ;;; projection-multi-make.el ends here

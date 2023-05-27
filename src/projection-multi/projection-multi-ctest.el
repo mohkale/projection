@@ -117,5 +117,13 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    (projection--current-project 'no-error)
    `((t ,#'projection-multi-ctest-targets))))
 
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (oset projection-project-type-cmake compile-multi-targets
+        (seq-uniq
+         (append
+          (oref projection-project-type-cmake compile-multi-targets)
+          (list #'projection-multi-ctest-targets)))))
+
 (provide 'projection-multi-ctest)
 ;;; projection-multi-ctest.el ends here

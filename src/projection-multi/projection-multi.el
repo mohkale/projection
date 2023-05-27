@@ -72,7 +72,7 @@ prefix:project-type:project-command."
                       (projection-commands--get-command
                        project project-config cmd-type nil 'no-error 'no-cache)))
             (push (cons (concat project-type-prefix ":"
-                                (symbol-name (car project-config)) ":"
+                                (symbol-name (oref project-config name)) ":"
                                 (symbol-name cmd-type))
                         cmd)
                   result))))
@@ -94,9 +94,9 @@ prefix:project-type:project-command."
    (list #'projection-multi-projection-targets)
    (when-let ((project-types (projection-project-types (project-root project))))
      (cl-loop
-      for (_ . config) in project-types
+      for config in project-types
       with targets = nil
-      do (setq targets (ensure-list (alist-get :targets config)))
+      do (setq targets (ensure-list (oref config compile-multi-targets)))
       when targets
         append targets))))
 
@@ -123,10 +123,10 @@ prefix:project-type:project-command."
                compile-multi-config)))))
 
 ;;;###autoload
-(with-eval-after-load 'projection-types
-  (projection-register-type 'cmake
-    :targets (list 'projection-multi-cmake-targets
-                   'projection-multi-ctest-targets)))
+;; (with-eval-after-load 'projection-types
+;;   (projection-register-type 'cmake
+;;     :targets (list 'projection-multi-cmake-targets
+;;                    'projection-multi-ctest-targets)))
 
 (provide 'projection-multi)
 ;;; projection-multi.el ends here
