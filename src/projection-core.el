@@ -34,7 +34,7 @@
   ((name
     :initarg :name
     :custom symbol
-    :reader projection-type-name
+    :reader projection-type--name
     :documentation "Identifier for the current project type.
 This should be unique within the body of the variable `projection-project-types'.
 A special name of default is accepted when no specialised project type is applicable.")
@@ -296,12 +296,12 @@ and will be set to having a modtime of `current-time'."
                           (funcall it))
                          (t
                           (user-error "Unknown project predicate type %s: %S"
-                                      (projection-type-name project-type)
+                                      (projection-type--name project-type)
                                       it)))
                    return t
                    finally return nil))
       (warn "Project with no predicate in `projection-project-types': %s"
-            (projection-type-name project-type)))))
+            (projection-type--name project-type)))))
 
 (defun projection--match-project-type (root-dir)
   "Match project type for ROOT-DIR from variable `projection-project-types'."
@@ -393,7 +393,7 @@ FORMAT-ARGS will be used to format PROMPT if provided."
    (let ((project (projection--current-project)))
      (list
       project
-      (mapcar #'projection-type-name
+      (mapcar #'projection-type--name
               (projection-project-types (project-root project))))))
 
   (message

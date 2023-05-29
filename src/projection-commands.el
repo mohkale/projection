@@ -59,7 +59,7 @@ and have to refresh it by calling `projection-reset-project-cache'."
     (project project-config cmd-type &optional prompt no-error no-cache)
   "Retrieve a command to do CMD-TYPE in PROJECT from PROJECT-CONFIG.
 Returns a cons cell of the form (PROJECT-TYPE . COMMAND-FOR-TYPE) where
-PROJECT-TYPE is (projection-type-name project-config). PROJECT-CONFIG
+PROJECT-TYPE is (projection-type--name project-config). PROJECT-CONFIG
 should be the configuration for the current project type in
 `projection-project-types'.
 

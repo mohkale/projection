@@ -141,7 +141,7 @@
        ("test"
         "test_foo.py"
         "foo_test.py")))
-    (expect (projection-type-name (projection-project-type default-directory))
+    (expect (projection-type--name (projection-project-type default-directory))
             :to-equal 'python-pip)
 
     (find-file "src/foo.py")
