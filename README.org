@@ -10,9 +10,10 @@
 
 Project type support for Emacs builtin ~project.el~.
 
-This Emacs package provides a [[https://github.com/bbatsov/projectile][Projectile]] like project management library built atop
-Emacs built-in ~project.el~. The end goal is to provide a stable and reliable
-out-of-the-box project management experience for as many project types as possible.
+This Emacs package provides a [[https://github.com/bbatsov/projectile][Projectile]] like project management library atop Emacs
+built-in ~project.el~. The end goal is to provide a stable and reliable out-of-the-box
+project management experience for as many project types as possible while supporting
+very targeted support for some project types like [[https://cmake.org/][CMake]].
 
 * The Why?
   Projectile is *fantastic!* The out of the box experience is amazing, but it's also
@@ -34,11 +35,74 @@ out-of-the-box project management experience for as many project types as possib
   *Note*: If any part of this description is no longer up-to-date please open a PR to
   discuss updating it :-).
 
+* Installation
+** Manually
+   1. Clone the repo.
+   2. Add the src and/or the src/projection-multi path to your Emacs ~load-path~.
+   3. Load it when needed.
+
+** MELPA
+   Projection and any extension packages are on [[https://github.com/melpa/melpa][MELPA]]. You can add this to your
+   ~package-archives~ variable and then install through ~M-x package-install~.
+
+   #+begin_src emacs-lisp
+     (push '("melpa" . "https://melpa.org/packages/") package-archives)
+     (package-refresh-contents)
+     (package-install 'projection)
+     (package-install 'projection-multi)
+   #+end_src
+
+* Quickstart
+  Must of projection is optional. By default projection does not do anything, not
+  even bind any keys (although it does provide a map to make this more convenient).
+  Here's a base configuration that will enable ALL the feature of projection out of
+  the box. See [[*Features][Features]] for a list of features.
+
+  #+begin_src emacs-lisp
+    (use-package projection
+      :ensure t
+      ;; Enable the `projection-hook' feature.
+      :hook (after-init . global-projection-hook-mode)
+
+      ;; Require projections immediately after project.el.
+      :config
+      (with-eval-after-load 'project
+        (require 'projection))
+
+      ;; Access pre-configured projection commands from a keybinding of your choice.
+      ;; Run `M-x describe-keymap projection-map` for a list of available commands.
+      :init
+      (define-key global-map "C-x P" projection-map))
+
+    (use-package projection-multi
+      :ensure t
+      ;; Allow interactively selecting available compilation targets from the current
+      ;; project type.
+      :init
+      (define-key global-map "RET" #'projection-multi-compile))
+  #+end_src
+
 * Features
 ** Projection Commands
    This feature works just like projectiles ~projectile-compile-project~ family of
-   commands, with projects being allowed to optionally define commands for
-   configuring, building, running and testing the current project.
+   commands. Each project can optionally expose one of the following command types
+   and you can use the associated =projection-TYPE-project= command to invoke it
+   interactively.
+
+   | Type      | Description                                               |
+   |-----------+-----------------------------------------------------------|
+   | Configure | Run any pre-configure steps such as generating Makefiles. |
+   | Build     | Compile the project.                                      |
+   | Test      | Run any configured tests for the current project.         |
+   | Run       | Run the project (for example: Starting a game).           |
+   | Package   | Produce a package from the built project.                 |
+   | Install   | Install the packaged project into an install directory.   |
+
+   At any point you can customize or override what command to run for these
+   command-types by passing a prefix argument (=C-u=) to the command. The command you
+   enter will be cached so subsequent attempts to run the same command-type will use
+   the same command. You can reset to the project defaults with =M-x
+   projection-reset-project-cache=.
 
    *Note*: Projection supports both shell-commands, interactive functions and helper
    functions which can return either of these as valid targets for each of these
@@ -46,21 +110,20 @@ out-of-the-box project management experience for as many project types as possib
    compilation commands and fallback to basic shell-commands when those aren't
    defined. See [[file:src/projection-types.el][projection-types]] for how this is configured.
 
-   You can also customise these commands on a project-by-project basis by using a
-   directory-local variable for each of them or by passing a prefix-argument to the
-   command (Example: ~C-u M-x projection-build-project~) which will result in projection
-   prompting you for a command and then caching it to make sure it's used the next
-   time you run that command.
-
-   If a project-type doesn't define a default for one of these commands, for example
-   if it doesn't support configuring as an independent step, then the respective
-   projection command will fail.
+#+html: <img src="https://user-images.githubusercontent.com/23294780/241755558-cadd9e02-aafc-4f2f-8ca2-58b72affcf27.gif" alt="Demo" align="left" title="Projection Commands Demo" class="img" />
 
 ** Projection Hook
    Provides a more general purpose parallel to ~projectile-toggle-project-read-only~.
    With this you can hook certain functions (Example: ~read-only-mode~) into a project
    and retroactively apply it to both all the open buffers from that project and any
    new buffers that will be opened in it.
+
+** Projection ibuffer
+   Offers variants of ~projectile-ibuffer~ and the [[https://github.com/purcell/ibuffer-projectile][ibuffer-projectile]] project in the
+   form of =ibuffer-projection-current-project= and =ibuffer-projection-set-filter-groups=.
+   The former creates and displays a dedicated ibuffer window for only buffers in the
+   current project. The latter pre-pends filters to group by a specific project for
+   all currently open projects.
 
 ** Projection Find
    Adds facilities for jumping to related files within a project. The most common use
@@ -82,23 +145,78 @@ out-of-the-box project management experience for as many project types as possib
    and prefixes for test files is configured by the project-type in
    [[file:src/projection-types.el]].
 
-** Projection ibuffer
-   Offers variants of ~projectile-ibuffer~ and the [[https://github.com/purcell/ibuffer-projectile][ibuffer-projectile]] project in the
-   form of =ibuffer-projection-current-project= and =ibuffer-projection-set-filter-groups=.
-   The former creates and displays a dedicated ibuffer window for only buffers in the
-   current project. The latter pre-pends filters to group by a specific project for
-   all currently open projects.
-
-** Projection multi-compile
-   compile-multi is a [[https://github.com/mohkale/compile-multi][package]] that supports auto extracting compilation commands from
-   the current project (for example from Makefiles) and lets you interactively select
-   one to run. Projection is designed to be a generic frontend for numerous project
-   types, not an extractor for the specific compilation targets a given project
-   defines. However projection does expose a ~projection-multi-compile~ command that
-   wraps around ~compile-multi~. It uses this to inject compilation target definitions
-   for projection itself (for example "project:build" is offered to run
-   ~projection-build-project~ for projects that have a configured build command) and
-   also for build frameworks projection is aware of (such as Make or CMake).
-
 ** Projection recentf
    A variant of =M-x recentf= for files exclusively in the current project.
+
+** Projection multi-compile
+#+html: <p align="right">
+#+html: <a href="https://melpa.org/#/projection-multi"><img alt="MELPA" src="https://melpa.org/packages/projection-multi-badge.svg"/></a>
+#+html: </p>
+
+   [[https://github.com/mohkale/compile-multi][compile-multi]] is a multi target interface to =M-x compile=. It allows you to
+   configure and interactively select compilation targets based on arbitrary
+   projects.
+
+   Projection has an optional extension package called =projection-multi-compile= to
+   integrate =compile-multi= into the current project type. It can extract available
+   compilation targets from Makefiles, CMake configuration, etc. and let you execute
+   them easily. By default =projection-multi-compile= determines all project types
+   matching the current project and then resolves compilation targets based on them.
+   For example a project that would match CMake and tox would let you select both tox
+   environments and CMake build targets.
+
+   Each target generation function in projection-multi also supports being run
+   independently. To select a tox task you can run =M-x projection-multi-compile-tox=,
+   and you won't be presented with CMake or any other target types. This bypasses
+   project type matching altogether and so may present targets not normally
+   discovered by =projection-multi-compile=.
+
+   Currently automatic target generation functions are available for the following
+   project types:
+
+   - projection (This simply presents available [[*Projection Commands][commands]] for the matching project types)
+   - CMake (& CTest)
+   - Make
+   - Poetry Poe
+   - Tox
+
+
+#+html: <img src="https://user-images.githubusercontent.com/23294780/241755864-b9bc5e13-b78d-426d-9598-a3f535554e5c.gif" alt="Demo" align="left" title="Projection Commands Demo" class="img" />
+
+** Specialised Project Support
+   Currently projection has very extensive support for certain project types. This
+   tries to bind Emacs a little stronger into the framework and bring more IDE like
+   support for extending the project builds. This section documents some of the extra
+   support available.
+
+*** CMake
+    For CMake projects projection supports the following extensions:
+
+    - =projection-cmake-set-preset= - Interactively sets a preset for a given
+      build-type in the current project. By default if a project has any supported
+      presets for a build-type projection will automatically prompt you for which to
+      use and then cache it for subsequent invocations. See =projection-cmake-preset=
+      to set an alternative preset behaviour for your use case.
+    - =projection-cmake-set-build-type= - Alter the value of the =CMAKE_BUILD_TYPE=
+      option passed through to CMake while configuring.
+
+* Configuration
+** Permanently Configuring Project Types
+   Project types are eioio objects. Every project type currently supported by
+   projection has a =defvar= to allow you to modify it. For example you can override
+   the default compilation command run for a given project by overriding the build
+   attribute:
+
+   #+begin_src emacs-lisp
+     ;; Change the test command for dotnet projects.
+     (oset projection-project-type-dotnet test "dotnet lint")
+     ;; Unset the build command for dotnet projects.
+     (oset projection-project-type-dotnet build nil)
+   #+end_src
+
+   To remove a project type from the configuration list altogether you can delete it
+   from =projection-project-types=.
+
+   #+begin_src emacs-lisp
+     (delq projection-project-type-cmake projection-project-types)
+   #+end_src
