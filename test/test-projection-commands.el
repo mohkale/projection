@@ -5,7 +5,8 @@
 (require 'projection-commands)
 
 (describe "Projection registered commands"
-  :var (projection-project-types dir default-directory)
+  :var (projection-project-types dir default-directory
+        project-type-foo)
   ;; Create a temporary project directory that will be re-used across each run.
   (before-all
     (setq dir (make-temp-file "buttercup-test-" t)
@@ -14,8 +15,9 @@
 
   ;; Register a new project type that matches the current project directory.
   (before-each
-    (setq projection-project-types nil)
-    (projection-register-type 'foo :predicate ".foo" :run "foo")
+    (setq
+     project-type-foo  (projection-type :name 'foo :predicate ".foo" :run "foo")
+     projection-project-types (list project-type-foo))
     (f-touch ".git")
     (f-touch ".foo"))
 
@@ -44,7 +46,7 @@
         ;; GIVEN
         ;;   A project-type matching the current project with an interactive
         ;;   run function.
-        (projection-register-type 'foo :run func)
+        (oset project-type-foo run func)
 
         ;; WHEN
         ;;   I try to run the 'run command for the current project.
@@ -100,7 +102,7 @@
     (it "Fails if registered command isn't valid"
       ;; GIVEN
       ;;   Current project has an invalid run command type.
-      (projection-register-type 'foo :run 'foo)
+      (oset project-type-foo run 'foo)
 
       (let ((err (should-error (projection-run-project) :type 'user-error)))
         ;; WHEN
@@ -158,7 +160,7 @@
       ;;   I run the run command for the current project and have the
       ;;   current project type cached.
       (spy-on #'projection--match-project-type :and-return-value
-              (assoc 'foo projection-project-types))
+              project-type-foo)
 
       (expect (projection--cache-get (project-current) 'type) :to-be nil)
       (projection-run-project)
@@ -178,7 +180,7 @@
         ;; GIVEN
         ;;   A run command configured as a function which returns the shell
         ;;   command "foo".
-        (projection-register-type 'foo :run (lambda () "foo"))
+        (oset project-type-foo run (lambda () "foo"))
 
         ;; WHEN
         ;;   I try to run the run command for the current project.
@@ -194,7 +196,7 @@
           ;;   * A run command configured as a function which returns the shell
           ;;   command "foo".
           ;;   * Caching of dynamic commands is enabled.
-          (projection-register-type 'foo :run (lambda () "foo"))
+          (oset project-type-foo run (lambda () "foo"))
 
           ;; WHEN
           ;;   I try to run the run command for the current project.
@@ -209,11 +211,10 @@
         ;; GIVEN
         ;;   A run command configured as a function which returns another
         ;;   interactive function which should actually be run for compilation.
-        (projection-register-type 'foo :run
-                                  (lambda ()
-                                    (lambda ()
-                                      (interactive)
-                                      "my-interactive-function")))
+        (oset project-type-foo run (lambda ()
+                                     (lambda ()
+                                       (interactive)
+                                       "my-interactive-function")))
 
         ;; WHEN
         ;;   I try to run the run command for the current project.
@@ -229,11 +230,10 @@
           ;;   * A run command configured as a function which returns another
           ;;   interactive function which should actually be run for compilation.
           ;;   * Caching of dynamic commands is enabled.
-          (projection-register-type 'foo :run
-                                    (lambda ()
-                                      (lambda ()
-                                        (interactive)
-                                        "my-interactive-function")))
+          (oset project-type-foo run (lambda ()
+                                       (lambda ()
+                                         (interactive)
+                                         "my-interactive-function")))
 
           ;; WHEN
           ;;   I try to run the run command for the current project.
@@ -243,5 +243,4 @@
           ;;   The value cached for the run command is the result of calling the
           ;;   configured function, not the configured function itself.
           (let ((run-cached (projection--cache-get (project-current) 'run)))
-            (expect (funcall run-cached) :to-equal "my-interactive-function"))))))
-  )
+            (expect (funcall run-cached) :to-equal "my-interactive-function")))))))

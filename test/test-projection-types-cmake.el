@@ -68,14 +68,16 @@
       (delete-directory test-directory t)))
 
   (before-each
-    (setq projection-project-types nil)
-    (projection-register-type 'cmake
-      :predicate "CMakeLists.txt"
-      :configure #'projection-cmake-run-configure
-      :build     #'projection-cmake-run-build
-      :test      #'projection-cmake-run-test
-      :install   #'projection-cmake-run-install
-      :package   #'projection-cmake-run-package)
+    (setq projection-project-types
+          (list
+           (projection-type
+            :name 'cmake
+            :predicate "CMakeLists.txt"
+            :configure #'projection-cmake-run-configure
+            :build     #'projection-cmake-run-build
+            :test      #'projection-cmake-run-test
+            :install   #'projection-cmake-run-install
+            :package   #'projection-cmake-run-package)))
 
     ;; Setup a simple CMake project.
     (projection-find-test--setup-project

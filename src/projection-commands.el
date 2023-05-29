@@ -59,37 +59,39 @@ and have to refresh it by calling `projection-reset-project-cache'."
     (project project-config cmd-type &optional prompt no-error no-cache)
   "Retrieve a command to do CMD-TYPE in PROJECT from PROJECT-CONFIG.
 Returns a cons cell of the form (PROJECT-TYPE . COMMAND-FOR-TYPE) where
-PROJECT-TYPE is (car project-config). PROJECT-CONFIG should be the
-configuration for the current project type in `projection-project-types'.
+PROJECT-TYPE is (projection-type-name project-config). PROJECT-CONFIG
+should be the configuration for the current project type in
+`projection-project-types'.
 
 When PROMPT is non-nil then interactively prompt the user for a command
 instead of picking one automatically. When NO-ERROR don't throw an error
 if no command is configured for the current project. When NO-CACHE is
 truthy do not query or place the command into the cache for PROJECT."
   (or
+   ;; Interactively set the compilation command.
    (when prompt
      (let ((command
             (projection-commands--read-shell-command project cmd-type)))
        (unless no-cache
          (projection--cache-put project cmd-type command))
        command))
+   ;; Access the last cached compilation command for the current project.
    (unless no-cache
      (projection--cache-get project cmd-type))
-   (let* ((project-type (car project-config))
-          (project-config (cdr project-config))
-          (type-command
-           (alist-get (intern (concat ":" (symbol-name cmd-type)))
-                      project-config)))
-     (unless no-error
-       (when (and (eq project-type t)
-                  (not project-config))
+
+   (let* ((type-command
+           (when project-config
+             (eieio-oref project-config cmd-type))))
+     ;; Throw an error if no command could be resolved for CMD-TYPE.
+     (when (and (not type-command)
+                (not no-error))
+       (when (or (not project-config)
+                 (eq (oref project-config name) 'default))
          (error "No project type matching project %s found" (project-root project)))
-       (unless type-command
-         (error "Project of type %s does not support the command: %s"
-                (if (eq project-type t)
-                    "default"
-                  (symbol-name project-type))
-                cmd-type)))
+       (error "Project of type %s does not support the command: %s"
+              (symbol-name (oref project-config name))
+              cmd-type))
+     ;; Sanitise compilation command and then cache it.
      (cond
       ((or (stringp type-command)
            (commandp type-command))

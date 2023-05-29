@@ -37,66 +37,90 @@
 
 
 
-(projection-register-type 'haskell-cabal
-  :predicate (defun projection-haskell-cabal-project-p ()
-               (and (file-expand-wildcards "?*.cabal")
-                    (not (file-exists-p "stack.yml"))))
-  :build "cabal build"
-  :test  "cabal test"
-  :run   "cabal run"
-  :test-suffix "Spec")
+(defvar projection-project-type-haskell-cabal
+  (projection-type
+   :name 'haskell-cabal
+   :predicate (defun projection-haskell-cabal-project-p ()
+                (and (file-expand-wildcards "?*.cabal")
+                     (not (file-exists-p "stack.yml"))))
+   :build "cabal build"
+   :test  "cabal test"
+   :run   "cabal run"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-haskell-cabal)
 
 
 
-(projection-register-type 'dotnet
-  :predicate (defun projection-dotnet-project-p ()
-               (or (file-expand-wildcards "?*.csproj")
-                   (file-expand-wildcards "?*.fsproj")
-                   (file-expand-wildcards "?*.sln")))
-  :build "dotnet build"
-  :test  "dotnet run"
-  :run   "dotnet test")
+(defvar projection-project-type-dotnet
+  (projection-type
+   :name 'dotnet
+   :predicate (defun projection-dotnet-project-p ()
+                (or (file-expand-wildcards "?*.csproj")
+                    (file-expand-wildcards "?*.fsproj")
+                    (file-expand-wildcards "?*.sln")))
+   :build "dotnet build"
+   :test  "dotnet run"
+   :run   "dotnet test"))
+
+(add-to-list 'projection-project-types projection-project-type-dotnet)
 
 
 
-(projection-register-type 'nim-nimble
-  :predicate (defun projection-nimble-project-p ()
-               (file-expand-wildcards "?*.nimble"))
-  :build   "nimble --noColor build --colors:off"
-  :test    "nimble --noColor test -d:nimUnittestColor:off --colors:off"
-  :install "nimble --noColor install --colors:off"
-  :run     "nimble --noColor run --colors:off"
-  :src-dir "src"
-  :test-dir "tests")
+(defvar projection-project-type-nim-nimble
+  (projection-type
+   :name 'nim-nimble
+   :predicate (defun projection-nimble-project-p ()
+                (file-expand-wildcards "?*.nimble"))
+   :build   "nimble --noColor build --colors:off"
+   :test    "nimble --noColor test -d:nimUnittestColor:off --colors:off"
+   :install "nimble --noColor install --colors:off"
+   :run     "nimble --noColor run --colors:off"
+   :src-dir "src"
+   :test-dir "tests"))
+
+(add-to-list 'projection-project-types projection-project-type-nim-nimble)
 
 
 
 ;; Go should take higher precedence than Make because Go projects often have a
 ;; Makefile.
 
-(projection-register-type 'golang
-  :predicate (defun projection-golang-project-p ()
-               (or (file-exists-p "go.mod")
-                   (file-expand-wildcards "*.go")))
-  :build "go build"
-  :test "go test ./..."
-  :test-suffix "_test")
+(defvar projection-project-type-golang
+  (projection-type
+   :name 'golang
+   :predicate (defun projection-golang-project-p ()
+                (or (file-exists-p "go.mod")
+                    (file-expand-wildcards "*.go")))
+   :build "go build"
+   :test "go test ./..."
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-golang)
 
 
 
-(projection-register-type 'go-task
-  :predicate "Taskfile.yml"
-  :build "task build"
-  :test "task test"
-  :install "task install")
+(defvar projection-project-type-go-task
+  (projection-type
+   :name 'go-task
+   :predicate "Taskfile.yml"
+   :build "task build"
+   :test "task test"
+   :install "task install"))
+
+(add-to-list 'projection-project-types projection-project-type-go-task)
 
 
 
-(projection-register-type 'scons
-  :predicate "SConstruct"
-  :build "scons"
-  :test "scons test"
-  :test-suffix "test")
+(defvar projection-project-type-scons
+  (projection-type
+   :name 'scons
+   :predicate "SConstruct"
+   :build "scons"
+   :test "scons test"
+   :test-suffix "test"))
+
+(add-to-list 'projection-project-types projection-project-type-scons)
 
 
 
@@ -105,49 +129,73 @@
 (autoload 'projection-meson-get-test-command      "projection-utils-meson")
 (autoload 'projection-meson-get-install-command   "projection-utils-meson")
 
-(projection-register-type 'meson
-  :predicate "meson.build"
-  :configure #'projection-meson-get-configure-command
-  :build #'projection-meson-get-build-command
-  :test #'projection-meson-get-test-command
-  :install #'projection-meson-get-install-command)
+(defvar projection-project-type-meson
+  (projection-type
+   :name 'meson
+   :predicate "meson.build"
+   :configure #'projection-meson-get-configure-command
+   :build #'projection-meson-get-build-command
+   :test #'projection-meson-get-test-command
+   :install #'projection-meson-get-install-command))
+
+(add-to-list 'projection-project-types projection-project-type-meson)
 
 
 
-(projection-register-type 'nix
-  :predicate "default.nix"
-  :build "nix-build"
-  :test  "nix-build")
+(defvar projection-project-type-nix
+  (projection-type
+   :name 'nix
+   :predicate "default.nix"
+   :build "nix-build"
+   :test  "nix-build"))
+
+(add-to-list 'projection-project-types projection-project-type-nix)
 
 
 
-(projection-register-type 'nix-flake
-  :predicate "flake.nix"
-  :build "nix build"
-  :test  "nix flake check"
-  :run   "nix run")
+(defvar projection-project-type-nix-flake
+  (projection-type
+   :name 'nix-flake
+   :predicate "flake.nix"
+   :build "nix build"
+   :test  "nix flake check"
+   :run   "nix run"))
+
+(add-to-list 'projection-project-types projection-project-type-nix-flake)
 
 
 
-(projection-register-type 'bazel
-  :predicate "WORKSPACE"
-  :build "bazel build"
-  :test  "bazel test"
-  :run   "bazel run")
+(defvar projection-project-type-bazel
+  (projection-type
+   :name 'bazel
+   :predicate "WORKSPACE"
+   :build "bazel build"
+   :test  "bazel test"
+   :run   "bazel run"))
+
+(add-to-list 'projection-project-types projection-project-type-bazel)
 
 
 
-(projection-register-type 'debian
-  :predicate "debian/control"
-  :build "debuild -uc -us")
+(defvar projection-project-type-debian
+  (projection-type
+   :name 'debian
+   :predicate "debian/control"
+   :build "debuild -uc -us"))
+
+(add-to-list 'projection-project-types projection-project-type-debian)
 
 
 
-(projection-register-type 'make
-  :predicate '("Makefile" "GNUMakefile")
-  :build   "make"
-  :test    "make test"
-  :install "make install")
+(defvar projection-project-type-make
+  (projection-type
+   :name 'make
+   :predicate '("Makefile" "GNUMakefile")
+   :build   "make"
+   :test    "make test"
+   :install "make install"))
+
+(add-to-list 'projection-project-types projection-project-type-make)
 
 
 
@@ -157,350 +205,514 @@
 (autoload 'projection-cmake-run-install   "projection-utils-cmake" nil t)
 (autoload 'projection-cmake-run-package   "projection-utils-cmake" nil t)
 
-(projection-register-type 'cmake
-  :predicate "CMakeLists.txt"
-  :configure #'projection-cmake-run-configure
-  :build     #'projection-cmake-run-build
-  :test      #'projection-cmake-run-test
-  :install   #'projection-cmake-run-install
-  :package   #'projection-cmake-run-package)
+(defvar projection-project-type-cmake
+  (projection-type
+   :name 'cmake
+   :predicate "CMakeLists.txt"
+   :configure #'projection-cmake-run-configure
+   :build     #'projection-cmake-run-build
+   :test      #'projection-cmake-run-test
+   :install   #'projection-cmake-run-install
+   :package   #'projection-cmake-run-package))
+
+(add-to-list 'projection-project-types projection-project-type-cmake)
 
 
 
-(projection-register-type 'php-symfony
-  :predicate (projection--all-files-exists "composer.json" "app" "src" "vendor")
-  :build "app/console server:run"
-  :test "phpunit -c app"
-  :test-suffix "Test")
+(defvar projection-project-type-php-symfony
+  (projection-type
+   :name 'php-symfony
+   :predicate (projection--all-files-exists "composer.json" "app" "src" "vendor")
+   :build "app/console server:run"
+   :test "phpunit -c app"
+   :test-suffix "Test"))
+
+(add-to-list 'projection-project-types projection-project-type-php-symfony)
 
 
 
-(projection-register-type 'rebar
-  :predicate "rebar.config"
-  :build "rebar3 compile"
-  :test "rebar3 do eunit,ct"
-  :test-suffix "_SUITE")
+(defvar projection-project-type-rebar
+  (projection-type
+   :name 'rebar
+   :predicate "rebar.config"
+   :build "rebar3 compile"
+   :test "rebar3 do eunit,ct"
+   :test-suffix "_SUITE"))
+
+(add-to-list 'projection-project-types projection-project-type-rebar)
 
 
 
-(projection-register-type 'elixir
-  :predicate "mix.exs"
-  :build "mix compile"
-  :test "mix test"
-  :test-suffix "_test")
+(defvar projection-project-type-elixir
+  (projection-type
+   :name 'elixir
+   :predicate "mix.exs"
+   :build "mix compile"
+   :test "mix test"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-elixir)
 
 
 
-(projection-register-type 'grunt
-  :predicate "Gruntfile.js"
-  :build "grunt"
-  :test "grunt test")
+(defvar projection-project-type-grunt
+  (projection-type
+   :name 'grunt
+   :predicate "Gruntfile.js"
+   :build "grunt"
+   :test "grunt test"))
+
+(add-to-list 'projection-project-types projection-project-type-grunt)
 
 
 
-(projection-register-type 'gulp
-  :predicate "gulpfile.js"
-  :build "gulp"
-  :test "gulp test")
+(defvar projection-project-type-gulp
+  (projection-type
+   :name 'gulp
+   :predicate "gulpfile.js"
+   :build "gulp"
+   :test "gulp test"))
+
+(add-to-list 'projection-project-types projection-project-type-gulp)
 
 
 
-(projection-register-type 'npm
-  :predicate "package.json"
-  :build "npm install"
-  :test "npm test"
-  :test-suffix ".test")
+(defvar projection-project-type-npm
+  (projection-type
+   :name 'npm
+   :predicate "package.json"
+   :build "npm install"
+   :test "npm test"
+   :test-suffix ".test"))
+
+(add-to-list 'projection-project-types projection-project-type-npm)
 
 
 
-(projection-register-type 'angular
-  :predicate (projection--all-files-exists "angular.json" ".angular-cli.json")
-  :build "ng build"
-  :run "ng serve"
-  :test "ng test"
-  :test-suffix ".spec")
+(defvar projection-project-type-angular
+  (projection-type
+   :name 'angular
+   :predicate (projection--all-files-exists "angular.json" ".angular-cli.json")
+   :build "ng build"
+   :run "ng serve"
+   :test "ng test"
+   :test-suffix ".spec"))
+
+(add-to-list 'projection-project-types projection-project-type-angular)
 
 
 
-(projection-register-type 'django
-  :predicate "manage.py"
-  :build "python manage.py runserver"
-  :test "python manage.py test"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-django
+  (projection-type
+   :name 'django
+   :predicate "manage.py"
+   :build "python manage.py runserver"
+   :test "python manage.py test"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-django)
 
 
 
-(projection-register-type 'python-pip
-  :predicate "requirements.txt"
-  :build "python setup.py build"
-  :test "python -m unittest discover"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-python-pip
+  (projection-type
+   :name 'python-pip
+   :predicate "requirements.txt"
+   :build "python setup.py build"
+   :test "python -m unittest discover"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-python-pip)
 
 
 
-(projection-register-type 'python-pkg
-  :predicate "setup.py"
-  :build "python setup.py build"
-  :test "python -m unittest discover"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-python-pkg
+  (projection-type
+   :name 'python-pkg
+   :predicate "setup.py"
+   :build "python setup.py build"
+   :test "python -m unittest discover"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-python-pkg)
 
 
 
-(projection-register-type 'python-toml
-  :predicate "pyproject.toml"
-  :build "python -m build"
-  :test "python -m unittest discover"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-python-toml
+  (projection-type
+   :name 'python-toml
+   :predicate "pyproject.toml"
+   :build "python -m build"
+   :test "python -m unittest discover"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-python-toml)
 
 
 
-(projection-register-type 'python-tox
-  :predicate "tox.ini"
-  :build "tox -r --notest"
-  :test "tox"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-python-tox
+  (projection-type
+   :name 'python-tox
+   :predicate "tox.ini"
+   :build "tox -r --notest"
+   :test "tox"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-python-tox)
 
 
 
-(projection-register-type 'python-pipenv
-  :predicate "Pipfile"
-  :build "pipenv run build"
-  :test "pipenv run test"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-python-pipenv
+  (projection-type
+   :name 'python-pipenv
+   :predicate "Pipfile"
+   :build "pipenv run build"
+   :test "pipenv run test"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-python-pipenv)
 
 
 
-(projection-register-type 'python-poetry
-  :predicate "poetry.lock"
-  :build "poetry build"
-  :test "poetry run python -m unittest discover"
-  :test-prefix "test_"
-  :test-suffix "_test")
+(defvar projection-project-type-python-poetry
+  (projection-type
+   :name 'python-poetry
+   :predicate "poetry.lock"
+   :build "poetry build"
+   :test "poetry run python -m unittest discover"
+   :test-prefix "test_"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-python-poetry)
 
 
 
-(projection-register-type 'maven
-  :predicate "pom.xml"
-  :build "mvn -B clean install"
-  :test "mvn -B test"
-  :src-dir "src/main/"
-  :test-dir "src/test/")
+(defvar projection-project-type-maven
+  (projection-type
+   :name 'maven
+   :predicate "pom.xml"
+   :build "mvn -B clean install"
+   :test "mvn -B test"
+   :src-dir "src/main/"
+   :test-dir "src/test/"))
+
+(add-to-list 'projection-project-types projection-project-type-maven)
 
 
 
-(projection-register-type 'gradle
-  :predicate "build.gradle"
-  :build "gradle build"
-  :test "gradle test"
-  :test-suffix "Spec")
+(defvar projection-project-type-gradle
+  (projection-type
+   :name 'gradle
+   :predicate "build.gradle"
+   :build "gradle build"
+   :test "gradle test"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-gradle)
 
 
 
-(projection-register-type 'gradlew
-  :predicate "gradlew"
-  :build "./gradlew build"
-  :test "./gradlew test"
-  :test-suffix "Spec")
+(defvar projection-project-type-gradlew
+  (projection-type
+   :name 'gradlew
+   :predicate "gradlew"
+   :build "./gradlew build"
+   :test "./gradlew test"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-gradlew)
 
 
 
-(projection-register-type 'grails
-  :predicate (projection--all-files-exists "application.yml" "grails-app")
-  :build "grails package"
-  :test "grails test-app"
-  :test-suffix "Spec")
+(defvar projection-project-type-grails
+  (projection-type
+   :name 'grails
+   :predicate (projection--all-files-exists "application.yml" "grails-app")
+   :build "grails package"
+   :test "grails test-app"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-grails)
 
 
 
-(projection-register-type 'sbt
-  :predicate "build.sbt"
-  :build "sbt compile"
-  :test "sbt test"
-  :src-dir "main"
-  :test-dir "test"
-  :test-suffix "Spec")
+(defvar projection-project-type-sbt
+  (projection-type
+   :name 'sbt
+   :predicate "build.sbt"
+   :build "sbt compile"
+   :test "sbt test"
+   :src-dir "main"
+   :test-dir "test"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-sbt)
 
 
 
-(projection-register-type 'mill
-  :predicate "build.sc"
-  :build "mill all __.compile"
-  :test "mill all __.test"
-  :test-suffix "Test"
-  :src-dir "src/"
-  :test-dir "test/src/")
+(defvar projection-project-type-mill
+  (projection-type
+   :name 'mill
+   :predicate "build.sc"
+   :build "mill all __.compile"
+   :test "mill all __.test"
+   :test-suffix "Test"
+   :src-dir "src/"
+   :test-dir "test/src/"))
+
+(add-to-list 'projection-project-types projection-project-type-mill)
 
 
 
-(projection-register-type 'lein-test
-  :predicate "project.clj"
-  :build "lein compile"
-  :test "lein test"
-  :test-suffix "_test")
+(defvar projection-project-type-lein-test
+  (projection-type
+   :name 'lein-test
+   :predicate "project.clj"
+   :build "lein compile"
+   :test "lein test"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-lein-test)
 
 
 
-(projection-register-type 'lein-midje
-  :predicate (projection--all-files-exists "project.clj" ".midje.clj")
-  :build "lein compile"
-  :test "lein midje"
-  :test-prefix "t_")
+(defvar projection-project-type-lein-midje
+  (projection-type
+   :name 'lein-midje
+   :predicate (projection--all-files-exists "project.clj" ".midje.clj")
+   :build "lein compile"
+   :test "lein midje"
+   :test-prefix "t_"))
+
+(add-to-list 'projection-project-types projection-project-type-lein-midje)
 
 
 
-(projection-register-type 'boot-clj
-  :predicate "build.boot"
-  :build "boot aot"
-  :test "boot test"
-  :test-suffix "_test")
+(defvar projection-project-type-boot-clj
+  (projection-type
+   :name 'boot-clj
+   :predicate "build.boot"
+   :build "boot aot"
+   :test "boot test"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-boot-clj)
 
 
 
-(projection-register-type 'clojure-cli
-  :predicate "deps.edn"
-  :test-suffix "_test")
+(defvar projection-project-type-clojure-cli
+  (projection-type
+   :name 'clojure-cli
+   :predicate "deps.edn"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-clojure-cli)
 
 
 
-(projection-register-type 'bloop
-  :predicate ".bloop"
-  :build "bloop compile root"
-  :test "bloop test --propagate --reporter scalac root"
-  :src-dir "src/main/"
-  :test-dir "src/test/"
-  :test-suffix "Spec")
+(defvar projection-project-type-bloop
+  (projection-type
+   :name 'bloop
+   :predicate ".bloop"
+   :build "bloop compile root"
+   :test "bloop test --propagate --reporter scalac root"
+   :src-dir "src/main/"
+   :test-dir "src/test/"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-bloop)
 
 
 
-(projection-register-type 'ruby-rspec
-  :predicate (projection--all-files-exists "Gemfile" "lib" "spec")
-  :build "bundle exec rake"
-  :test "bundle exec rspec"
-  :src-dir "lib/"
-  :test-dir "spec/"
-  :test-suffix "_spec")
+(defvar projection-project-type-ruby-rspec
+  (projection-type
+   :name 'ruby-rspec
+   :predicate (projection--all-files-exists "Gemfile" "lib" "spec")
+   :build "bundle exec rake"
+   :test "bundle exec rspec"
+   :src-dir "lib/"
+   :test-dir "spec/"
+   :test-suffix "_spec"))
+
+(add-to-list 'projection-project-types projection-project-type-ruby-rspec)
 
 
 
-(projection-register-type 'ruby-test
-  :predicate (projection--all-files-exists "Gemfile" "lib" "test")
-  :build "bundle exec rake"
-  :test "bundle exec rake test"
-  :test-suffix "_spec")
+(defvar projection-project-type-ruby-test
+  (projection-type
+   :name 'ruby-test
+   :predicate (projection--all-files-exists "Gemfile" "lib" "test")
+   :build "bundle exec rake"
+   :test "bundle exec rake test"
+   :test-suffix "_spec"))
+
+(add-to-list 'projection-project-types projection-project-type-ruby-test)
 
 
 
 ;; Rails needs to be registered after npm, otherwise `package.json` makes it `npm`.
 ;; https://github.com/bbatsov/projectile/pull/1191
-(projection-register-type 'rails-test
-  :predicate (projection--all-files-exists "Gemfile" "app" "lib" "db" "config" "test")
-  :build "bundle exec rails server"
-  :test "bundle exec rake test"
-  :test-suffix "_test")
+(defvar projection-project-type-rails-test
+  (projection-type
+   :name 'rails-test
+   :predicate (projection--all-files-exists "Gemfile" "app" "lib" "db" "config" "test")
+   :build "bundle exec rails server"
+   :test "bundle exec rake test"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-rails-test)
 
 
 
-(projection-register-type 'rails-rspec
-  :predicate (projection--all-files-exists "Gemfile" "app" "lib" "db" "config" "spec")
-  :build "bundle exec rails server"
-  :test "bundle exec rspec"
-  :src-dir "lib/"
-  :test-dir "spec/"
-  :test-suffix "_test")
+(defvar projection-project-type-rails-rspec
+  (projection-type
+   :name 'rails-rspec
+   :predicate (projection--all-files-exists "Gemfile" "app" "lib" "db" "config" "spec")
+   :build "bundle exec rails server"
+   :test "bundle exec rspec"
+   :src-dir "lib/"
+   :test-dir "spec/"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-rails-rspec)
 
 
 
-(projection-register-type 'crystal-spec
-  :predicate "shard.yml"
-  :test "crystal spec"
-  :src-dir "src/"
-  :test-dir "spec/"
-  :test-suffix "_spec")
+(defvar projection-project-type-crystal-rspec
+  (projection-type
+   :name 'crystal-rspec
+   :predicate "shard.yml"
+   :test "crystal spec"
+   :src-dir "src/"
+   :test-dir "spec/"
+   :test-suffix "_spec"))
+
+(add-to-list 'projection-project-types projection-project-type-crystal-rspec)
 
 
 
-(projection-register-type 'emacs-cask
-  :predicate "Cask"
-  :build "cask install"
-  :test-prefix "test-"
-  :test-suffix "-test")
+(defvar projection-project-type-emacs-cask
+  (projection-type
+   :name 'emacs-cask
+   :predicate "Cask"
+   :build "cask install"
+   :test-prefix "test-"
+   :test-suffix "-test"))
+
+(add-to-list 'projection-project-types projection-project-type-emacs-cask)
 
 
 
-(projection-register-type 'emacs-eldev
-  :predicate '("Eldev" "Eldev-local")
-  :build "eldev compile"
-  :test "eldev test"
-  :run "eldev emacs"
-  :package "eldev package")
+(defvar projection-project-type-emacs-eldev
+  (projection-type
+   :name 'emacs-eldev
+   :predicate '("Eldev" "Eldev-local")
+   :build "eldev compile"
+   :test "eldev test"
+   :run "eldev emacs"
+   :package "eldev package"))
+
+(add-to-list 'projection-project-types projection-project-type-emacs-eldev)
 
 
 
-(projection-register-type 'r
-  :predicate "DESCRIPTION"
-  :build "R CMD INSTALL --with-keep.source ."
-  :test (concat "R CMD check -o " temporary-file-directory " ."))
+(defvar projection-project-type-r
+  (projection-type
+   :name 'r
+   :predicate "DESCRIPTION"
+   :build "R CMD INSTALL --with-keep.source ."
+   :test (concat "R CMD check -o " temporary-file-directory " .")))
+
+(add-to-list 'projection-project-types projection-project-type-r)
 
 
 
-(projection-register-type 'haskell-stack
-  :predicate "stack.yaml"
-  :build "stack build"
-  :test "stack build --test"
-  :test-suffix "Spec")
+(defvar projection-project-type-haskell-stack
+  (projection-type
+   :name 'haskell-stack
+   :predicate "stack.yaml"
+   :build "stack build"
+   :test "stack build --test"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-haskell-stack)
 
 
 
-(projection-register-type 'rust-cargo
-  :predicate "Cargo.toml"
-  :build (projection--command-or-shell 'rustic-compile "cargo build")
-  :test  (projection--command-or-shell 'rustic-cargo-test "cargo test")
-  :run   (projection--command-or-shell 'rustic-cargo-run "cargo run"))
+(defvar projection-project-type-rust-cargo
+  (projection-type
+   :name 'rust-cargo
+   :predicate "Cargo.toml"
+   :build (projection--command-or-shell 'rustic-compile "cargo build")
+   :test  (projection--command-or-shell 'rustic-cargo-test "cargo test")
+   :run   (projection--command-or-shell 'rustic-cargo-run "cargo run")))
+
+(add-to-list 'projection-project-types projection-project-type-rust-cargo)
 
 
 
-(projection-register-type 'racket
-  :predicate "info.rkt"
-  :test "raco test ."
-  :install "raco pkg install"
-  :package "raco pkg create --source $(pwd)")
+(defvar projection-project-type-racket
+  (projection-type
+   :name 'racket
+   :predicate "info.rkt"
+   :test "raco test ."
+   :install "raco pkg install"
+   :package "raco pkg create --source $(pwd)"))
+
+(add-to-list 'projection-project-types projection-project-type-racket)
 
 
 
-(projection-register-type 'dart
-  :predicate "pubspec.yaml"
-  :build "pub get"
-  :test "pub run test"
-  :run "dart"
-  :test-suffix "_test.dart")
+(defvar projection-project-type-dart
+  (projection-type
+   :name 'dart
+   :predicate "pubspec.yaml"
+   :build "pub get"
+   :test "pub run test"
+   :run "dart"
+   :test-suffix "_test.dart"))
+
+(add-to-list 'projection-project-types projection-project-type-dart)
 
 
 
-(projection-register-type 'elm
-  :predicate "elm.json"
-  :build "elm make")
+(defvar projection-project-type-elm
+  (projection-type
+   :name 'elm
+   :predicate "elm.json"
+   :build "elm make"))
+
+(add-to-list 'projection-project-types projection-project-type-elm)
 
 
 
-(projection-register-type 'julia
-  :predicate "Project.toml"
-  :build "julia --project=@. -e 'import Pkg; Pkg.precompile(); Pkg.build()'"
-  :test "julia --project=@. -e 'import Pkg; Pkg.test()' --check-bounds=yes"
-  :src-dir "src"
-  :test-dir "test")
+(defvar projection-project-type-julia
+  (projection-type
+   :name 'julia
+   :predicate "Project.toml"
+   :build "julia --project=@. -e 'import Pkg; Pkg.precompile(); Pkg.build()'"
+   :test "julia --project=@. -e 'import Pkg; Pkg.test()' --check-bounds=yes"
+   :src-dir "src"
+   :test-dir "test"))
+
+(add-to-list 'projection-project-types projection-project-type-julia)
 
 
 
-(projection-register-type 'ocaml-dune
-  :predicate "dune-project"
-  :build "dune build"
-  :test "dune runtest")
+(defvar projection-project-type-ocaml-dune
+  (projection-type
+   :name 'ocaml-dune
+   :predicate "dune-project"
+   :build "dune build"
+   :test "dune runtest"))
+
+(add-to-list 'projection-project-types projection-project-type-ocaml-dune)
 
 
 

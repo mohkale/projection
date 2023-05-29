@@ -31,6 +31,7 @@
 (require 'projection-core-log)
 (require 'projection-utils-cmake)
 (require 'projection-multi)
+(require 'projection-types)
 
 (defgroup projection-multi-cmake nil
   "Helpers for `compile-multi' and CMake projects."
@@ -97,6 +98,14 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (projection-multi-compile--run
    (projection--current-project 'no-error)
    `((t ,#'projection-multi-cmake-targets))))
+
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (oset projection-project-type-cmake compile-multi-targets
+        (seq-uniq
+         (append
+          (oref projection-project-type-cmake compile-multi-targets)
+          (list #'projection-multi-cmake-targets)))))
 
 (provide 'projection-multi-cmake)
 ;;; projection-multi-cmake.el ends here

@@ -24,45 +24,100 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'subr-x)
+(require 'eieio)
 (require 'project)
+(require 'subr-x)
+
 (require 'projection-core-log)
 
-(define-obsolete-variable-alias 'projection-types 'projection-project-types "0.1")
-
-(defcustom projection-project-types nil
-  "Alist of defined project types and metadata for them.
-You shouldn't modify this variable directly, instead you should do so
-with `projection-register-type'."
-  :group 'projection
-  :type
-  '(list
-    (repeat
-     (cons
-      symbol                                                 ; Project identifier
-      (alist :key-type symbol                                ; Command type name
-             :value-type                                     ; Command value
-             (choice string                                  ; Shell command
-                     ;; Either a command or a function returning
-                     ;; a shell command or a interactive function.
-                     function))))))
-
-(defcustom projection-default-type
-  '((:build   . "make")
-    (:test    . "make test")
-    (:run     . "make run")
-    (:install . "make install"))
-  "Default project type.
-Used when no other registered type matches the current project."
-  :group 'projection
-  :type '(optional (alist :key-type symbol :value-type (choice string function))))
-
-(cl-defun projection-register-type
-    (project &rest extra-keys
-             &key predicate
-             configure build test run package install
-             src-dir test-dir test-prefix test-suffix
-             &allow-other-keys)
+(defclass projection-type ()
+  ((name
+    :initarg :name
+    :custom symbol
+    :reader projection-type-name
+    :documentation "Identifier for the current project type.")
+   (predicate
+    :initarg :predicate
+    :custom (choice
+             (const t :tag "Always supported")
+             (function :tag "Predicate function")
+             (string :tag "Marker file for project")
+             (repeat (string :tag "Marker files for project")))
+    :documentation "Predicate used to assert whether the current project matches this project type.")
+   ;; Possible compilation commands
+   (configure
+    :initarg :configure
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support configure.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to configure project.")
+   (build
+    :initarg :build
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support build.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to build project.")
+   (test
+    :initarg :test
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support test.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to test project.")
+   (run
+    :initarg :run
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support run.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to run project.")
+   (package
+    :initarg :package
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support package.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to package project.")
+   (install
+    :initarg :install
+    :initform nil
+    :custom (choice
+             (const nil :tag "Project does not support install.")
+             (string :tag "Shell command to invoke.")
+             (function :tag "Either a command or a function returning a valid command type."))
+    :documentation "Command used to install project.")
+   ;; File navigation
+   (src-dir  :initarg :src-dir  :initform nil :documentation "Currently unused.")
+   (test-dir :initarg :test-dir :initform nil :documentation "Currently unused.")
+   (test-prefix
+    :initarg :test-prefix
+    :initform nil
+    :custom (choice
+             (string :tag "Test file prefix")
+             (repeat (string :tag "Test file prefixes")))
+    :documentation "TODO")
+   (test-suffix
+    :initarg :test-suffix
+    :initform nil
+    :custom (choice
+             (string :tag "Test file prefix")
+             (repeat (string :tag "Test file prefixes")))
+    :documentation "TODO")
+   (compile-multi-targets
+    :initarg :compile-multi-targets
+    :initform nil
+    :custom '(choice
+              function
+              (list (repeat function)))
+    :documentation "TODO"))
+  "TODO.")
   "Register or update entries in `projection-project-types'.
 PROJECT should be the name of the project entry as a symbol.
 
@@ -91,34 +146,32 @@ value or a list of values but it will be saved as a list.
 SRC-DIR, and TEST-DIR are currently unused. EXTRA-KEYS is part of the
 call signature but will contain all key value arguments. It's usage is
 internal to project registration."
-  (declare (indent defun))
 
-  ;; All of the standard keys arguments are in extra-keys. Their kept
-  ;; as part of the caller interface so the docstring mentions it.
-  (ignore predicate configure build test run package install src-dir
-          test-dir test-prefix test-suffix)
+(cl-defmethod initialize-instance :after ((obj projection-type) &rest _args)
+  "Initialise a new projection type object."
+  (unless (slot-boundp obj :name)
+    (error "Must define the :name slot for a `projection-type' object"))
+  (when (slot-boundp obj 'test-prefix)
+    (oset obj test-prefix (ensure-list (oref obj test-prefix))))
+  (when (slot-boundp obj 'test-suffix)
+    (oset obj test-suffix (ensure-list (oref obj test-suffix)))))
 
-  (let ((config
-         (let ((extra-keys extra-keys) result)
-           (while extra-keys
-             (let ((key (car extra-keys))
-                   (val (cadr extra-keys)))
-               (when (member key '(:test-prefix :test-suffix))
-                 (setq val (ensure-list val)))
-               (push (cons key val) result))
-             (setq extra-keys (cddr extra-keys)))
-           (nreverse result))))
-    (if-let ((existing (assoc project projection-project-types)))
-        (progn
-          (projection--log
-           :debug "Updating project of type=%s with config=%s" project config)
-          (dolist (it config)
-            (setf (alist-get (car it) (cdr existing)) (cdr it)))
-          existing)
-      (projection--log
-       :debug "Defining project of type=%s with conf=%s" project config)
-      (push (cons project config) projection-project-types))))
-(put 'projection-register-type 'lisp-indent-function 1)
+(defcustom projection-project-types nil
+  "TODO."
+  :group 'projection
+  :type '(list (repeat projection-type)))
+
+(defcustom projection-default-type
+  (projection-type
+   :name    'default
+   :build   "make"
+   :test    "make test"
+   :run     "make run"
+   :install "make install")
+  "Default project type.
+Used when no other registered type matches the current project."
+  :group 'projection
+  :type '(optional projection-type))
 
 
 
@@ -229,11 +282,10 @@ and will be set to having a modtime of `current-time'."
 
 
 
-(defun projection--project-matches-p (root-dir project-type project-config)
-  "Assert whether project of type PROJECT-TYPE matches ROOT-DIR.
-PROJECT-CONFIG is the configuration for PROJECT-TYPE."
+(defun projection--project-matches-p (root-dir project-type)
+  "Assert whether project of type PROJECT-TYPE matches ROOT-DIR."
   (let ((default-directory root-dir))
-    (if-let ((predicate (alist-get :predicate project-config)))
+    (if-let ((predicate (oref project-type predicate)))
         (progn
           (setq predicate
                 (if (and (consp predicate)
@@ -248,57 +300,66 @@ PROJECT-CONFIG is the configuration for PROJECT-TYPE."
                          ((functionp it)
                           (funcall it))
                          (t
-                          (user-error "Unknown project predicate type %s: %S" project-type it)))
+                          (user-error "Unknown project predicate type %s: %S"
+                                      (projection-type-name project-type)
+                                      it)))
                    return t
                    finally return nil))
-      (warn "Project with no predicate in `projection-project-types': %s" project-type))))
+      (warn "Project with no predicate in `projection-project-types': %s"
+            (projection-type-name project-type)))))
 
 (defun projection--match-project-type (root-dir)
-  "Match project type for ROOT-DIR from `projection-project-types'."
+  "Match project type for ROOT-DIR from variable `projection-project-types'."
   (cl-loop
-   for (project . config) in projection-project-types
-   when (projection--project-matches-p root-dir project config)
-     return (cons project config)))
+   for project-type in projection-project-types
+   when (projection--project-matches-p root-dir project-type)
+     return project-type))
 
 (defun projection--match-project-types (root-dir)
-  "Match all project types for ROOT-DIR from `projection-project-types'."
+  "Match all project types for ROOT-DIR from variable `projection-project-types'."
   (cl-loop
-   for (project . config) in projection-project-types
-   when (projection--project-matches-p root-dir project config)
-     collect (cons project config)))
+   for project-type in projection-project-types
+   when (projection--project-matches-p root-dir project-type)
+     collect project-type))
 
 (defun projection-project-type (root-dir &optional must-match)
   "Determine the project type for ROOT-DIR.
 With MUST-MATCH an error will be raised if no project type could be matched."
   (or
    (when-let ((type (projection--cache-get root-dir 'type)))
-     (assoc type projection-project-types))
-   (when-let ((config (projection--match-project-type root-dir)))
-     (projection--cache-put root-dir 'type (car config))
-     config)
-   (when must-match
+     (cl-find-if (lambda (project-type)
+                   (eq (oref project-type name) type))
+                 projection-project-types))
+   (when-let ((project-type (projection--match-project-type root-dir)))
+     (projection--cache-put root-dir 'type (oref project-type name))
+     project-type)
+   (when (and must-match
+              (not projection-default-type))
      (error "Could not determine current project type for %s" root-dir))
-   (cons t projection-default-type)))
+
+   projection-default-type))
 
 (defun projection-project-types (root-dir &optional must-match)
   "Determine all project types matching ROOT-DIR.
 With MUST-MATCH an error will be raised if no project types could be matched."
-  (list (projection-project-type root-dir must-match))
   (or
    (when-let ((types (projection--cache-get root-dir 'types)))
-     (delq nil
-           (mapcar (lambda (type)
-                     (assoc type projection-project-types))
-                   types)))
+     (cl-loop for project-type in projection-project-types
+              when (member (oref project-type name) types)
+                collect project-type))
 
-   (when-let ((config (projection--match-project-types root-dir)))
-     (projection--cache-put root-dir 'types (mapcar #'car config))
-     config)
+   (when-let ((project-types (projection--match-project-types root-dir)))
+     (projection--cache-put root-dir 'types
+                            (mapcar (lambda (project-type)
+                                      (oref project-type name))
+                                    project-types))
+     project-types)
 
-   (when must-match
+   (when (and must-match
+              (not projection-default-type))
      (error "Could not determine any project types for %s" root-dir))
 
-   (list (cons t projection-default-type))))
+   (list projection-default-type)))
 
 
 
@@ -337,10 +398,8 @@ FORMAT-ARGS will be used to format PROMPT if provided."
    (let ((project (projection--current-project)))
      (list
       project
-      (mapcar #'car (projection-project-types (project-root project))))))
-
-  (when (member t project-types)
-    (setq project-types (delq t project-types)))
+      (mapcar #'projection-type-name
+              (projection-project-types (project-root project))))))
 
   (message
    (cl-loop

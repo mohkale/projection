@@ -28,6 +28,7 @@
 (require 'projection-core-log)
 (require 'projection-utils)
 (require 'projection-multi)
+(require 'projection-types)
 
 (defgroup projection-multi-tox nil
   "Helpers for `compile-multi' and tox projects."
@@ -89,8 +90,11 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (projection-register-type 'python-tox
-    :targets 'projection-multi-tox-targets))
+  (oset projection-project-type-python-tox compile-multi-targets
+        (seq-uniq
+         (append
+          (oref projection-project-type-python-tox compile-multi-targets)
+          (list #'projection-multi-tox-targets)))))
 
 (provide 'projection-multi-tox)
 ;;; projection-multi-tox.el ends here

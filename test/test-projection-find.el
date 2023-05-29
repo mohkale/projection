@@ -9,7 +9,13 @@
 
 (describe "Projection find other file"
   :var (original-directory
-        test-directory)
+        test-directory
+        (project-type-python-pip
+         (projection-type
+          :name 'python-pip
+          :predicate "requirements.txt"
+          :test-prefix "test_"
+          :test-suffix "_test")))
   ;; Save the original directory before we run any tests.
   (before-all
     (setq original-directory default-directory))
@@ -29,11 +35,7 @@
     ;; `projection-project-types' from other tests will impact the tests in this module. To
     ;; work around this I just copied the relevant project definitions from the
     ;; related file. See https://github.com/jorgenschaefer/emacs-buttercup/issues/127
-    (setq projection-project-types nil)
-    (projection-register-type 'python-pip
-      :predicate "requirements.txt"
-      :test-prefix "test_"
-      :test-suffix "_test"))
+    (setq projection-project-types (list project-type-python-pip)))
 
   (it "Can jump between related files in a project based on file extension"
     ;; GIVEN
@@ -139,7 +141,8 @@
        ("test"
         "test_foo.py"
         "foo_test.py")))
-    (expect (car (projection-project-type default-directory)) :to-equal 'python-pip)
+    (expect (projection-type-name (projection-project-type default-directory))
+            :to-equal 'python-pip)
 
     (find-file "src/foo.py")
     (expect buffer-file-name :to-match "src/foo.py")

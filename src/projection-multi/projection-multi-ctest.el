@@ -27,6 +27,7 @@
 (require 'projection-core-log)
 (require 'projection-utils-cmake)
 (require 'projection-multi)
+(require 'projection-types)
 
 (defcustom projection-multi-ctest-cache-targets nil
   "When true cache the CMake ctest targets of each project permanently."
@@ -116,6 +117,14 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (projection-multi-compile--run
    (projection--current-project 'no-error)
    `((t ,#'projection-multi-ctest-targets))))
+
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (oset projection-project-type-cmake compile-multi-targets
+        (seq-uniq
+         (append
+          (oref projection-project-type-cmake compile-multi-targets)
+          (list #'projection-multi-ctest-targets)))))
 
 (provide 'projection-multi-ctest)
 ;;; projection-multi-ctest.el ends here

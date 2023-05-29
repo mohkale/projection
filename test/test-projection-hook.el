@@ -13,7 +13,8 @@
   (before-each
     (setq projection-project-types nil)
     (projection-reset-project-cache projection-hook--cache)
-    (projection-register-type 'foo :predicate ".foo")
+    (push (projection-type :name 'foo :predicate ".foo")
+          projection-project-types)
     (dolist (it (list ".foo" "foo" "bar" "baz"))
       (f-touch it))
     (call-process "git" nil nil nil "init")
