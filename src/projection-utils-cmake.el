@@ -361,7 +361,7 @@ Place any -D options or extra flags you always want to use (for example
 
 (defun projection-cmake-run-test ()
   "Test command generator for CMake projects."
-  (projection--cmake-command 'test "ctest"))
+  (projection--cmake-command 'test "test"))
 
 (defun projection-cmake-run-install ()
   "Install command generator for CMake projects."

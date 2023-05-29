@@ -52,6 +52,7 @@
   :group 'project
   :link '(url-link :tag "GitHub" "https://github.com/mohkale/projection"))
 
+;;;###autoload
 (defvar projection-map
   (let ((map (make-sparse-keymap)))
     ;; `projection-core'

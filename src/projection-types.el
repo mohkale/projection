@@ -199,11 +199,11 @@
 
 
 
-(autoload 'projection-cmake-run-configure "projection-utils-cmake" nil t)
-(autoload 'projection-cmake-run-build     "projection-utils-cmake" nil t)
-(autoload 'projection-cmake-run-test      "projection-utils-cmake" nil t)
-(autoload 'projection-cmake-run-install   "projection-utils-cmake" nil t)
-(autoload 'projection-cmake-run-package   "projection-utils-cmake" nil t)
+(autoload 'projection-cmake-run-configure "projection-utils-cmake")
+(autoload 'projection-cmake-run-build     "projection-utils-cmake")
+(autoload 'projection-cmake-run-test      "projection-utils-cmake")
+(autoload 'projection-cmake-run-install   "projection-utils-cmake")
+(autoload 'projection-cmake-run-package   "projection-utils-cmake")
 
 (defvar projection-project-type-cmake
   (projection-type
