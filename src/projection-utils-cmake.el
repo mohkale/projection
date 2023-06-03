@@ -207,8 +207,9 @@ Prompt for the `completing-read' session will be PROMPT."
                (projection-cmake--read-preset
                 (projection--prompt
                  "Set CMake%s preset: " project
-                 (when build-type
-                   (concat " " (symbol-name build-type))))
+                 (if build-type
+                     (concat " " (symbol-name build-type))
+                   ""))
                 presets))))
 
             (when preset
