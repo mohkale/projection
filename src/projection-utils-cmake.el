@@ -367,9 +367,5 @@ Place any -D options or extra flags you always want to use (for example
   "Install command generator for CMake projects."
   (projection--cmake-command 'install "install"))
 
-(defun projection-cmake-run-package ()
-  "Package command generator for CMake projects."
-  (projection--cmake-command 'package "package"))
-
 (provide 'projection-utils-cmake)
 ;;; projection-utils-cmake.el ends here

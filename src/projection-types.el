@@ -203,7 +203,6 @@
 (autoload 'projection-cmake-run-build     "projection-utils-cmake")
 (autoload 'projection-cmake-run-test      "projection-utils-cmake")
 (autoload 'projection-cmake-run-install   "projection-utils-cmake")
-(autoload 'projection-cmake-run-package   "projection-utils-cmake")
 
 (defvar projection-project-type-cmake
   (projection-type
@@ -212,8 +211,7 @@
    :configure #'projection-cmake-run-configure
    :build     #'projection-cmake-run-build
    :test      #'projection-cmake-run-test
-   :install   #'projection-cmake-run-install
-   :package   #'projection-cmake-run-package))
+   :install   #'projection-cmake-run-install))
 
 (add-to-list 'projection-project-types projection-project-type-cmake)
 
