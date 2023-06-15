@@ -339,9 +339,12 @@ With MUST-MATCH an error will be raised if no project type could be matched."
 With MUST-MATCH an error will be raised if no project types could be matched."
   (or
    (when-let ((types (projection--cache-get root-dir 'types)))
-     (cl-loop for project-type in projection-project-types
-              when (member (oref project-type name) types)
-                collect project-type))
+     (cl-sort
+      (cl-loop for project-type in projection-project-types
+               when (member (oref project-type name) types)
+                 collect project-type)
+      (lambda (a b) (< (cl-position a types) (cl-position b types)))
+      :key #'projection-type--name))
 
    (when-let ((project-types (projection--match-project-types root-dir)))
      (projection--cache-put root-dir 'types
@@ -355,6 +358,41 @@ With MUST-MATCH an error will be raised if no project types could be matched."
      (error "Could not determine any project types for %s" root-dir))
 
    (list projection-default-type)))
+
+;;;###autoload
+(defun projection-set-primary-project-type (project project-type)
+  "Set the primary project type for PROJECT to PROJECT-TYPE."
+  (interactive
+   (let* ((project (projection--current-project))
+          (current-type
+           (projection-type--name
+            (projection-project-type (project-root project))))
+          (matching-types
+           (mapcar #'projection-type--name
+                   (if current-prefix-arg
+                       projection-project-types
+                     (projection-project-types (project-root project))))))
+     (unless matching-types
+       (error "No project types matching %s found" (project-root project)))
+
+     (list
+      project
+      (intern
+       (completing-read
+        (projection--prompt "Set type: " project)
+        matching-types
+        nil
+        'require-match
+        nil
+        current-type)))))
+
+  (unless (eq project-type 'default)
+    ;; TODO: Remove non-matching project-types on change.
+    (projection--cache-put project 'type project-type)
+    (projection--cache-put
+     project 'types
+     (append (list project-type)
+             (delq project-type (projection--cache-get project 'types))))))
 
 
 
