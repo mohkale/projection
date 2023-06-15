@@ -38,7 +38,10 @@
   "Helper function to  generate a ctest command.
 ARGV if provided will be appended to the command."
   (projection--join-shell-command
-   `("ctest" "--test-dir" ,projection-cmake-build-directory ,@argv)))
+   `("ctest"
+     ,@(when projection-cmake-build-directory
+         (list "--test-dir" projection-cmake-build-directory))
+     ,@argv)))
 
 (defcustom projection-multi-ctest-add-exclude-label-targets t
   "When true add targets to run all tests except a given label."

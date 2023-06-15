@@ -305,8 +305,10 @@ PROJECT defaults to the current project."
 ;; CMake command utils.
 
 (defcustom projection-cmake-build-directory "build"
-  "Build directory for cmake project builds."
-  :type 'string
+  "Build directory for cmake project builds.
+When unset no -B flag will be passed to CMake. You may want this if the build
+directory is configured directly in the CMakePresets or elsewhere."
+  :type '(optional string)
   :group 'projection-type-cmake)
 
 (defcustom projection-cmake-configure-options nil
@@ -320,15 +322,18 @@ Place any -D options or extra flags you always want to use (for example
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
   (projection--join-shell-command
    `("cmake"
-     "--build" ,projection-cmake-build-directory
+     ,@(when projection-cmake-build-directory
+         (list "--build" projection-cmake-build-directory))
      ,@(when-let ((preset (projection-cmake--preset build-type)))
          (list (concat "--preset=" preset)))
      ,@(when target (list "--target" target)))))
 
 (defun projection--cmake-annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
-  (format "cmake build:%s %s%s"
-          projection-cmake-build-directory
+  (format "cmake %s%s%s"
+          (if projection-cmake-build-directory
+              (concat "build:" projection-cmake-build-directory " ")
+            "")
           (if-let ((preset (projection-cmake--preset build-type)))
               (concat "preset:" preset " ")
             "")
@@ -346,7 +351,8 @@ Place any -D options or extra flags you always want to use (for example
   (projection--join-shell-command
    `("cmake"
      "-S" "."
-     "-B" ,projection-cmake-build-directory
+     ,@(when projection-cmake-build-directory
+        (list "-B" projection-cmake-build-directory))
      ,@(when-let ((preset (projection-cmake--preset 'configure)))
          (list (concat "--preset=" preset)))
      ,@(when-let ((build-type (projection-cmake--build-type)))
