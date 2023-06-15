@@ -41,6 +41,8 @@ ARGV if provided will be appended to the command."
    `("ctest"
      ,@(when projection-cmake-build-directory
          (list "--test-dir" projection-cmake-build-directory))
+     ,@(when-let ((preset (projection-cmake--preset 'test)))
+         (list (concat "--preset=" preset)))
      ,@argv)))
 
 (defcustom projection-multi-ctest-add-exclude-label-targets t
