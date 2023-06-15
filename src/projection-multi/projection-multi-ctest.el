@@ -29,9 +29,11 @@
 (require 'projection-multi)
 (require 'projection-types)
 
-(defcustom projection-multi-ctest-cache-targets nil
-  "When true cache the CMake ctest targets of each project permanently."
-  :type '(boolean :tag "Always/Never cache targets")
+(defcustom projection-multi-ctest-cache-targets 'auto
+  "When true cache the CMake ctest targets of each project."
+  :type '(choice
+          (const auto :tag "Cache targets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-cmake)
 
 (defcustom projection-multi-ctest-extra-args '("-V")
@@ -62,7 +64,10 @@ ARGV if provided will be appended to the command."
   (projection--cache-get-with-predicate
    (projection--current-project 'no-error)
    'projection-multi-ctest-targets
-   projection-multi-ctest-cache-targets
+   (cond
+    ((eq projection-multi-ctest-cache-targets 'auto)
+     (projection--cmake-configure-modtime-p))
+    (t projection-multi-ctest-cache-targets))
    #'projection-multi-ctest--resolve-targets2))
 
 (defun projection-multi-ctest--resolve-targets2 ()

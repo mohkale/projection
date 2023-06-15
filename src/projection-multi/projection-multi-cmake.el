@@ -37,9 +37,11 @@
   "Helpers for `compile-multi' and CMake projects."
   :group 'projection-multi)
 
-(defcustom projection-multi-cmake-cache-targets nil
-  "When true cache the CMake targets of each project permanently."
-  :type '(boolean :tag "Always/Never cache targets")
+(defcustom projection-multi-cmake-cache-targets 'auto
+  "When true cache the CMake targets of each project."
+  :type '(choice
+          (const auto :tag "Cache targets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-cmake)
 
 (defconst projection-multi-cmake--help-regex
@@ -61,7 +63,10 @@
   (projection--cache-get-with-predicate
    (projection--current-project 'no-error)
    'projection-multi-cmake-targets
-   projection-multi-cmake-cache-targets
+   (cond
+    ((eq projection-multi-cmake-cache-targets 'auto)
+     (projection--cmake-configure-modtime-p))
+    (t projection-multi-cmake-cache-targets))
    #'projection-multi-cmake--targets-from-command2))
 
 (defun projection-multi-cmake--targets-from-command2 ()

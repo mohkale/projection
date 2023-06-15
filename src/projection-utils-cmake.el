@@ -341,6 +341,33 @@ Place any -D options or extra flags you always want to use (for example
 
 
 
+;; Reconfigure detection.
+
+(defcustom projection-cmake-cache-file "CMakeCache.txt"
+  "Path to configuration cache file relative to the CMake build directory.
+This is used to detect if CMake has been configured and whether it has been
+reconfigured by since we last may have cached some CMake state (like targets).
+This file should change on every build reconfiguration."
+  :type 'string
+  :group 'projection-multi-cmake)
+
+(defun projection--cmake-configure-modtime-p ()
+  "Get when CMake was last configured based on `projection-cmake-cache-file'."
+  (projection--cache-modtime-predicate
+   (if projection-cmake-build-directory
+       (expand-file-name projection-cmake-cache-file
+                         projection-cmake-build-directory)
+     (unless (file-name-absolute-p projection-cmake-cache-file)
+       ;; This will probably always be unmodified since it checks from
+       ;; `default-directory' and the file will never exist so we display
+       ;; a warning.
+       (projection--log
+        :warning "Cannot check if CMake has been reconfigured when build \
+directory is unknown and `projection-cmake-cache-file' is not absolute."))
+     projection-cmake-cache-file)))
+
+
+
 ;; CMake compilation commands.
 
 ;; The configure step takes the source directory and the output build
