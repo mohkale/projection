@@ -34,6 +34,11 @@
   :type '(boolean :tag "Always/Never cache targets")
   :group 'projection-multi-cmake)
 
+(defcustom projection-multi-ctest-extra-args '("-V")
+  "Any extra arguments to pass to ctest in `projection-multi-ctest-targets'."
+  :type '(list string)
+  :group 'projection-multi-cmake)
+
 (defun projection-multi-ctest--command (&rest argv)
   "Helper function to  generate a ctest command.
 ARGV if provided will be appended to the command."
@@ -43,6 +48,7 @@ ARGV if provided will be appended to the command."
          (list "--test-dir" projection-cmake-build-directory))
      ,@(when-let ((preset (projection-cmake--preset 'test)))
          (list (concat "--preset=" preset)))
+     ,@projection-multi-ctest-extra-args
      ,@argv)))
 
 (defcustom projection-multi-ctest-add-exclude-label-targets t
