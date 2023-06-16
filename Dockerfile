@@ -26,7 +26,7 @@ RUN apt-get update \
  && apt-get install -y kitware-archive-keyring \
  && rm /etc/apt/trusted.gpg.d/kitware.gpg \
  && apt-get update \
- && apt-get install -y cmake \
+ && apt-get install -y cmake npm \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
