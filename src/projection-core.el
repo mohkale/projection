@@ -317,17 +317,25 @@ and will be set to having a modtime of `current-time'."
    when (projection--project-matches-p root-dir project-type)
      collect project-type))
 
+(defun projection--name-to-type (type)
+  "Find the project in `projection-project-types' with name TYPE."
+  (or
+   (cl-find-if (lambda (project-type)
+                 (eq (oref project-type name) type))
+               projection-project-types)
+   (user-error "Could not find project with name=%s" type)))
+
 (defun projection-project-type (root-dir &optional must-match)
   "Determine the project type for ROOT-DIR.
 With MUST-MATCH an error will be raised if no project type could be matched."
   (or
    (when-let ((type (projection--cache-get root-dir 'type)))
-     (cl-find-if (lambda (project-type)
-                   (eq (oref project-type name) type))
-                 projection-project-types))
+     (projection--name-to-type type))
+
    (when-let ((project-type (projection--match-project-type root-dir)))
      (projection--cache-put root-dir 'type (oref project-type name))
      project-type)
+
    (when (and must-match
               (not projection-default-type))
      (error "Could not determine current project type for %s" root-dir))
@@ -337,31 +345,40 @@ With MUST-MATCH an error will be raised if no project type could be matched."
 (defun projection-project-types (root-dir &optional must-match)
   "Determine all project types matching ROOT-DIR.
 With MUST-MATCH an error will be raised if no project types could be matched."
-  (or
-   (when-let ((types (projection--cache-get root-dir 'types)))
-     (cl-sort
-      (cl-loop for project-type in projection-project-types
-               when (member (oref project-type name) types)
-                 collect project-type)
-      (lambda (a b) (< (cl-position a types) (cl-position b types)))
-      :key #'projection-type--name))
+  (let ((matching-types
+         (or
+          (when-let ((types (projection--cache-get root-dir 'types)))
+            (mapcar #'projection--name-to-type types))
 
-   (when-let ((project-types (projection--match-project-types root-dir)))
-     (projection--cache-put root-dir 'types
-                            (mapcar (lambda (project-type)
-                                      (oref project-type name))
-                                    project-types))
-     project-types)
+          (when-let ((project-types (projection--match-project-types root-dir)))
+            (projection--cache-put root-dir 'types
+                                   (mapcar #'projection-type--name project-types))
+            project-types))))
 
-   (when (and must-match
-              (not projection-default-type))
-     (error "Could not determine any project types for %s" root-dir))
+    ;; Ensure the default project-type is the first entry in the collection
+    ;; of matching types. This is so any functions relying on this result can
+    ;; expect on the invariant of (car types) == default-type.
+    (when-let ((default-type (projection-project-type root-dir)))
+      (when (and
+             (not (eq default-type projection-default-type))
+             (not (eq default-type (car matching-types))))
+        (setq matching-types (append (list default-type)
+                                     (delq default-type matching-types)))))
 
-   (list projection-default-type)))
+    (or
+     matching-types
+
+     (when (and must-match
+                (not projection-default-type))
+       (error "Could not determine any project types for %s" root-dir))
+
+     (list projection-default-type))))
 
 ;;;###autoload
 (defun projection-set-primary-project-type (project project-type)
-  "Set the primary project type for PROJECT to PROJECT-TYPE."
+  "Set the primary project type for PROJECT to PROJECT-TYPE.
+With prefix argument prompt for all possible project types not just those
+matching the current project."
   (interactive
    (let* ((project (projection--current-project))
           (current-type
@@ -379,20 +396,62 @@ With MUST-MATCH an error will be raised if no project types could be matched."
       project
       (intern
        (completing-read
-        (projection--prompt "Set type: " project)
-        matching-types
-        nil
-        'require-match
-        nil
-        current-type)))))
+        (projection--prompt "Set project type: " project)
+        matching-types nil 'require-match nil current-type)))))
 
   (unless (eq project-type 'default)
-    ;; TODO: Remove non-matching project-types on change.
-    (projection--cache-put project 'type project-type)
-    (projection--cache-put
-     project 'types
-     (append (list project-type)
-             (delq project-type (projection--cache-get project 'types))))))
+    (projection--cache-put project 'type project-type)))
+
+;;;###autoload
+(defun projection-update-extra-project-types (project add-types remove-types)
+  "Update the list of project types matching the PROJECT.
+ADD-TYPES is a list of project types to start associating with PROJECT.
+REMOVE-TYPES is a list of project types to stop associating with PROJECT."
+  (interactive
+   (let* ((project (projection--current-project))
+          (current-types
+           (delq 'default (mapcar #'projection-type--name (projection-project-types
+                                                           (project-root project)))))
+          (all-types
+           (delq 'default (mapcar #'projection-type--name projection-project-types)))
+          (add nil) (remove nil))
+     (dolist (type (completing-read-multiple
+                    (projection--prompt "Update project types: " project)
+                    (append
+                     (cl-loop
+                      for type in current-types
+                      collect (concat "-" (symbol-name type)))
+                     (cl-loop
+                      for type in all-types
+                      unless (member type current-types)
+                        collect (concat "+" (symbol-name type))))
+                    nil 'require-match))
+       (pcase (aref type 0)
+         (?+ (push (intern (substring type 1)) add))
+         (?- (push (intern (substring type 1)) remove))))
+     (list
+      project
+      (nreverse add)
+      (nreverse remove))))
+
+   ;; Call to ensure the cache has been populated.
+  (projection-project-type (project-root project))
+  (projection-project-types (project-root project))
+
+  (let* ((current-type (projection--cache-get project 'type))
+         (current-types (projection--cache-get project 'types))
+         (new-current-types
+          (append
+           (seq-remove (lambda (type) (member type remove-types))
+                       current-types)
+           (seq-remove (lambda (type) (member type current-types))
+                       add-types))))
+    (unless new-current-types
+      (user-error "Cannot remove all supported project types"))
+    (projection--cache-put project 'types new-current-types)
+    (when (member current-type remove-types)
+      ;; Cycle forward to the next included project type.
+      (projection--cache-put project 'type (car new-current-types)))))
 
 
 

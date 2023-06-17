@@ -56,6 +56,8 @@
 (defvar projection-map
   (let ((map (make-sparse-keymap)))
     ;; `projection-core'
+    (define-key map "1" 'projection-set-primary-project-type)
+    (define-key map "2" 'projection-update-extra-project-types)
     (define-key map "I" 'projection-show-project-info)
     (define-key map "DEL" 'projection-reset-project-cache)
     ;; `projection-find'
