@@ -61,9 +61,23 @@ PACKAGE-JSON is the file that will be used to invalidate the cache of targets."
     (let (result)
       (save-match-data
         (while (search-forward-regexp
-                (rx bol "  " (group (+ (not " "))) eol)
+                (rx
+                 ;; bol "  " (group (+ (not " "))) eol
+                 (and
+                  bol
+                  (or
+                   (and
+                    "info Commands available from binary scripts: "
+                    (group-n 1 (+ any)))
+                   (and (repeat 3 space) "-" space (group-n 2 (+ any))))
+                  eol))
                 nil 'noerror)
-          (push (match-string 1) result))
+          (cond
+           ((match-string 1)
+            (setq result (append result
+                                 (split-string (match-string 1) ", " 'omit-nulls))))
+           ((match-string 2)
+            (push (match-string 2) result))))
         (nreverse result)))))
 
 ;;;###autoload
