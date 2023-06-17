@@ -79,11 +79,17 @@ otherwise it will return SHELL-COMMAND."
 (defmacro projection--with-shell-command-buffer (command &rest body)
   "Run BODY in a temporary buffer with the output of COMMAND."
   (declare (indent defun))
-  `(with-temp-buffer
-     (insert (or (projection--shell-command-to-string ,command) ""))
-     (goto-char (point-min))
-     (unless (string-empty-p (buffer-substring (point-min) (point-max)))
-       ,@body)))
+  ;; We evaluate the command before we move to a temporary buffer to ensure
+  ;; if it depends on any buffer local variables then they are available.
+  `(let ((projection--with-shell-command-buffer-command ,command))
+     (with-temp-buffer
+       (insert (or
+                (projection--shell-command-to-string
+                 projection--with-shell-command-buffer-command)
+                ""))
+       (goto-char (point-min))
+       (unless (string-empty-p (buffer-substring (point-min) (point-max)))
+         ,@body))))
 
 
 
