@@ -275,11 +275,23 @@
 
 
 
+(defvar projection-project-type-yarn
+  (projection-type
+   :name 'yarn
+   :predicate (projection--all-files-exists "package.json" "yarn.lock")
+   :configure "yarn install"
+   :test "yarn test"
+   :test-suffix ".test"))
+
+(add-to-list 'projection-project-types projection-project-type-yarn)
+
+
+
 (defvar projection-project-type-npm
   (projection-type
    :name 'npm
    :predicate "package.json"
-   :build "npm install"
+   :configure "npm install"
    :test "npm test"
    :test-suffix ".test"))
 

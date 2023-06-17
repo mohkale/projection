@@ -122,5 +122,13 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
           (oref projection-project-type-npm compile-multi-targets)
           (list #'projection-multi-npm-script-targets)))))
 
+;;;###autoload
+(with-eval-after-load 'projection-types
+  (oset projection-project-type-yarn compile-multi-targets
+        (seq-uniq
+         (append
+          (oref projection-project-type-yarn compile-multi-targets)
+          (list #'projection-multi-yarn-script-targets)))))
+
 (provide 'projection-multi-node-scripts)
 ;;; projection-multi-node-scripts.el ends here
