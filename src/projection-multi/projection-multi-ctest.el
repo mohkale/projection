@@ -46,8 +46,8 @@
 ARGV if provided will be appended to the command."
   (projection--join-shell-command
    `("ctest"
-     ,@(when projection-cmake-build-directory
-         (list "--test-dir" projection-cmake-build-directory))
+     ,@(when-let ((build (projection-cmake--build-directory)))
+         (list "--test-dir" build))
      ,@(when-let ((preset (projection-cmake--preset 'test)))
          (list (concat "--preset=" preset)))
      ,@projection-multi-ctest-extra-args

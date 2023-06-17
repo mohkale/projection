@@ -311,6 +311,23 @@ directory is configured directly in the CMakePresets or elsewhere."
   :type '(optional string)
   :group 'projection-type-cmake)
 
+(defcustom projection-cmake-build-directory-remote t
+  "Assert whether build directory is on the same host as the project.
+This option only has significance when `projection-cmake-build-directory' is
+absolute. This may be the case when using docker tramp and setting the CMake
+build directory to some shared volume. In this case the remote part may not
+be deterministic of time so you may omit it from the above option but then
+projection cannot find the build area for target caching or other checks.
+
+When set to true projection will prefix the absolute build directory path
+with the remote part of the project. This is done automatically when the
+build path is relative."
+  :type '(choice
+          (const t :tag "Reuse the remote component of the project")
+          (string :tag "Specify the remote component directly")
+          (const nil :tag "Do not do remote matching, the build area will always be local"))
+  :group 'projection-type-cmake)
+
 (defcustom projection-cmake-configure-options nil
   "Default CMake options when configured with projection.
 Place any -D options or extra flags you always want to use (for example
@@ -318,12 +335,32 @@ Place any -D options or extra flags you always want to use (for example
   :type '(list (repeat (string :tag "Argument")))
   :group 'projection-type-cmake)
 
+(cl-defsubst projection-cmake--build-directory (&optional expand)
+  "Get the CMake build directory.
+When EXPAND is true this function will resolve the complete path to the
+build directory in a form that can be queried directly from elisp
+including any remote components of the project when
+`projection-cmake-build-directory-remote' is configured correctly."
+  (when projection-cmake-build-directory
+    (if expand
+        (let ((project (projection--current-project 'no-error)))
+          (if (file-name-absolute-p projection-cmake-build-directory)
+              (concat
+               (cond
+                ((stringp projection-cmake-build-directory-remote)
+                 projection-cmake-build-directory-remote)
+                (projection-cmake-build-directory-remote
+                 (file-remote-p (project-root project))))
+               projection-cmake-build-directory)
+            (expand-file-name projection-cmake-build-directory (project-root project))))
+      projection-cmake-build-directory)))
+
 (defun projection--cmake-command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
   (projection--join-shell-command
    `("cmake"
-     ,@(when projection-cmake-build-directory
-         (list "--build" projection-cmake-build-directory))
+     ,@(when-let ((build projection-cmake-build-directory))
+         (list "--build" build))
      ,@(when-let ((preset (projection-cmake--preset build-type)))
          (list (concat "--preset=" preset)))
      ,@(when target (list "--target" target)))))
@@ -331,8 +368,8 @@ Place any -D options or extra flags you always want to use (for example
 (defun projection--cmake-annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
   (format "cmake %s%s%s"
-          (if projection-cmake-build-directory
-              (concat "build:" projection-cmake-build-directory " ")
+          (if-let ((build (projection-cmake--build-directory)))
+              (concat "build:" build " ")
             "")
           (if-let ((preset (projection-cmake--preset build-type)))
               (concat "preset:" preset " ")
@@ -354,9 +391,8 @@ This file should change on every build reconfiguration."
 (defun projection--cmake-configure-modtime-p ()
   "Get when CMake was last configured based on `projection-cmake-cache-file'."
   (projection--cache-modtime-predicate
-   (if projection-cmake-build-directory
-       (expand-file-name projection-cmake-cache-file
-                         projection-cmake-build-directory)
+   (if-let ((build-directory (projection-cmake--build-directory 'expand)))
+       (expand-file-name projection-cmake-cache-file build-directory)
      (unless (file-name-absolute-p projection-cmake-cache-file)
        ;; This will probably always be unmodified since it checks from
        ;; `default-directory' and the file will never exist so we display
@@ -378,8 +414,8 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   (projection--join-shell-command
    `("cmake"
      "-S" "."
-     ,@(when projection-cmake-build-directory
-        (list "-B" projection-cmake-build-directory))
+     ,@(when-let ((build (projection-cmake--build-directory)))
+        (list "-B" build))
      ,@(when-let ((preset (projection-cmake--preset 'configure)))
          (list (concat "--preset=" preset)))
      ,@(when-let ((build-type (projection-cmake--build-type)))
