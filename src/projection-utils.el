@@ -64,13 +64,16 @@ otherwise it will return SHELL-COMMAND."
   (let ((stderr nil)
         (stdout nil))
     (setq stdout
-          (with-output-to-string
-            (with-temp-buffer
-              (cl-letf (((symbol-function #'display-buffer)
-                         (symbol-function #'ignore)))
-                (shell-command command standard-output (current-buffer)))
-              (setq stderr
-                    (buffer-substring-no-properties (point-min) (point-max))))))
+          (let ((stderr-buffer
+                 (generate-new-buffer " *projection-stderr*" 'inhibit-buffer-hooks)))
+            (unwind-protect
+                (with-output-to-string
+                  (with-current-buffer standard-output
+                    (shell-command command standard-output stderr-buffer))
+                  (setq stderr
+                        (with-current-buffer stderr-buffer
+                          (buffer-substring-no-properties (point-min) (point-max)))))
+              (kill-buffer stderr-buffer))))
     (cons stdout stderr)))
 
 (defmacro projection--with-shell-command-buffer (command &rest body)
