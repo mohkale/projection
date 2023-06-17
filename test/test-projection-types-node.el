@@ -1,7 +1,7 @@
 ;; -*- lexical-binding: t -*-
 
 (require 'projection-types)
-(require 'projection-multi-node-scripts)
+(require 'projection-multi-npm-scripts)
 
 (describe "Projection node project"
   :var (original-directory
