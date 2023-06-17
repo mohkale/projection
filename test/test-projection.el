@@ -2,6 +2,7 @@
 
 (require 'f)
 (require 'projection-core)
+(require 'projection-core-commands)
 (require 'projection-test-utils)
 
 (describe "Projection determine project type"
