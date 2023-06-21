@@ -108,7 +108,7 @@ When BUILD-TYPE is nil fetch the presets for all build types."
 
 ;; CMake presets.
 
-(defcustom projection-cmake-preset 'prompt-once
+(defcustom projection-cmake-preset 'prompt-once-when-multiple
   "Set which CMake preset to use for the current project.
 See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
   :type
