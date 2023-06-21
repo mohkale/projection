@@ -387,17 +387,32 @@ including any remote components of the project when
 
 ;; ctest command utils.
 
-(defcustom projection-cmake-ctest-options '("-V")
+(defcustom projection-cmake-ctest-options '("--output-on-failure")
   "Default CTest invocation options.
 Set the extra command line options to pass to ctest."
   :type '(list string)
+  :group 'projection-type-cmake)
+
+(defcustom projection-cmake-ctest-environment-variables
+  '(("CLICOLOR_FORCE" . "1")
+    ("GTEST_COLOR" . "1"))
+  "Default CTest environment variables options.
+When set any ctest commands will be invoked through the env command with each
+key value pair set."
+  :type '(alist :key-type (string :tag "Environment variable")
+                :value-type (string :tag "Value of variable"))
   :group 'projection-type-cmake)
 
 (defun projection--cmake-ctest-command (&rest argv)
   "Helper function to  generate a CTest command.
 ARGV if provided will be appended to the command."
   (projection--join-shell-command
-   `("ctest"
+   `(,@(when projection-cmake-ctest-environment-variables
+         (append (list "env")
+                 (cl-loop for (key . value) in
+                          projection-cmake-ctest-environment-variables
+                          collect (concat key "=" value))))
+     "ctest"
      ,@(when-let ((build (projection-cmake--build-directory)))
          (list "--test-dir" build))
      ,@(when-let ((preset (projection-cmake--preset 'test)))
