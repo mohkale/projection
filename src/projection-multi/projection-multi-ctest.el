@@ -115,12 +115,12 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
                  :command ,(projection-multi-ctest--command "-R" target-regex)
                  :annotation ,(concat "ctest " target))
      else if (eq type :label)
-       collect `((concat project-type ":label:" target)
-                 :command (projection-multi-ctest--command "-L" target-regex)
+       collect `(,(concat project-type ":label:" target)
+                 :command ,(projection-multi-ctest--command "-L" target-regex)
                  :annotation ,(concat "ctest label:" target))
        and if projection-multi-ctest-add-exclude-label-targets
-         collect `((concat project-type ":label:not:" target)
-                   :command (projection-multi-ctest--command "-LE" target-regex)
+         collect `(,(concat project-type ":label:not:" target)
+                   :command ,(projection-multi-ctest--command "-LE" target-regex)
                    :annotation ,(concat "ctest except-label:" target))
        end
      else
