@@ -272,7 +272,7 @@ add_executable(main main.cpp)
         ;; WHEN
         ;;   I call projection-build-project.
         ;; THEN
-        ;;   * The user was not prompted for a configure preset to use.
+        ;;   * The user was not prompted for a build preset to use.
         ;;   * The invoked shell-command references the chosen default preset.
         (with-completing-read-not-called
          (interactively-call-compile-command
@@ -309,8 +309,6 @@ add_executable(main main.cpp)
           "cmake --build build --preset\\=defaultPreset")))
 
       (it "Never uses a preset when configured"
-        (interactively-set-cmake-preset nil "defaultPreset")
-
         ;; Try run configure
         (let ((projection-cmake-preset 'disable))
           (with-completing-read-not-called
