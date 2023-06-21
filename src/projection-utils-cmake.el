@@ -368,11 +368,44 @@ including any remote components of the project when
 (defun projection--cmake-annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
   (format "cmake %s%s%s"
+          (if-let ((preset (projection-cmake--preset build-type)))
+              (concat "preset:" preset " ")
+            "")
           (if-let ((build (projection-cmake--build-directory)))
               (concat "build:" build " ")
             "")
-          (if-let ((preset (projection-cmake--preset build-type)))
+          target))
+
+
+
+;; ctest command utils.
+
+(defcustom projection-cmake-ctest-options '("-V")
+  "Default CTest invocation options.
+Set the extra command line options to pass to ctest."
+  :type '(list string)
+  :group 'projection-type-cmake)
+
+(defun projection--cmake-ctest-command (&rest argv)
+  "Helper function to  generate a CTest command.
+ARGV if provided will be appended to the command."
+  (projection--join-shell-command
+   `("ctest"
+     ,@(when-let ((build (projection-cmake--build-directory)))
+         (list "--test-dir" build))
+     ,@(when-let ((preset (projection-cmake--preset 'test)))
+         (list (concat "--preset=" preset)))
+     ,@projection-cmake-ctest-options
+     ,@argv)))
+
+(defun projection--cmake-ctest-annotation (target)
+  "Generate an annotation for a ctest command to run TARGET."
+  (format "ctest %s%s%s"
+          (if-let ((preset (projection-cmake--preset 'test)))
               (concat "preset:" preset " ")
+            "")
+          (if-let ((build (projection-cmake--build-directory)))
+              (concat "build:" build " ")
             "")
           target))
 
@@ -431,7 +464,7 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 (defun projection-cmake-run-test ()
   "Test command generator for CMake projects."
-  (projection--cmake-command 'test "test"))
+  (projection--cmake-ctest-command "test"))
 
 (defun projection-cmake-run-install ()
   "Install command generator for CMake projects."

@@ -36,23 +36,6 @@
           (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-cmake)
 
-(defcustom projection-multi-ctest-extra-args '("-V")
-  "Any extra arguments to pass to ctest in `projection-multi-ctest-targets'."
-  :type '(list string)
-  :group 'projection-multi-cmake)
-
-(defun projection-multi-ctest--command (&rest argv)
-  "Helper function to  generate a ctest command.
-ARGV if provided will be appended to the command."
-  (projection--join-shell-command
-   `("ctest"
-     ,@(when-let ((build (projection-cmake--build-directory)))
-         (list "--test-dir" build))
-     ,@(when-let ((preset (projection-cmake--preset 'test)))
-         (list (concat "--preset=" preset)))
-     ,@projection-multi-ctest-extra-args
-     ,@argv)))
-
 (defcustom projection-multi-ctest-add-exclude-label-targets t
   "When true add targets to run all tests except a given label."
   :type 'boolean
@@ -77,7 +60,7 @@ value. Supported target types include test for tests and label for labels."
   (projection--log :debug "Resolving available CMake ctest targets")
 
   (projection--with-shell-command-buffer
-    (projection-multi-ctest--command "--show-only=json-v1")
+    (projection--cmake-ctest-command "--show-only=json-v1")
     (let ((json-array-type 'list))
       (cl-loop for test in (alist-get 'tests (json-read))
                with test-name = nil
@@ -112,16 +95,18 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
      if (eq type :test)
        collect `(,(concat project-type ":" target)
-                 :command ,(projection-multi-ctest--command "-R" target-regex)
-                 :annotation ,(concat "ctest " target))
+                 :command ,(projection--cmake-ctest-command "-R" target-regex)
+                 :annotation ,(projection--cmake-ctest-annotation target))
      else if (eq type :label)
        collect `(,(concat project-type ":label:" target)
-                 :command ,(projection-multi-ctest--command "-L" target-regex)
-                 :annotation ,(concat "ctest label:" target))
+                 :command ,(projection--cmake-ctest-command "-L" target-regex)
+                 :annotation ,(projection--cmake-ctest-annotation
+                               (concat "label:" target)))
        and if projection-multi-ctest-add-exclude-label-targets
          collect `(,(concat project-type ":label:not:" target)
-                   :command ,(projection-multi-ctest--command "-LE" target-regex)
-                   :annotation ,(concat "ctest except-label:" target))
+                   :command ,(projection--cmake-ctest-command "-LE" target-regex)
+                   :annotation ,(projection--cmake-ctest-annotation
+                                 (concat "except-label:" target)))
        end
      else
        do (error "Unexpected ctest target type=%s" type))))
