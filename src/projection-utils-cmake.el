@@ -343,7 +343,7 @@ Place any -D options or extra flags you always want to use (for example
   :type '(list (repeat (string :tag "Argument")))
   :group 'projection-type-cmake)
 
-(cl-defsubst projection-cmake--build-directory (&optional expand)
+(defun projection-cmake--build-directory (&optional expand)
   "Get the CMake build directory.
 When EXPAND is true this function will resolve the complete path to the
 build directory in a form that can be queried directly from elisp

@@ -100,6 +100,45 @@ prefix:project-type:project-command."
       when targets
         append targets))))
 
+(defmacro projection-multi--cache-command-helpers (target-functions &rest body)
+  "Setup memoisation for each function in TARGET-FUNCTIONS.
+Within the body of this macro every invocation of TARGET-FUNCTIONS is cached.
+If a previous invocation with the same arguments is already in the cache it
+will be returned directly. This function as a simple optimiser. All the
+functions in TARGET-FUNCTIONS must be defined when BODY is invoked and the
+result of each function should be deterministic."
+  (declare (indent 2))
+  `(let ((--projection-multi-helper-cache nil))
+     (let* ((target-functions (quote (list ,@target-functions)))
+            (loaded-target-functions
+             (seq-filter #'symbol-function (quote (list ,@target-functions))))
+            (missing-target-functions
+             (seq-difference target-functions loaded-target-functions)))
+       (cl-assert
+        (not missing-target-functions)
+        'show-args
+        "Command helper caching requires all cached helpers to be loaded %s"
+        missing-target-functions))
+     (cl-letf*
+         (,@(cl-loop for function in target-functions
+                     with cached-function = nil
+                     do (setq cached-function
+                              (intern (concat "--project-multi-cached-"
+                                              (symbol-name function))))
+                     collect
+                     `(,cached-function (symbol-function ',function))
+                     collect
+                     `((symbol-function ',function)
+                       (lambda (&rest args)
+                         (let ((key (append (list ',function) args)))
+                           (if-let ((cached
+                                     (assoc key --projection-multi-helper-cache #'equal)))
+                               (cdr cached)
+                             (let ((value (apply ,cached-function args)))
+                               (push (cons key value) --projection-multi-helper-cache)
+                               value)))))))
+       ,@body)))
+
 (cl-defun projection-multi-compile--run (project triggers)
   "Run `compile-multi' TRIGGERS for PROJECT."
   (let* (;; Run compilations and generators from the project root.
@@ -108,7 +147,13 @@ prefix:project-type:project-command."
                                 default-directory))
          (compile-multi-default-directory #'ignore)
          (compile-multi-config triggers))
-    (call-interactively #'compile-multi)))
+    ;; KLUDGE: We can't cache any functions until they've been loaded.
+    (require 'projection-utils-cmake)
+    (projection-multi--cache-command-helpers
+        (project-current
+         projection-cmake--preset
+         projection-cmake--build-directory)
+      (call-interactively #'compile-multi))))
 
 ;;;###autoload
 (defun projection-multi-compile ()
