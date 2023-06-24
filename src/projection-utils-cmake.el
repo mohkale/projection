@@ -236,8 +236,9 @@ Prompt for the `completing-read' session will be PROMPT."
 (defun projection-cmake-set-preset (project build-type preset)
   "Set CMake preset for BUILD-TYPE to PRESET for PROJECT."
   (interactive
-   (let ((project (projection--current-project))
-         build-type preset)
+   (let* ((project (projection--current-project))
+          (default-directory (project-root project))
+          build-type preset)
      ;; When `build-type' is not nil we only prompt for presets of that type.
      (setq build-type
            (unless current-prefix-arg
@@ -249,10 +250,10 @@ Prompt for the `completing-read' session will be PROMPT."
      (setq preset
            (projection-cmake--read-preset
             (projection--prompt
-             "Set CMake%s preset" project
+             "Set CMake%s preset: " project
              (if build-type
                  (concat " " (symbol-name build-type))
-               " "))
+               ""))
             (projection-cmake--list-presets-for-build-type build-type)))
      (list project build-type preset)))
   (projection--cache-put
