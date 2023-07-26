@@ -660,8 +660,9 @@
    :name 'rust-cargo
    :predicate "Cargo.toml"
    :build (projection--command-or-shell 'rustic-compile "cargo build")
-   :test  (projection--command-or-shell 'rustic-cargo-test "cargo test")
-   :run   (projection--command-or-shell 'rustic-cargo-run "cargo run")))
+   :test (projection--command-or-shell 'rustic-cargo-test "cargo test")
+   :install (projection--command-or-shell 'rustic-cargo-install "cargo install")
+   :run (projection--command-or-shell 'rustic-cargo-run "cargo run")))
 
 (add-to-list 'projection-project-types projection-project-type-rust-cargo)
 
