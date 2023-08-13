@@ -289,7 +289,45 @@
       (expect 'completing-read-multiple :to-have-been-called-times 1)
       (expect (cadr (spy-calls-args-for 'completing-read-multiple 0))
               :to-equal '("-baz" "-bar" "+foo")))
-    )
+
+    (describe "Locally overridden primary project type"
+      (after-each
+        (setq projection-primary-project-type nil))
+
+      (it "Matches the overridden primary project type"
+        ;; GIVEN
+        ;;   * The current project matches the baz project type by default.
+        ;;   * The primary project type has then been locally overridden to foo.
+        (f-touch ".baz")
+        (setq projection-primary-project-type 'foo)
+
+        ;; WHEN
+        (setq config (projection-project-type default-directory))
+        (setq config2 (projection-project-types default-directory))
+
+        ;; THEN
+        (expect config :to-equal project-type-foo)
+        (expect config2 :to-equal (list project-type-foo project-type-baz)))
+
+      (it "Can override the primary project type interactively"
+        ;; GIVEN
+        ;;   * The current project matches the baz project type by default.
+        ;;   * The primary project type has been overridden locally to foo.
+        ;;   * The primary project type has been interactively overridden locally to bar.
+        (f-touch ".baz")
+        (setq projection-primary-project-type 'foo)
+
+        (spy-on #'completing-read :and-call-fake (fake-completing-read "bar"))
+        (call-interactively #'projection-set-primary-project-type)
+
+        ;; WHEN
+        (setq config (projection-project-type default-directory))
+        (setq config2 (projection-project-types default-directory))
+
+        ;; THEN
+        (expect config :to-equal project-type-bar)
+        (expect config2 :to-equal (list project-type-bar project-type-foo project-type-baz))
+        (expect projection-primary-project-type :to-equal 'foo))))
 
   (it "Falls back to default project type when no project types are defined"
     ;; GIVEN
@@ -302,4 +340,5 @@
 
     ;; THEN
     ;;   I determine the project-type for the current directory.
-    (expect config :to-equal projection-default-type)))
+    (expect config :to-equal projection-default-type))
+  )

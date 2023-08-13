@@ -277,6 +277,15 @@ and will be set to having a modtime of `current-time'."
 
 
 
+(defvar-local projection-primary-project-type nil
+  "Override for the primary project type of the current project.
+Set this to the name of a defined project type to force projection to use it as
+the primary project type by default. You can still override the current project
+type interactively with `projection-set-primary-project-type'. This is useful
+for projects that support multiple possible project-types but the default
+matched type isn't the primary type you'd like to use for the project. It's
+recommended to set this in a dir-locals file.")
+
 (defun projection--project-matches-p (root-dir project-type)
   "Assert whether project of type PROJECT-TYPE matches ROOT-DIR."
   (let ((default-directory root-dir))
@@ -332,6 +341,11 @@ With MUST-MATCH an error will be raised if no project type could be matched."
    (when-let ((type (projection--cache-get root-dir 'type)))
      (projection--name-to-type type))
 
+   (when-let ((project-type
+               (when projection-primary-project-type
+                 (projection--name-to-type projection-primary-project-type))))
+     project-type)
+
    (when-let ((project-type (projection--match-project-type root-dir)))
      (projection--cache-put root-dir 'type (oref project-type name))
      project-type)
@@ -364,6 +378,17 @@ With MUST-MATCH an error will be raised if no project types could be matched."
              (not (eq default-type (car matching-types))))
         (setq matching-types (append (list default-type)
                                      (delq default-type matching-types)))))
+
+    ;; Ensure the locally overridden project-type is in the collection of matching
+    ;; types. It doesn't necessarily have to be the primary type since you can
+    ;; override it after the fact but it should always be in the list.
+    (when-let ((local-primary-project-type
+               (when projection-primary-project-type
+                 (projection--name-to-type projection-primary-project-type))))
+      (unless (member local-primary-project-type matching-types)
+        (setq matching-types (append (list (car matching-types)
+                                           local-primary-project-type)
+                                     (cdr matching-types)))))
 
     (or
      matching-types
