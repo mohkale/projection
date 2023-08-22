@@ -80,6 +80,14 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
       ;; project type.
       :init
       (define-key global-map "RET" #'projection-multi-compile))
+
+    (use-package projection-multi-embark
+      :ensure t
+      :after embark
+      :after projection-multi
+      :demand t
+      ;; Add the projection set-command bindings to `compile-multi-embark-command-map'.
+      :config (projection-multi-embark-setup-command-map))
   #+end_src
 
 * Features
@@ -182,6 +190,16 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
 
 
 #+html: <img src="https://user-images.githubusercontent.com/23294780/241755864-b9bc5e13-b78d-426d-9598-a3f535554e5c.gif" alt="Demo" align="left" title="Projection Commands Demo" class="img" />
+
+** Projection multi-embark
+#+html: <p align="right">
+#+html: <a href="https://melpa.org/#/projection-multi-embark"><img alt="MELPA" src="https://melpa.org/packages/projection-multi-embark-badge.svg"/></a>
+#+html: </p>
+
+  Add embark integration to multi-compile using the [[https://github.com/mohkale/compile-multi#compile-multi-embark][multi-compile-embark]] extension
+  feature. This allows you to immediately set one of the candidates show in a
+  compile-multi session as the projects build, configure, etc. command type. Use this
+  to interactively and incrementally update build targets.
 
 ** Specialised Project Support
    Currently projection has very extensive support for certain project types. This

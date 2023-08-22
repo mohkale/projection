@@ -7,7 +7,8 @@ ELCHKDOC := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.checkdoc,$(SRC))
 
 EMACS ?= cask emacs \
     --eval '(push (concat default-directory "$(SRC_DIR)/") load-path)' \
-	--eval '(push (concat default-directory "$(SRC_DIR)/projection-multi") load-path)'
+	--eval '(push (concat default-directory "$(SRC_DIR)/projection-multi") load-path)' \
+	--eval '(push (concat default-directory "$(SRC_DIR)/projection-multi-embark") load-path)'
 
 $(V).SILENT:
 

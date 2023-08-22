@@ -7,6 +7,7 @@
 (files "src/*.el" "src/projection-multi/*.el")
 
 (depends-on "compile-multi")
+(depends-on "compile-multi-embark")
 
 (development
  (depends-on "f")

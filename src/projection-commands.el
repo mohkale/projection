@@ -114,7 +114,8 @@ truthy do not query or place the command into the cache for PROJECT."
 (defmacro projection-commands--register (type)
   "Define an interactive function to run a TYPE command on the current project."
   (let ((var-symbol (intern (concat "projection-project-" (symbol-name type) "-cmd")))
-        (cmd-symbol (intern (concat "projection-" (symbol-name type) "-project"))))
+        (cmd-symbol (intern (concat "projection-" (symbol-name type) "-project")))
+        (save-cmd-symbol (intern (concat "projection-set-" (symbol-name type) "-command"))))
     `(progn
        (projection--log :debug "Defining project command of type=%s" ',type)
 
@@ -144,20 +145,53 @@ Should be set via .dir-locals.el."
               ((commandp command)
                (call-interactively command))
               (t
-               (user-error "Do not know how to run %s command %s" ',type command)))))))))
+               (user-error "Do not know how to run %s command %s" ',type command))))))
+
+       (defun ,save-cmd-symbol (command project)
+         ,(concat "Save COMMAND as the " (symbol-name type) " command for PROJECT.")
+         (interactive
+          (list (read-shell-command "Compile command: ")
+                (projection--current-project)))
+         (projection--cache-put project ',type command)))))
 
 ;;;###autoload (autoload 'projection-configure-project "projection-commands" nil t)
+;;;###autoload (autoload 'projection-set-configure-command "projection-commands" nil t)
 (projection-commands--register configure)
 ;;;###autoload (autoload 'projection-build-project "projection-commands" nil t)
+;;;###autoload (autoload 'projection-set-build-command "projection-commands" nil t)
 (projection-commands--register build)
 ;;;###autoload (autoload 'projection-test-project "projection-commands" nil t)
+;;;###autoload (autoload 'projection-set-test-command "projection-commands" nil t)
 (projection-commands--register test)
 ;;;###autoload (autoload 'projection-run-project "projection-commands" nil t)
+;;;###autoload (autoload 'projection-set-run-command "projection-commands" nil t)
 (projection-commands--register run)
 ;;;###autoload (autoload 'projection-package-project "projection-commands" nil t)
+;;;###autoload (autoload 'projection-set-package-command "projection-commands" nil t)
 (projection-commands--register package)
 ;;;###autoload (autoload 'projection-install-project "projection-commands" nil t)
+;;;###autoload (autoload 'projection-set-install-command "projection-commands" nil t)
 (projection-commands--register install)
+
+
+
+(defun projection-commands--read-command-type (prompt)
+  "Read one of the defined command-types for projection projects.
+PROMPT is the prompt shown in the minibuffer while reading the command type."
+  (intern (completing-read
+           prompt
+           projection-commands--registered-cmd-types
+           nil 'require-match)))
+
+;;;###autoload
+(defun projection-set-command-for-type (command project cmd-type)
+  "Save COMMAND as the compilation command CMD-TYPE for PROJECT."
+  (interactive
+   (list (read-shell-command "Compile command: ")
+         (projection--current-project)
+         (projection-commands--read-command-type
+          (format "Save command as type: "))))
+  (projection--cache-put project cmd-type command))
 
 
 
