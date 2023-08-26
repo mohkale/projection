@@ -71,10 +71,12 @@ prefix:project-type:project-command."
           (when-let ((cmd
                       (projection-commands--ignore-no-command
                        (funcall (cadr cmd-type-config) project :use-cache nil))))
-            (push (cons (concat project-type-prefix ":"
-                                (symbol-name (oref project-config name)) ":"
-                                (symbol-name (car cmd-type-config)))
-                        cmd)
+            (push `(,(concat project-type-prefix ":"
+                             (symbol-name (oref project-config name)) ":"
+                             (symbol-name (car cmd-type-config)))
+                    :command ,(lambda () (interactive)
+                                (funcall-interactively (caddr cmd-type-config) project cmd))
+                    :annotation ,(when (stringp cmd) cmd))
                   result))))
       (nreverse result))))
 
