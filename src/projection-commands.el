@@ -108,8 +108,9 @@ project-type does not support the command: %s"
 Is a list of cmd-type records of the form
 \(CMD-TYPE CMD-TYPE-FUNC CMD-TYPE-COMMAND).")
 
-(defun projection-commands--run-command-for-type (project command cmd-type)
+(defun projection-commands--run-command-for-type (project command cmd-type pre-hook post-hook)
   "Run COMMAND for PROJECT as CMD-TYPE."
+  (run-hook-with-args pre-hook project)
   (let ((default-directory (project-root project)))
     (cond
      ((stringp command)
@@ -117,14 +118,17 @@ Is a list of cmd-type records of the form
      ((commandp command)
       (call-interactively command))
      (t
-      (user-error "Do not know how to run %s command %s" cmd-type command)))))
+      (user-error "Do not know how to run %s command %s" cmd-type command))))
+  (run-hook-with-args post-hook project))
 
 (defmacro projection-commands--register (cmd-type)
   "Define an interactive function to run a CMD-TYPE command on the current project."
-  (let ((cmd-symbol     (intern (concat "projection-commands-"     (symbol-name cmd-type) "-project")))
-        (cmd-get-symbol (intern (concat "projection-commands--"    (symbol-name cmd-type) "-command")))
-        (cmd-var-symbol (intern (concat "projection-commands-"     (symbol-name cmd-type) "-command")))
-        (set-cmd-symbol (intern (concat "projection-commands-set-" (symbol-name cmd-type) "-command"))))
+  (let ((cmd-symbol       (intern (concat "projection-commands-"      (symbol-name cmd-type) "-project")))
+        (cmd-get-symbol   (intern (concat "projection-commands--"     (symbol-name cmd-type) "-command")))
+        (cmd-var-symbol   (intern (concat "projection-commands-"      (symbol-name cmd-type) "-command")))
+        (set-cmd-symbol   (intern (concat "projection-commands-set-"  (symbol-name cmd-type) "-command")))
+        (pre-hook-symbol  (intern (concat "projection-commands-pre-"  (symbol-name cmd-type) "-hook")))
+        (post-hook-symbol (intern (concat "projection-commands-post-" (symbol-name cmd-type) "-hook"))))
     `(progn
        (projection--log :debug "Defining project command of type=%s" ',cmd-type)
 
@@ -133,6 +137,17 @@ Is a list of cmd-type records of the form
 It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
                   cmd-symbol))
+
+       (defvar ,pre-hook-symbol nil
+         ,(format "Hook variable run immediately before `%s'.
+Currently this hook will be invoked with a single argument the project.
+It may be updated to take more arguments at a later date."
+                  (symbol-name cmd-symbol)))
+       (defvar ,post-hook-symbol nil
+         ,(format "Hook variable run immediately after `%s'.
+Accepts the same arguments as `%s'."
+                  (symbol-name cmd-symbol)
+                  (symbol-name pre-hook-symbol)))
 
        ;; Save the just registered command to an alist so we can later reference it.
        (add-to-list 'projection-commands--registered-cmd-types
@@ -160,7 +175,8 @@ When PROMPT interactively ask the user to set the %s command."
           (let* ((project (projection--current-project))
                  (command (,cmd-get-symbol project :prompt current-prefix-arg)))
             (list project command)))
-         (projection-commands--run-command-for-type project command ',cmd-type)))))
+         (projection-commands--run-command-for-type
+          project command ',cmd-type ',pre-hook-symbol ',post-hook-symbol)))))
 
 ;;;###autoload (autoload 'projection-commands-configure-project     "projection-commands" nil t)
 ;;;###autoload (autoload 'projection-commands-set-configure-command "projection-commands" nil t)
