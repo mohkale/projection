@@ -240,7 +240,7 @@ Prompt for the `completing-read' session will be PROMPT."
         (cl-return preset)))))
 
 (defconst projection-cmake--preset-build-types
-  '(configure build test package)
+  '(configure build test package workflow)
   "List of build-types that support CMake preset configurations.")
 
 (defun projection-cmake-set-preset (project build-type preset)
@@ -503,6 +503,22 @@ including any remote components of the project when
               (concat "build:" build " ")
             "")
           target))
+
+(defun projection--cmake-workflow-command (preset)
+  "Generate a CMake command to run the workflow PRESET."
+  (projection--join-shell-command
+   `("cmake"
+     "--workflow"
+     ,(concat "--preset=" preset))))
+
+(defun projection--cmake-workflow-annotation (preset)
+  "Generate an annotation for a cmake command to run a workflow PRESET."
+  (format "cmake %s%s%s"
+          (concat "preset:" preset " ")
+          (if-let ((build (projection-cmake--build-directory)))
+              (concat "build:" build " ")
+            "")
+          "workflow"))
 
 
 

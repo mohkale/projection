@@ -159,6 +159,34 @@ targets) with this option."
 
 
 
+(defun projection-multi-cmake--dynamic-triggers (project-type)
+  "`compile-multi' target generator using dynamic CMake target backend.
+Candidates will be prefixed with PROJECT-TYPE."
+  (cl-loop
+   for target in
+   (pcase projection-cmake-target-backend
+     ('help-target (projection-multi-cmake--targets-from-command))
+     ('code-model (projection-multi-cmake--targets-from-code-model))
+     (_ (user-error "Invalid CMake target backend: %s"
+                    projection-cmake-target-backend)))
+   unless (string-match-p projection-multi-cmake-exclude-targets target)
+     collect `(,(concat project-type ":" target)
+               :command
+               ,(projection--cmake-command 'build target)
+               :annotation
+               ,(projection--cmake-annotation 'build target))))
+
+(defun projection-multi-cmake--workflow-preset-triggers (project-type)
+  "`compile-multi' target generator using CMake workflow presets.
+Candidates will be prefixed with PROJECT-TYPE."
+  (cl-loop
+   for (preset) in (projection-cmake--list-presets-for-build-type 'workflow)
+   collect `(,(concat project-type ":workflow:" preset)
+             :command
+             ,(projection--cmake-workflow-command preset)
+             :annotation
+             ,(projection--cmake-workflow-annotation preset))))
+
 ;;;###autoload
 (defun projection-multi-cmake-targets (&optional project-type)
   "`compile-multi' target generator function for CMake projects.
@@ -166,19 +194,9 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (setq project-type (or project-type "cmake"))
 
   (let ((projection-cmake-preset 'silent))
-    (cl-loop
-     for target in
-     (pcase projection-cmake-target-backend
-       ('help-target (projection-multi-cmake--targets-from-command))
-       ('code-model (projection-multi-cmake--targets-from-code-model))
-       (_ (user-error "Invalid CMake target backend: %s"
-                      projection-cmake-target-backend)))
-     unless (string-match-p projection-multi-cmake-exclude-targets target)
-       collect `(,(concat project-type ":" target)
-                 :command
-                 ,(projection--cmake-command 'build target)
-                 :annotation
-                 ,(projection--cmake-annotation 'build target)))))
+    (append
+     (projection-multi-cmake--dynamic-triggers project-type)
+     (projection-multi-cmake--workflow-preset-triggers project-type))))
 
 ;;;###autoload
 (defun projection-multi-compile-cmake ()
