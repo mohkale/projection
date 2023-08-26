@@ -176,9 +176,9 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
      unless (string-match-p projection-multi-cmake-exclude-targets target)
        collect `(,(concat project-type ":" target)
                  :command
-                 ,(projection--cmake-command nil target)
+                 ,(projection--cmake-command 'build target)
                  :annotation
-                 ,(projection--cmake-annotation nil target)))))
+                 ,(projection--cmake-annotation 'build target)))))
 
 ;;;###autoload
 (defun projection-multi-compile-cmake ()
