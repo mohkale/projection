@@ -57,8 +57,6 @@
         (expect 'compile :not :to-have-been-called)
         (expect 'call-interactively :to-have-been-called-with func)))
 
-    ;; Note: This is failing on snapshot emacs with github ci/cd for reasons I don't
-    ;; understand. Will investigate later.
     (it "Fails early if no project could be found relative to current directory"
       ;; GIVEN
       ;;   There's no project dominating the current directory.
