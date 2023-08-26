@@ -84,6 +84,10 @@ targets) with this option."
   :type '(optional string)
   :group 'projection-multi-cmake)
 
+
+
+;;; Command target backend
+
 (defconst projection-multi-cmake--help-regex
   (rx
    bol
@@ -121,6 +125,40 @@ targets) with this option."
             (push target res))))
       (nreverse res))))
 
+
+
+;;; Code model target backend
+
+(defconst projection-multi-cmake--code-model-meta-targets
+  ;; CMake targets [[https://github.com/kitware/CMake/blob/master/Source/cmGlobalGenerator.cxx#L3145][defined]] by CMake itself instead of the generator.
+  '("all" "install" "clean"))
+
+(defun projection-multi-cmake--targets-from-code-model ()
+  "Determine list of available CMake targets from the code-model."
+  ;; KLUDGE: The code-model contains targets for all build-type configurations.
+  ;; For a single build-type generator like Ninja this is fine. For multi type
+  ;; configs like Ninja Multi-Config projection won't know which configuration
+  ;; contains the active targets for now we just return the set union of all
+  ;; targets even if some may not be runnable for the current project config.
+  (when-let ((code-model (projection-cmake--file-api-code-model)))
+    (cl-assert (string-equal (alist-get 'kind code-model) "codemodel"))
+
+    (append
+     (thread-last
+       code-model
+       (alist-get 'configurations)
+       (mapcar (apply-partially #'alist-get 'targets))
+       (apply #'append)
+       (mapcar (apply-partially #'alist-get 'name))
+       (append (list (make-hash-table :test 'equal)))
+       (cl-reduce (lambda (hash-table target)
+                    (puthash target t hash-table)
+                    hash-table))
+       (hash-table-keys))
+     projection-multi-cmake--code-model-meta-targets)))
+
+
+
 ;;;###autoload
 (defun projection-multi-cmake-targets (&optional project-type)
   "`compile-multi' target generator function for CMake projects.
@@ -129,7 +167,12 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
   (let ((projection-cmake-preset 'silent))
     (cl-loop
-     for target in (projection-multi-cmake--targets-from-command)
+     for target in
+     (pcase projection-cmake-target-backend
+       ('help-target (projection-multi-cmake--targets-from-command))
+       ('code-model (projection-multi-cmake--targets-from-code-model))
+       (_ (user-error "Invalid CMake target backend: %s"
+                      projection-cmake-target-backend)))
      unless (string-match-p projection-multi-cmake-exclude-targets target)
        collect `(,(concat project-type ":" target)
                  :command
