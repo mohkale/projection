@@ -188,11 +188,6 @@ See related function for a description of SELECT-INTERACTIVELY."
     (cond
      ((not files-not-current)
       (error "No other files found"))
-     ;; When only one other file found and it isn't the same as current-file then
-     ;; return it.
-     ((equal (length files-not-current) 1)
-      (car files-not-current))
-     ;;
      (select-interactively
       (let ((default-directory (project-root project)))
         ;; Re-order to push the next file we would've switched to, to the top of
