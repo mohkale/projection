@@ -28,84 +28,65 @@
 (require 'projection-core)
 (require 'projection-core-log)
 
-(defcustom projection-cache-dynamic-commands nil
-  "When true cache the result of dynamic compilation commands.
-Some projects require dynamically generating a compilation command based
-on the project configuration. When this is disabled the function to generate
-that command is always called. When enabled the function is called once and
-the result cached such that subsequent invocations do not refresh the command.
-
-You'll likely want to leave this disabled. If you notice some projects are
-slow to generate commands (most likely on remote machines) you may want to
-enable this. The only impact is occasionally you'll run the cached command
-and have to refresh it by calling `projection-reset-project-cache'."
-  :type 'boolean
-  :group 'projection)
-
-(defun projection-commands--read-shell-command (project type)
-  "Interactively read a shell command for the command TYPE in PROJECT."
+(defun projection-commands--read-shell-command (project type default)
+  "Interactively read a shell command for the command TYPE in PROJECT.
+DEFAULT is the optional initial command that the user will be presented with."
   (read-shell-command
    (projection--prompt "%s project: " project
                       (capitalize (symbol-name type)))
-   (when-let ((command
-               (projection-commands--get-command
-                project (projection-project-type (project-root project))
-                type nil 'no-error)))
-     (and (stringp command)
-          command))
+   default
    'compile-history))
 
 (defun projection-commands--get-command
-    (project project-config cmd-type &optional prompt no-error no-cache)
-  "Retrieve a command to do CMD-TYPE in PROJECT from PROJECT-CONFIG.
-Returns a cons cell of the form (PROJECT-TYPE . COMMAND-FOR-TYPE) where
-PROJECT-TYPE is (projection-type--name project-config). PROJECT-CONFIG
-should be the configuration for the current project type in
-`projection-project-types'.
-
-When PROMPT is non-nil then interactively prompt the user for a command
-instead of picking one automatically. When NO-ERROR don't throw an error
-if no command is configured for the current project. When NO-CACHE is
-truthy do not query or place the command into the cache for PROJECT."
+    (project project-config cmd-type cmd-var &optional prompt no-error use-cache)
+  "Determine the command to do CMD-TYPE in PROJECT using PROJECT-CONFIG.
+PROJECT-CONFIG should be the configuration for the current project type in
+`projection-project-types'. CMD-VAR is the value of a directory local variable
+to set the command. When PROMPT interactively ask the user for which command to
+run. When NO-ERROR do not raise an error if no command matches the current
+project. When USE-CACHE read or write the command cache for the project (set
+to \\='read or \\='write respectively to enable either of these operations)."
   (or
    ;; Interactively set the compilation command.
    (when prompt
      (let ((command
-            (projection-commands--read-shell-command project cmd-type)))
-       (unless no-cache
-         (projection--cache-put project cmd-type command))
+            (projection-commands--read-shell-command
+             project cmd-type
+             (when-let ((default-command
+                          (projection-commands--get-command
+                           project project-config cmd-type cmd-var nil 'no-error 'use-cache)))
+               (when (stringp default-command)
+                 default-command)))))
+       (pcase use-cache
+         ((or 'write (guard use-cache)) (projection--cache-put project cmd-type command)))
        command))
-   ;; Access the last cached compilation command for the current project.
-   (unless no-cache
-     (projection--cache-get project cmd-type))
 
+   ;; Access the last cached compilation command for the current project.
+   (pcase use-cache
+     ((or 'read (guard use-cache)) (projection--cache-get project cmd-type)))
+
+   ;; Command for cmd-type has been set using a directory-local variable.
+   cmd-var
+
+   ;; Read command from the current project-type.
    (let* ((type-command
            (when project-config
              (eieio-oref project-config cmd-type))))
      ;; Throw an error if no command could be resolved for CMD-TYPE.
-     (when (and (not type-command)
-                (not no-error))
-       (when (or (not project-config)
-                 (eq (oref project-config name) 'default))
-         (error "No project type matching project %s found" (project-root project)))
-       (error "Project of type %s does not support the command: %s"
-              (symbol-name (oref project-config name))
-              cmd-type))
+     (unless (or type-command no-error)
+       (if (projection--default-type-p project-config)
+           (error "No project type matching project %s found" (project-root project))
+         (error "Project of type %s does not support the command: %s"
+                (symbol-name (oref project-config name))
+                cmd-type)))
+
      ;; Sanitise compilation command and then cache it.
-     (cond
-      ((or (stringp type-command)
-           (commandp type-command))
-       (unless no-cache
-         (projection--cache-put project cmd-type type-command)))
-      ((functionp type-command)
-       ;; When the command is a function, but not a command, the function should
-       ;; return a shell command or interactive function to run instead. To let
-       ;; the function adapt to external configuration changes it will not be
-       ;; cached by default.
-       (setq type-command (funcall type-command))
-       (when (and projection-cache-dynamic-commands
-                  (not no-cache))
-         (projection--cache-put project cmd-type type-command))))
+     (pcase type-command
+       ((or (pred stringp) (pred commandp)))
+       ((pred functionp)
+        ;; When the command is a function, but not a command, the function should
+        ;; return a shell command or interactive function to run instead.
+        (setq type-command (funcall type-command))))
      type-command)))
 
 (defvar projection-commands--registered-cmd-types nil
@@ -135,10 +116,9 @@ Should be set via .dir-locals.el."
          (when-let ((project (projection--current-project)))
            (let* ((default-directory (project-root project))
                   (command
-                   (or ,var-symbol
-                       (projection-commands--get-command
-                        project (projection-project-type (project-root project))
-                        ',type prompt))))
+                   (projection-commands--get-command
+                    project (projection-project-type (project-root project))
+                    ',type ,var-symbol prompt nil 'use-cache)))
              (cond
               ((stringp command)
                (compile command))
@@ -196,6 +176,7 @@ PROMPT is the prompt shown in the minibuffer while reading the command type."
 
 
 (make-obsolete 'projection-project-command nil "0.1")
+(make-obsolete-variable 'projection-cache-dynamic-commands nil "0.1")
 
 (provide 'projection-commands)
 ;;; projection-commands.el ends here

@@ -168,6 +168,11 @@ Used when no other registered type matches the current project."
   :group 'projection
   :type '(optional projection-type))
 
+(defun projection--default-type-p (project-type)
+  "Assert whether PROJECT-TYPE is the default project type."
+  (or (not project-type)
+      (eq (oref project-type name) 'default)))
+
 
 
 (defmacro projection--define-cache (symbol &optional docstring)

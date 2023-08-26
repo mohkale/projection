@@ -136,8 +136,7 @@
       ;; GIVEN
       ;;   We've run the run command for the current project with prompt
       ;;   and cached a value of "result".
-      (spy-on #'read-shell-command :and-return-value "result")
-      (projection-run-project 'prompt)
+      (projection-set-run-command "result" (project-current))
       (expect (projection--cache-get (project-current) 'run) :to-equal "result")
 
       ;; WHEN
@@ -153,92 +152,37 @@
               'compile-history)
       (expect 'compile :to-have-been-called-with "result"))
 
-    (it "Caches the current project-type after the first run"
+    (it "Uses the directory-local variable as the command instead of the project-type"
       ;; GIVEN
-      ;;   I run the run command for the current project and have the
-      ;;   current project type cached.
-      (spy-on #'projection--match-project-type :and-return-value
-              project-type-foo)
+      (let ((projection-project-run-cmd "bar"))
+        ;; WHEN
+        (projection-run-project)
 
-      (expect (projection--cache-get (project-current) 'type) :to-be nil)
-      (projection-run-project)
-      (expect (projection--cache-get (project-current) 'type) :to-be 'foo)
+        ;; THEN
+        (expect 'compile :to-have-been-called-with "bar")))
 
-      ;; WHEN
-      ;;   I run the run command for the current project again.
-      (projection-run-project)
+    (it "Uses the cached command instead of the directory-local variable when set"
+      ;; GIVEN
+      (let ((projection-project-run-cmd "bar"))
+        (projection-set-run-command "baz" (project-current))
 
-      ;; THEN
-      ;;   `projection' didn't try to re-determine the current project type.
-      ;;   It loaded the result from the cache.
-      )
+        ;; WHEN
+        (projection-run-project)
+
+        ;; THEN
+        (expect 'compile :to-have-been-called-with "baz")))
 
     (describe "With dynamic commands"
-      (it "Doesn't cache the generated compilation shell-command by default"
-        ;; GIVEN
-        ;;   A run command configured as a function which returns the shell
-        ;;   command "foo".
-        (oset project-type-foo run (lambda () "foo"))
+              (it "Doesn't cache the generated compilation shell-command by default"
+                  ;; GIVEN
+                  ;;   A run command configured as a function which returns the shell
+                  ;;   command "foo".
+                  (oset project-type-foo run (lambda () "foo"))
 
-        ;; WHEN
-        ;;   I try to run the run command for the current project.
-        (projection-run-project)
+                  ;; WHEN
+                  ;;   I try to run the run command for the current project.
+                  (projection-run-project)
 
-        ;; THEN
-        ;;   No command was cached for the current project.
-        (expect (projection--cache-get (project-current) 'run) :to-be nil))
-
-      (it "Can cache the compilation shell-command not the function which generates it"
-        (let ((projection-cache-dynamic-commands t))
-          ;; GIVEN
-          ;;   * A run command configured as a function which returns the shell
-          ;;   command "foo".
-          ;;   * Caching of dynamic commands is enabled.
-          (oset project-type-foo run (lambda () "foo"))
-
-          ;; WHEN
-          ;;   I try to run the run command for the current project.
-          (projection-run-project)
-
-          ;; THEN
-          ;;   The command cached for the run command is the result of calling the
-          ;;   configured function, not the configured function itself.
-          (expect (projection--cache-get (project-current) 'run) :to-equal "foo")))
-
-      (it "Doesn't cache the generated compilation function by default"
-        ;; GIVEN
-        ;;   A run command configured as a function which returns another
-        ;;   interactive function which should actually be run for compilation.
-        (oset project-type-foo run (lambda ()
-                                     (lambda ()
-                                       (interactive)
-                                       "my-interactive-function")))
-
-        ;; WHEN
-        ;;   I try to run the run command for the current project.
-        (projection-run-project)
-
-        ;; THEN
-        ;;   No command was cached for the current project.
-        (expect (projection--cache-get (project-current) 'run) :to-be nil))
-
-      (it "Can caches the compilation function not the function which generates it"
-        (let ((projection-cache-dynamic-commands t))
-          ;; GIVEN
-          ;;   * A run command configured as a function which returns another
-          ;;   interactive function which should actually be run for compilation.
-          ;;   * Caching of dynamic commands is enabled.
-          (oset project-type-foo run (lambda ()
-                                       (lambda ()
-                                         (interactive)
-                                         "my-interactive-function")))
-
-          ;; WHEN
-          ;;   I try to run the run command for the current project.
-          (projection-run-project)
-
-          ;; THEN
-          ;;   The value cached for the run command is the result of calling the
-          ;;   configured function, not the configured function itself.
-          (let ((run-cached (projection--cache-get (project-current) 'run)))
-            (expect (funcall run-cached) :to-equal "my-interactive-function")))))))
+                  ;; THEN
+                  ;;   No command was cached for the current project.
+                  (expect (projection--cache-get (project-current) 'run) :to-be nil)))))

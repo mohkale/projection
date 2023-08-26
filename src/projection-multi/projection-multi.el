@@ -69,8 +69,9 @@ prefix:project-type:project-command."
       (dolist (project-config current-project-types)
         (dolist (cmd-type (mapcar #'car projection-commands--registered-cmd-types))
           (when-let ((cmd
+                      ;; TODO: Update cmd-var here.
                       (projection-commands--get-command
-                       project project-config cmd-type nil 'no-error 'no-cache)))
+                       project project-config cmd-type nil nil 'no-error 'no-cache)))
             (push (cons (concat project-type-prefix ":"
                                 (symbol-name (oref project-config name)) ":"
                                 (symbol-name cmd-type))
