@@ -152,7 +152,8 @@ result of each function should be deterministic."
     (projection-multi--cache-command-helpers
         (project-current
          projection-cmake--preset
-         projection-cmake--build-directory)
+         projection-cmake--build-directory
+         projection-cmake-ctest--jobs)
       (call-interactively #'compile-multi))))
 
 ;;;###autoload

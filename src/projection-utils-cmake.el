@@ -394,6 +394,15 @@ Set the extra command line options to pass to ctest."
   :type '(list string)
   :group 'projection-type-cmake)
 
+(defcustom projection-cmake-ctest-jobs nil
+  "Value of the --parallel option passed to CTest when set."
+  :type '(optional
+          (choice
+           (const -1 :tag "Use `num-processors'.")
+           (const -2 :tag "Use half of `num-processors'.")
+           (integer :tag "Use this value as the number of jobs.")))
+  :group 'projection-type-cmake)
+
 (defcustom projection-cmake-ctest-environment-variables
   '(("CLICOLOR_FORCE" . "1")
     ("GTEST_COLOR" . "1"))
@@ -403,6 +412,18 @@ key value pair set."
   :type '(alist :key-type (string :tag "Environment variable")
                 :value-type (string :tag "Value of variable"))
   :group 'projection-type-cmake)
+
+(defun projection-cmake-ctest--jobs ()
+  "Query the number of parallel jobs to use for ctest."
+  (when projection-cmake-ctest-jobs
+    (pcase projection-cmake-ctest-jobs
+      (-1 (num-processors))
+      (-2 (/ (num-processors) 2))
+      ((cl-type integer) projection-cmake-ctest-jobs)
+      (_ (projection--log
+          :warning "Unsupported `projection-cmake-ctest-jobs' value: %S."
+          projection-cmake-ctest-jobs)
+         nil))))
 
 (defun projection--cmake-ctest-command (&rest argv)
   "Helper function to  generate a CTest command.
@@ -418,6 +439,8 @@ ARGV if provided will be appended to the command."
          (list "--test-dir" build))
      ,@(when-let ((preset (projection-cmake--preset 'test)))
          (list (concat "--preset=" preset)))
+     ,@(when-let ((job-count (projection-cmake-ctest--jobs)))
+         (list (concat "--parallel=" (number-to-string job-count))))
      ,@projection-cmake-ctest-options
      ,@argv)))
 
