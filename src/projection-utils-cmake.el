@@ -21,6 +21,7 @@
 
 ;;; Code:
 
+(require 'f)
 (require 'json)
 
 (require 'projection-core)
@@ -30,6 +31,15 @@
 (defgroup projection-type-cmake nil
   "Projection CMake project type."
   :group 'projection-types)
+
+(defcustom projection-cmake-target-backend 'help-target
+  "Which data source to query CMake targets from."
+  :type '(choice
+          (const help-target :tag "Call the help target and parse the output.")
+          (const code-model :tag "Use the CMake file api and parse the targets from the codemodel.
+This is a much more reliable source for querying CMake targets because it doesn't include any phony
+targets CMake might add just for build framework integrations or dummy tasks like directory creation."))
+  :group 'projection-type-cmake)
 
 
 
@@ -307,6 +317,116 @@ PROJECT defaults to the current project."
                            (projection--current-project 'no-error))))
      (projection--cache-get project 'projection-cmake-build-type))
    projection-cmake-build-type))
+
+
+
+;; CMake file API [[man:cmake-file-api(7)]].
+
+(defconst projection-cmake--file-api-client "client-emacs-projection")
+
+(defcustom projection-cmake-cache-code-model 'auto
+  "When true cache the CMake code-model of each project."
+  :type '(choice
+          (const auto :tag "Cache targets and invalidate cache automatically")
+          (boolean :tag "Always/Never cache targets"))
+  :group 'projection-type-cmake)
+
+(cl-defsubst projection-cmake--file-api-directory ()
+  "Path to the CMake file-api directory under the build directory."
+  (f-join (projection-cmake--build-directory 'expand) ".cmake" "api" "v1"))
+
+(cl-defsubst projection-cmake--file-api-query-file-suffix ()
+  "Subpath to the CMake query file for the projection client."
+  (f-join "query" projection-cmake--file-api-client "query.json"))
+
+(cl-defsubst projection-cmake--file-api-reply-directory-suffix ()
+  "Subpath to the CMake reply directory for the projection client."
+  "reply")
+
+(defun projection-cmake--file-api-code-model ()
+  "Get the generated code-model object for the projection client.
+This function respects `projection-cmake-cache-code-model'."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-cmake-code-model
+   (cond
+    ((eq projection-cmake-cache-code-model 'auto)
+     (projection--cmake-configure-modtime-p))
+    (t projection-cmake-cache-code-model))
+   #'projection-cmake--file-api-code-model2))
+
+(defun projection-cmake--file-api-code-model2 ()
+  "Get the generated code-model object for the projection client."
+  (projection--log :debug "Reading CMake code-model")
+
+  (let ((api-directory (projection-cmake--file-api-directory)))
+    (if-let* ((index-pattern (f-join api-directory
+                                     (projection-cmake--file-api-reply-directory-suffix)
+                                     "index-*.json"))
+              (indexes (cl-sort (file-expand-wildcards index-pattern) #'string>)))
+        (condition-case err
+            (with-temp-buffer
+              (projection--log :debug "Reading codemodel from file=%s." (car indexes))
+              (insert-file-contents (car indexes))
+
+              (if-let ((code-model-file
+                        (projection-cmake--file-api-query-code-model-file
+                         (let ((json-array-type 'list)) (json-read)))))
+                  (progn
+                    (insert-file-contents
+                     (f-join api-directory
+                             (projection-cmake--file-api-reply-directory-suffix)
+                             code-model-file))
+                    (let ((json-array-type 'list)) (json-read)))
+                (projection--log :error "Failed to query code-model from file=%s." (car indexes))))
+          ((file-missing json-readtable-error)
+           (projection--log :error "error while querying CMake code-model %s." (cdr err))
+           nil))
+      (projection--log :warning "Cannot query cmake codemodel because no indexes exist.")
+      nil)))
+
+(cl-defsubst projection-cmake--file-api-query-code-model-file (index-obj)
+  "Read the base-name of the code-model file through INDEX-OBJ."
+  (thread-last
+    index-obj
+    (alist-get 'reply)
+    (alist-get (intern projection-cmake--file-api-client))
+    (alist-get 'query.json)
+    (alist-get 'responses)
+    (car-safe)
+    (alist-get 'jsonFile)))
+
+;;;###autoload
+(defun projection-cmake--file-api-create-query-file ()
+  "Create a file-api client query file for projection."
+  (let ((query-file (f-join
+                     (projection-cmake--file-api-directory)
+                     (projection-cmake--file-api-query-file-suffix))))
+    (unless (file-exists-p query-file)
+      (with-temp-buffer
+        (insert
+         (json-serialize '((requests . [((kind . "codemodel") (version . 2))])
+                           (client))
+                         :false-object :json-false))
+        (make-directory (f-dirname query-file) 'parents)
+        (write-region nil nil query-file nil 'silent)))))
+
+;;;###autoload
+(progn
+  (defun projection-cmake--cmake-project-p (project-types)
+    "Helper to check whether one of the types in PROJECT-TYPES is CMake.
+Advise this if you need more than just the CMake project type to be have a
+query file created before configuring."
+    (member 'cmake (mapcar #'projection-type--name project-types)))
+
+  (add-hook
+   'projection-commands-pre-configure-hook
+   (defun projection-cmake--file-api-create-query-hook (project)
+     "Helper to create a CMake query file before configuring for CMake projects."
+     (when (and (projection-cmake--cmake-project-p
+                 (projection-project-types (project-root project)))
+                (eq projection-cmake-target-backend 'code-model))
+       (projection-cmake--file-api-create-query-file)))))
 
 
 

@@ -217,6 +217,10 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
       to set an alternative preset behaviour for your use case.
     - =projection-cmake-set-build-type= - Alter the value of the =CMAKE_BUILD_TYPE=
       option passed through to CMake while configuring.
+    - Target resolution through the [[https://cmake.org/cmake/help/v3.15/manual/cmake-file-api.7.html][CMake file API]]. This is disabled by default but
+      can be enabled by customizing =projection-cmake-target-backend= (for example:
+      =(setq projection-cmake-target-backend 'code-model)=) and then re-configuring the
+      project.
 
 * Configuration
 ** Permanently Configuring Project Types
