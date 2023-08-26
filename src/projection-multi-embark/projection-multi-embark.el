@@ -1,4 +1,4 @@
-;;; projection-multi-embark.el --- `projection-multi' integration for `embark' -*- lexical-binding: t; -*-
+;;; projection-multi-embark.el --- Integration for `projection-multi' and `embark' -*- lexical-binding: t; -*-
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
