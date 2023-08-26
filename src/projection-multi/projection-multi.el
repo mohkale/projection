@@ -67,14 +67,14 @@ prefix:project-type:project-command."
                (projection-project-types (project-root project))))
     (let (result)
       (dolist (project-config current-project-types)
-        (dolist (cmd-type (mapcar #'car projection-commands--registered-cmd-types))
+        (dolist (cmd-type-config projection-commands--registered-cmd-types)
           (when-let ((cmd
                       ;; TODO: Update cmd-var here.
-                      (projection-commands--get-command
-                       project project-config cmd-type nil nil 'no-error 'no-cache)))
+                      (projection-commands--ignore-no-command
+                       (funcall (cadr cmd-type-config) project nil :use-cache nil))))
             (push (cons (concat project-type-prefix ":"
                                 (symbol-name (oref project-config name)) ":"
-                                (symbol-name cmd-type))
+                                (symbol-name (car cmd-type-config)))
                         cmd)
                   result))))
       (nreverse result))))
