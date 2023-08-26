@@ -54,7 +54,7 @@ otherwise it will return SHELL-COMMAND."
             (projection--log
              :debug "Shell command='%s' produced no %s output" command label)
           (projection--log
-           :debug "Stderr for shell command='%s' was\n%s" command stderr)))
+           :debug "%s for shell command='%s' was\n%s" label command output)))
 
     (unless (string-empty-p stdout)
       stdout)))

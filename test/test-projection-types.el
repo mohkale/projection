@@ -3,6 +3,7 @@
 (require 'projection-test-utils)
 
 (require 'projection-types)
+(require 'projection-utils)
 (require 'projection-utils-cmake)
 
 (require 'projection-multi-npm-scripts)
@@ -25,6 +26,11 @@
     (when (file-equal-p default-directory test-directory)
       (cd default-directory)
       (delete-directory test-directory t)))
+  ;; Make compile synchronously block.
+  (before-each
+    (spy-on #'compile :and-call-fake
+            (lambda (command &rest _)
+              (projection--shell-command-to-string command))))
 
   (describe "CMake"
     (before-each
@@ -39,7 +45,13 @@ int main() {
 }")
          ("CMakeLists.txt" . "cmake_minimum_required(VERSION 3.2)
 project(projection_test)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -std=c++11 -O3\")
+
+add_library(main_lib main.cpp)
 add_executable(main main.cpp)
+target_link_libraries(main main_lib)
 "))))
 
     (it "Can be identified"
@@ -94,6 +106,124 @@ add_executable(main main.cpp)
          #'projection-configure-project
          "cmake -S . -B build Foo Bar")))
 
+    (it "Runs tests through a separate ctest binary"
+      ;; GIVEN
+      (let ((projection-cmake-ctest-options)
+            (projection-cmake-ctest-environment-variables))
+        ;; WHEN/THEN
+        (interactively-call-compile-command
+         #'projection-test-project
+         "ctest --test-dir build test")))
+
+    (it "Assigns any configured environment variables when running tests"
+      ;; GIVEN
+      (let ((projection-cmake-ctest-options)
+            (projection-cmake-ctest-environment-variables
+             '(("foo" . "bar"))))
+        ;; WHEN/THEN
+        (interactively-call-compile-command
+         #'projection-test-project
+         "env foo\\=bar ctest --test-dir build test")))
+
+    (it "Forwards any configured options when running tests"
+      ;; GIVEN
+      (let ((projection-cmake-ctest-options '("-foo" "-bar"))
+            (projection-cmake-ctest-environment-variables))
+        ;; WHEN/THEN
+        (interactively-call-compile-command
+         #'projection-test-project
+         "ctest --test-dir build -foo -bar test")))
+
+    (describe "With the CMake help-target backend"
+      :var ((existing-target-backend projection-cmake-target-backend))
+      (before-all (require 'projection-multi-cmake))
+      (before-all (setq projection-cmake-target-backend 'help-target))
+      (after-all (setq projection-cmake-target-backend projection-cmake-target-backend))
+
+      (it "Does not construct a CMake query file"
+        ;; GIVEN
+        (expect projection-cmake-target-backend :to-equal 'help-target)
+
+        ;; WHEN
+        (interactively-call-compile-command
+         #'projection-configure-project
+         "cmake -S . -B build")
+
+        ;; THEN
+        (expect (file-expand-wildcards "build/.cmake/api/v1/query/*/query.json")
+                :to-be nil))
+
+      (describe "Multi compile"
+        :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib")))
+
+        (it "Extracts CMake targets from the Make backends"
+          ;; GIVEN
+          (let ((projection-cmake-configure-options '("-GNinja")))
+            (call-interactively #'projection-configure-project)
+
+            ;; WHEN
+            (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
+              ;; THEN
+              (dolist (expected-target expected-targets)
+                (expect expected-target :to-be-in cmake-targets)))))
+
+        (it "Extracts CMake targets from the Ninja backends"
+          ;; GIVEN
+          (let ((projection-cmake-configure-options '("-GUnix Makefiles")))
+            (call-interactively #'projection-configure-project)
+
+            ;; WHEN
+            (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
+              ;; THEN
+              (dolist (expected-target expected-targets)
+                (expect expected-target :to-be-in cmake-targets)))))
+
+        (it "Filters out targets matching the configured regexp"
+          ;; GIVEN
+          (call-interactively #'projection-configure-project)
+
+          ;; WHEN
+          (let* ((projection-multi-cmake-exclude-targets (rx bol "main_lib" eol))
+                 (cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
+            ;; THEN
+            (expect "main_lib" :not :to-be-in cmake-targets)))))
+
+    (describe "With the CMake file API backend"
+      :var ((existing-target-backend projection-cmake-target-backend)
+            (expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main")))
+      (before-all (setq projection-cmake-target-backend 'code-model))
+      (after-all (setq projection-cmake-target-backend projection-cmake-target-backend))
+
+      (it "Constructs a CMake query file while configuring"
+        ;; WHEN
+        (interactively-call-compile-command
+         #'projection-configure-project
+         "cmake -S . -B build")
+
+        ;; THEN
+        (expect (file-expand-wildcards "build/.cmake/api/v1/query/*/query.json")
+                :not :to-be nil))
+
+      (it "Extracts CMake targets from the code-model"
+        ;; GIVEN
+        (call-interactively #'projection-configure-project)
+
+        ;; WHEN
+        (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
+          ;; THEN
+          (dolist (expected-target expected-targets)
+            (expect expected-target :to-be-in cmake-targets))))
+
+      (it "Filters out targets matching the configured regexp"
+        ;; GIVEN
+        (call-interactively #'projection-configure-project)
+
+        ;; WHEN
+        (let* ((projection-multi-cmake-exclude-targets (rx bol "main_lib" eol))
+               (cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
+          ;; THEN
+          (expect "main_lib" :not :to-be-in cmake-targets))))
+
     (describe "With a CMake presets configuration"
       :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
             (build-presets '("buildPreset1")))
@@ -125,7 +255,27 @@ add_executable(main main.cpp)
       \"name\": \"buildPreset1\",
       \"configurePreset\": \"configurePreset1\"
     }
-  ]
+  ],
+  \"workflowPresets\": [
+    {
+      \"name\": \"default\",
+      \"steps\": [
+        {
+          \"type\": \"configure\",
+          \"name\": \"configurePreset1\"
+        },
+        {
+          \"type\": \"build\",
+          \"name\": \"buildPreset1\"
+        }
+      ]
+    }
+  ],
+  \"vendor\": {
+    \"example.com/ExampleIDE/1.0\": {
+      \"autoFormat\": false
+    }
+  }
 }"))))
 
       (it "Prompts for the current projects preset interactively"
@@ -416,8 +566,20 @@ add_executable(main main.cpp)
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset1")
 
-          (expect 'completing-read :to-have-been-called-times 1))))
-    )
+          (expect 'completing-read :to-have-been-called-times 1)))
+
+      (describe "Multi compile"
+        (before-all (require 'projection-multi-cmake))
+
+        (it "Includes targets for any workflow presets"
+          ;; GIVEN
+          (spy-on #'completing-read :and-return-value "configurePreset1")
+          (call-interactively #'projection-configure-project)
+
+          ;; WHEN
+          (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
+            ;; THEN
+            (expect "cmake:workflow:default" :to-be-in cmake-targets))))))
 
   (describe "NPM"
     (before-each
