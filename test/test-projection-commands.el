@@ -34,7 +34,7 @@
     (it "Runs configured shell-command for current project type"
       ;; WHEN
       ;;   I try to run the 'run command for the current project.
-      (funcall real-call-interactively #'projection-run-project)
+      (funcall real-call-interactively #'projection-commands-run-project)
 
       ;; THEN
       ;;   I expect `compile' to have been called with the configured
@@ -51,7 +51,7 @@
 
         ;; WHEN
         ;;   I try to run the 'run command for the current project.
-        (funcall real-call-interactively #'projection-run-project)
+        (funcall real-call-interactively #'projection-commands-run-project)
 
         ;; THEN
         ;;   The registered command for this project was run interactively.
@@ -68,7 +68,7 @@
       ;;   I try to run the run command for the current project.
       ;; THEN
       ;;   I get an error because the current project could not be found.
-      (let ((err (should-error (funcall real-call-interactively #'projection-run-project)
+      (let ((err (should-error (funcall real-call-interactively #'projection-commands-run-project)
                                :type 'error)))
         (expect (cadr err) :to-equal
                 (concat "No project found relative to " default-directory))))
@@ -82,14 +82,14 @@
         ;; THEN
         ;;   I get an error because no project type matching the current project
         ;;   could be found.
-        (expect (funcall real-call-interactively #'projection-package-project)
+        (expect (funcall real-call-interactively #'projection-commands-package-project)
               :to-throw 'projection-command-error
               (list (format "No project type matching project %s/ found and the default \
 project-type does not support the command: package"
                           default-directory)))))
 
     (it "Fails if registered command doesn't exist for current project type"
-      (expect (funcall real-call-interactively #'projection-package-project)
+      (expect (funcall real-call-interactively #'projection-commands-package-project)
               :to-throw 'projection-command-error
               '("Project of type foo does not support the command: package")))
 
@@ -98,7 +98,7 @@ project-type does not support the command: package"
       ;;   Current project has an invalid run command type.
       (oset project-type-foo run 'foo)
 
-      (let ((err (should-error (funcall real-call-interactively #'projection-run-project)
+      (let ((err (should-error (funcall real-call-interactively #'projection-commands-run-project)
                                :type 'error)))
         ;; WHEN
         ;;   I try to run the run command for the current project.
@@ -116,7 +116,7 @@ project-type does not support the command: package"
       ;; WHEN
       ;;   I try to run the run command for the current project with prompt.
       (let ((current-prefix-arg '(4)))
-        (funcall real-call-interactively #'projection-run-project 'prompt))
+        (funcall real-call-interactively #'projection-commands-run-project 'prompt))
 
       ;; THEN
       ;;   * Prompt used the initial input from the project configuration and
@@ -134,14 +134,14 @@ project-type does not support the command: package"
       ;; GIVEN
       ;;   We've run the run command for the current project with prompt
       ;;   and cached a value of "result".
-      (projection-set-run-command "result" (project-current))
+      (projection-commands-set-run-command "result" (project-current))
       (expect (projection--cache-get (project-current) 'run) :to-equal "result")
       (spy-on #'read-shell-command :and-return-value "prompted")
 
       ;; WHEN
       ;;   I try to run the run command for the current project with prompt.
       (let ((current-prefix-arg '(4)))
-       (funcall real-call-interactively #'projection-run-project))
+       (funcall real-call-interactively #'projection-commands-run-project))
 
       ;; THEN
       ;;   Prompt used the initial input from the cached command value and
@@ -154,20 +154,20 @@ project-type does not support the command: package"
 
     (it "Uses the directory-local variable as the command instead of the project-type"
       ;; GIVEN
-      (let ((projection-project-run-cmd "bar"))
+      (let ((projection-commands-run-command "bar"))
         ;; WHEN
-        (funcall real-call-interactively #'projection-run-project)
+        (funcall real-call-interactively #'projection-commands-run-project)
 
         ;; THEN
         (expect 'compile :to-have-been-called-with "bar")))
 
     (it "Uses the cached command instead of the directory-local variable when set"
       ;; GIVEN
-      (let ((projection-project-run-cmd "bar"))
-        (projection-set-run-command "baz" (project-current))
+      (let ((projection-commands-run-command "bar"))
+        (projection-commands-set-run-command "baz" (project-current))
 
         ;; WHEN
-        (funcall real-call-interactively #'projection-run-project)
+        (funcall real-call-interactively #'projection-commands-run-project)
 
         ;; THEN
         (expect 'compile :to-have-been-called-with "baz")))
@@ -181,7 +181,7 @@ project-type does not support the command: package"
 
                   ;; WHEN
                   ;;   I try to run the run command for the current project.
-                  (funcall real-call-interactively #'projection-run-project)
+                  (funcall real-call-interactively #'projection-commands-run-project)
 
                   ;; THEN
                   ;;   No command was cached for the current project.

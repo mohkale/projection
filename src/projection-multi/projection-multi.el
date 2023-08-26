@@ -69,9 +69,8 @@ prefix:project-type:project-command."
       (dolist (project-config current-project-types)
         (dolist (cmd-type-config projection-commands--registered-cmd-types)
           (when-let ((cmd
-                      ;; TODO: Update cmd-var here.
                       (projection-commands--ignore-no-command
-                       (funcall (cadr cmd-type-config) project nil :use-cache nil))))
+                       (funcall (cadr cmd-type-config) project :use-cache nil))))
             (push (cons (concat project-type-prefix ":"
                                 (symbol-name (oref project-config name)) ":"
                                 (symbol-name (car cmd-type-config)))

@@ -104,9 +104,11 @@ project-type does not support the command: %s"
      type-command)))
 
 (defvar projection-commands--registered-cmd-types nil
-  "Cache of values registered by `projection-commands--register'.")
+  "Cache of values registered by `projection-commands--register'.
+Is a list of cmd-type records of the form
+\(CMD-TYPE CMD-TYPE-FUNC CMD-TYPE-COMMAND).")
 
-(defun projection-commands--run-command (project command cmd-type)
+(defun projection-commands--run-command-for-type (project command cmd-type)
   "Run COMMAND for PROJECT as CMD-TYPE."
   (let ((default-directory (project-root project)))
     (cond
@@ -117,15 +119,16 @@ project-type does not support the command: %s"
      (t
       (user-error "Do not know how to run %s command %s" cmd-type command)))))
 
-(defmacro projection-commands--register (type)
-  "Define an interactive function to run a TYPE command on the current project."
-  (let ((var-symbol (intern (concat "projection-project-" (symbol-name type) "-cmd")))
-        (cmd-symbol (intern (concat "projection-" (symbol-name type) "-project")))
-        (save-cmd-symbol (intern (concat "projection-set-" (symbol-name type) "-command"))))
+(defmacro projection-commands--register (cmd-type)
+  "Define an interactive function to run a CMD-TYPE command on the current project."
+  (let ((cmd-symbol     (intern (concat "projection-commands-"     (symbol-name cmd-type) "-project")))
+        (cmd-get-symbol (intern (concat "projection-commands--"    (symbol-name cmd-type) "-command")))
+        (cmd-var-symbol (intern (concat "projection-commands-"     (symbol-name cmd-type) "-command")))
+        (set-cmd-symbol (intern (concat "projection-commands-set-" (symbol-name cmd-type) "-command"))))
     `(progn
-       (projection--log :debug "Defining project command of type=%s" ',type)
+       (projection--log :debug "Defining project command of type=%s" ',cmd-type)
 
-       (defvar ,var-symbol nil
+       (defvar ,cmd-var-symbol nil
          ,(format "The command to use with `%s'.
 It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
@@ -133,48 +136,54 @@ Should be set via .dir-locals.el."
 
        ;; Save the just registered command to an alist so we can later reference it.
        (add-to-list 'projection-commands--registered-cmd-types
-                    (list ',type ',var-symbol #',cmd-symbol) t)
+                    (list ',cmd-type #',cmd-get-symbol #',cmd-symbol) t)
 
-       (defun ,var-symbol (project &rest rest)
+       (defun ,cmd-get-symbol (project &rest rest)
          ,(format "Get the %s command for PROJECT
-When PROMPT interactively ask the user to set the %s command." (symbol-name type) (symbol-name type))
+When PROMPT interactively ask the user to set the %s command."
+                  (symbol-name cmd-type) (symbol-name cmd-type))
          (let* ((default-directory (project-root project))
                 (project-type (projection-project-type (project-root project))))
            (apply #'projection-commands--get-command
-            project project-type ',type ,var-symbol rest)))
+            project project-type ',cmd-type ,cmd-var-symbol rest)))
 
-       (defun ,cmd-symbol (project command)
-         ,(format "Run COMMAND as the %s command for PROJECT." (symbol-name type))
-         (interactive
-          (let* ((project (projection--current-project))
-                 (command (,var-symbol project :prompt current-prefix-arg)))
-            (list project command)))
-         (projection-commands--run-command project command ',type))
-
-       (defun ,save-cmd-symbol (command project)
-         ,(concat "Save COMMAND as the %s command for PROJECT." (symbol-name type))
+       (defun ,set-cmd-symbol (command project)
+         ,(concat "Save COMMAND as the %s command for PROJECT." (symbol-name cmd-type))
          (interactive
           (list (read-shell-command "Compile command: ")
                 (projection--current-project)))
-         (projection--cache-put project ',type command)))))
+         (projection--cache-put project ',cmd-type command))
 
-;;;###autoload (autoload 'projection-configure-project "projection-commands" nil t)
-;;;###autoload (autoload 'projection-set-configure-command "projection-commands" nil t)
+       (defun ,cmd-symbol (project command)
+         ,(format "Run COMMAND as the %s command for PROJECT." (symbol-name cmd-type))
+         (interactive
+          (let* ((project (projection--current-project))
+                 (command (,cmd-get-symbol project :prompt current-prefix-arg)))
+            (list project command)))
+         (projection-commands--run-command-for-type project command ',cmd-type)))))
+
+;;;###autoload (autoload 'projection-commands-configure-project     "projection-commands" nil t)
+;;;###autoload (autoload 'projection-commands-set-configure-command "projection-commands" nil t)
 (projection-commands--register configure)
-;;;###autoload (autoload 'projection-build-project "projection-commands" nil t)
-;;;###autoload (autoload 'projection-set-build-command "projection-commands" nil t)
+
+;;;###autoload (autoload 'projection-commands-build-project     "projection-commands" nil t)
+;;;###autoload (autoload 'projection-commands-set-build-command "projection-commands" nil t)
 (projection-commands--register build)
-;;;###autoload (autoload 'projection-test-project "projection-commands" nil t)
-;;;###autoload (autoload 'projection-set-test-command "projection-commands" nil t)
+
+;;;###autoload (autoload 'projection-commands-test-project     "projection-commands" nil t)
+;;;###autoload (autoload 'projection-commands-set-test-command "projection-commands" nil t)
 (projection-commands--register test)
-;;;###autoload (autoload 'projection-run-project "projection-commands" nil t)
-;;;###autoload (autoload 'projection-set-run-command "projection-commands" nil t)
+
+;;;###autoload (autoload 'projection-commands-run-project     "projection-commands" nil t)
+;;;###autoload (autoload 'projection-commands-set-run-command "projection-commands" nil t)
 (projection-commands--register run)
-;;;###autoload (autoload 'projection-package-project "projection-commands" nil t)
-;;;###autoload (autoload 'projection-set-package-command "projection-commands" nil t)
+
+;;;###autoload (autoload 'projection-commands-package-project     "projection-commands" nil t)
+;;;###autoload (autoload 'projection-commands-set-package-command "projection-commands" nil t)
 (projection-commands--register package)
-;;;###autoload (autoload 'projection-install-project "projection-commands" nil t)
-;;;###autoload (autoload 'projection-set-install-command "projection-commands" nil t)
+
+;;;###autoload (autoload 'projection-commands-install-project     "projection-commands" nil t)
+;;;###autoload (autoload 'projection-commands-set-install-command "projection-commands" nil t)
 (projection-commands--register install)
 
 
@@ -188,7 +197,7 @@ PROMPT is the prompt shown in the minibuffer while reading the command type."
            nil 'require-match)))
 
 ;;;###autoload
-(defun projection-set-command-for-type (command project cmd-type)
+(defun projection-commands-set-command-for-type (command project cmd-type)
   "Save COMMAND as the compilation command CMD-TYPE for PROJECT."
   (interactive
    (list (read-shell-command "Compile command: ")
@@ -201,6 +210,29 @@ PROMPT is the prompt shown in the minibuffer while reading the command type."
 
 (make-obsolete 'projection-project-command nil "0.1")
 (make-obsolete-variable 'projection-cache-dynamic-commands nil "0.1")
+
+(define-obsolete-function-alias 'projection-set-command-for-type 'projection-commands-set-command-for-type "0.1")
+
+(define-obsolete-function-alias 'projection-configure-project 'projection-commands-configure-project "0.1")
+(define-obsolete-function-alias 'projection-build-project     'projection-commands-build-project     "0.1")
+(define-obsolete-function-alias 'projection-test-project      'projection-commands-test-project      "0.1")
+(define-obsolete-function-alias 'projection-run-project       'projection-commands-run-project       "0.1")
+(define-obsolete-function-alias 'projection-package-project   'projection-commands-package-project   "0.1")
+(define-obsolete-function-alias 'projection-install-project   'projection-commands-install-project   "0.1")
+
+(define-obsolete-function-alias 'projection-set-configure-command 'projection-commands-set-configure-command "0.1")
+(define-obsolete-function-alias 'projection-set-build-command     'projection-commands-set-build-command     "0.1")
+(define-obsolete-function-alias 'projection-set-test-command      'projection-commands-set-test-command      "0.1")
+(define-obsolete-function-alias 'projection-set-run-command       'projection-commands-set-run-command       "0.1")
+(define-obsolete-function-alias 'projection-set-package-command   'projection-commands-set-package-command   "0.1")
+(define-obsolete-function-alias 'projection-set-install-command   'projection-commands-set-install-command   "0.1")
+
+(make-obsolete-variable 'projection-project-configure-cmd 'projection-commands-configure-project-command "0.1")
+(make-obsolete-variable 'projection-project-build-cmd     'projection-commands-build-project-command     "0.1")
+(make-obsolete-variable 'projection-project-test-cmd      'projection-commands-test-project-command      "0.1")
+(make-obsolete-variable 'projection-project-run-cmd       'projection-commands-run-project-command       "0.1")
+(make-obsolete-variable 'projection-project-package-cmd   'projection-commands-package-project-command   "0.1")
+(make-obsolete-variable 'projection-project-install-cmd   'projection-commands-install-project-command   "0.1")
 
 (provide 'projection-commands)
 ;;; projection-commands.el ends here

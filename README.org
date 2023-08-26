@@ -94,8 +94,8 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
 ** Projection Commands
    This feature works just like projectiles ~projectile-compile-project~ family of
    commands. Each project can optionally expose one of the following command types
-   and you can use the associated =projection-TYPE-project= command to invoke it
-   interactively.
+   and you can use the associated =projection-commands-TYPE-project= command to
+   invoke it interactively.
 
    | Type      | Description                                               |
    |-----------+-----------------------------------------------------------|

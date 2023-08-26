@@ -41,15 +41,15 @@
 
 (defvar projection-multi-embark-command-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "s" (cons "projection-set-command" #'projection-set-command-for-type))
+    (define-key map "s" (cons "projection-set-command" #'projection-commands-set-command-for-type))
     ;; NOTE: Keep in sync with `projection-map'.
-    (define-key map "c" #'projection-set-build-command)
-    (define-key map "g" #'projection-set-configure-command)
-    (define-key map "t" #'projection-set-test-command)
-    (define-key map "r" #'projection-set-run-command)
-    (define-key map "p" #'projection-set-run-command)
-    (define-key map "k" #'projection-set-package-command)
-    (define-key map "i" #'projection-set-install-command)
+    (define-key map "c" #'projection-commands-set-build-command)
+    (define-key map "g" #'projection-commands-set-configure-command)
+    (define-key map "t" #'projection-commands-set-test-command)
+    (define-key map "r" #'projection-commands-set-run-command)
+    (define-key map "p" #'projection-commands-set-run-command)
+    (define-key map "k" #'projection-commands-set-package-command)
+    (define-key map "i" #'projection-commands-set-install-command)
     map)
   "Command map for `projection-multi-embark'.")
 
