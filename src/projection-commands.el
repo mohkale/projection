@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (require 'projection-core)
 (require 'projection-core-log)
 
