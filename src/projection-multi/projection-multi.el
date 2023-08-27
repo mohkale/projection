@@ -2,7 +2,7 @@
 
 ;; Author: Mohsin Kaleem <mohkale@kisara.moe>
 ;; Keywords: project, convenience
-;; Package-Requires: ((emacs "29") (projection "0.1") (compile-multi "0.5"))
+;; Package-Requires: ((emacs "29.1") (projection "0.1") (compile-multi "0.5"))
 ;; Version: 0.1
 ;; Homepage: https://github.com/mohkale/projection
 
