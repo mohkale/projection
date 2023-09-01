@@ -380,10 +380,8 @@ This function respects `projection-cmake-cache-code-model'."
                     (let ((json-array-type 'list)) (json-read)))
                 (projection--log :error "Failed to query code-model from file=%s." (car indexes))))
           ((file-missing json-readtable-error)
-           (projection--log :error "error while querying CMake code-model %s." (cdr err))
-           nil))
-      (projection--log :warning "Cannot query cmake codemodel because no indexes exist.")
-      nil)))
+           (projection--log :error "error while querying CMake code-model %s." (cdr err))))
+      (projection--log :warning "Cannot query cmake codemodel because no indexes exist."))))
 
 (cl-defsubst projection-cmake--file-api-query-code-model-file (index-obj)
   "Read the base-name of the code-model file through INDEX-OBJ."

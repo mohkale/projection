@@ -44,8 +44,7 @@ DEFAULT is the optional initial command that the user will be presented with."
   `(condition-case err
        (progn ,@body)
      (projection-command-error
-      (projection--log :debug "%s" (cadr err))
-      nil)))
+      (projection--log :debug "%s" (cadr err)))))
 
 (cl-defun projection-commands--get-command
     (project project-config cmd-type cmd-var &optional &key prompt (use-cache t))

@@ -58,7 +58,8 @@ SUBLOG is the name of the file that produced the log."
        (list 'projection sublog)
        (apply #'format-message msg args)
        level
-       projection-log-buffer))))
+       projection-log-buffer)))
+  nil)
 
 (provide 'projection-core-log)
 ;;; projection-core-log.el ends here
