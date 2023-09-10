@@ -42,6 +42,15 @@ otherwise it will return SHELL-COMMAND."
   "Join quoted arguments from ARGV into a shell command."
   (string-join (mapcar #'shell-quote-argument argv) " "))
 
+(defun projection--join-shell-commands (argvs)
+  "Join multiple shell commands ARGVS conditionally chaining them."
+  (string-join
+   (thread-last
+     argvs
+     (mapcar #'ensure-list)
+     (mapcar #'projection--join-shell-command))
+   " && "))
+
 (defun projection--shell-command-to-string (command)
   "Run COMMAND in a subshell and return the standard output."
   (projection--log :debug "Running shell command='%s'" command)

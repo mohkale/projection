@@ -199,6 +199,31 @@
 
 
 
+(defcustom projection-autotools-configure-options nil
+  "Options to pass to autotools configure script."
+  :type '(list (repeat (string :tag "Argument")))
+  :group 'projection-type-autotools)
+
+(defun projection-autotools-run-configure ()
+  "Configure command generator for autotools projects."
+  (projection--join-shell-commands
+   `(,(if (file-exists-p "autogen.sh")
+          "./autogen.sh"
+        "autoconf")
+     ("./configure" ,@projection-autotools-configure-options))))
+
+(defvar projection-project-type-autotools
+  (projection-type
+   :name 'autotools
+   :predicate '("configure.ac" "configure.in")
+   :configure #'projection-autotools-run-configure
+   :build     "make"
+   :install   "make install"))
+
+(add-to-list 'projection-project-types projection-project-type-autotools)
+
+
+
 (autoload 'projection-cmake-run-configure "projection-utils-cmake")
 (autoload 'projection-cmake-run-build     "projection-utils-cmake")
 (autoload 'projection-cmake-run-test      "projection-utils-cmake")
