@@ -553,6 +553,7 @@ key value pair set."
     (pcase projection-cmake-ctest-jobs
       (-1 (num-processors))
       (-2 (/ (num-processors) 2))
+      (0 nil)
       ((cl-type integer) projection-cmake-ctest-jobs)
       (_ (projection--log
           :warning "Unsupported `projection-cmake-ctest-jobs' value: %S."
