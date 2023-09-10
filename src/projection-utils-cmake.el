@@ -79,6 +79,13 @@ When BUILD-TYPE is nil fetch the presets for all build types."
       (t projection-cmake-cache-presets))
      #'projection-cmake--list-presets2)))
 
+(projection--declare-cache-var
+  'projection-cmake-presets
+  :title "CMake presets"
+  :category "CMake"
+  :description "CMake presets collection"
+  :hide t)
+
 (defun projection-cmake--list-presets2 ()
   "List CMake presets from PRESET-FILES config files."
   (projection--log :debug "Resolving available CMake presets")
@@ -269,6 +276,21 @@ Prompt for the `completing-read' session will be PROMPT."
   (projection--cache-put
    project (projection-cmake--preset-cache-var build-type) preset))
 
+(dolist (build-type projection-cmake--preset-build-types)
+  (projection--declare-cache-var
+    (projection-cmake--preset-cache-var build-type)
+    :title (format "CMake %s preset" (symbol-name build-type))
+    :category "CMake"
+    :description (concat "The CMake preset for the " (symbol-name build-type))
+    :hide t))
+
+(projection--declare-cache-var
+  (projection-cmake--preset-cache-var nil)
+  :title "CMake default preset"
+  :category "CMake"
+  :description (concat "The default CMake preset")
+  :hide t)
+
 
 
 ;; CMake build type.
@@ -306,6 +328,13 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set."
        (setq build-type nil))
      (list project build-type)))
   (projection--cache-put project 'projection-cmake-build-type build-type))
+
+(projection--declare-cache-var
+  'projection-cmake-build-type
+  :title "CMake build type"
+  :category "CMake"
+  :description "The CMake build type for this project"
+  :hide t)
 
 (defun projection-cmake--build-type (&optional project)
   "Fetch the configured build-type for the PROJECT.
@@ -354,6 +383,13 @@ This function respects `projection-cmake-cache-code-model'."
      (projection--cmake-configure-modtime-p))
     (t projection-cmake-cache-code-model))
    #'projection-cmake--file-api-code-model2))
+
+(projection--declare-cache-var
+  'projection-cmake-presets
+  :title "CMake code model"
+  :category "CMake"
+  :description "CMake file-API code-model from last configure time"
+  :hide t)
 
 (defun projection-cmake--file-api-code-model2 ()
   "Get the generated code-model object for the projection client."

@@ -57,6 +57,13 @@
     (t projection-multi-tox-cache-targets))
    #'projection-multi-tox--targets-from-file2))
 
+(projection--declare-cache-var
+  'projection-multi-tox-targets
+  :title "Multi tox targets"
+  :category "Tox"
+  :description "Tox targets associated with this project"
+  :hide t)
+
 (defun projection-multi-tox--targets-from-file2 ()
   "Read tox targets."
   (projection--log :debug "Resolving available tox targets")

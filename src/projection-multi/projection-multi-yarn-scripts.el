@@ -54,6 +54,13 @@ PACKAGE-JSON is the file that will be used to invalidate the cache of targets."
     (t projection-multi-yarn-scripts-cache-targets))
    #'projection-multi-yarn-scripts--targets-from-file2))
 
+(projection--declare-cache-var
+  'projection-multi-yarn-script-targets
+  :title "Multi YARN script targets"
+  :category "Yarn"
+  :description "Yarn script targets associated with this project"
+  :hide t)
+
 (defun projection-multi-yarn-scripts--targets-from-file2 ()
   "Read Yarn script targets."
   (projection--log :debug "Resolving available yarn script targets")

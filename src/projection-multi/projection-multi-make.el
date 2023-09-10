@@ -61,6 +61,13 @@
     (t projection-multi-make-cache-targets))
    (apply-partially #'projection-multi-make--targets-from-file2 makefile)))
 
+(projection--declare-cache-var
+  'projection-multi-make-targets
+  :title "Multi make targets"
+  :category "Make"
+  :description "Make targets associated with this project"
+  :hide t)
+
 (defun projection-multi-make--targets-from-file2 (makefile)
   "Read makefile targets from MAKEFILE."
   ;; Taken from [[https://github.com/abo-abo/helm-make/blob/ebd71e85046d59b37f6a96535e01993b6962c559/helm-make.el#L284][helm-make/helm--make-target-list-default]].

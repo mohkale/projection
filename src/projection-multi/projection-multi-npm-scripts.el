@@ -54,6 +54,13 @@ PACKAGE-JSON is the file that will be used to invalidate the cache of targets."
     (t projection-multi-npm-scripts-cache-targets))
    #'projection-multi-npm-scripts--targets-from-file2))
 
+(projection--declare-cache-var
+  'projection-multi-npm-script-targets
+  :title "Multi NPM script targets"
+  :category "NPM"
+  :description "NPM script targets associated with this project"
+  :hide t)
+
 (defun projection-multi-npm-scripts--targets-from-file2 ()
   "Read npm script targets."
   (projection--log :debug "Resolving available npm script targets")

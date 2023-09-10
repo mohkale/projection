@@ -106,6 +106,11 @@ With MUST-MATCH an error will be raised if no project type could be matched."
 
    projection-default-type))
 
+(projection--declare-cache-var
+  'type
+  :title "Project type"
+  :description "The primary type of the current project")
+
 (defun projection-project-types (root-dir &optional must-match)
   "Determine all project types matching ROOT-DIR.
 With MUST-MATCH an error will be raised if no project types could be matched."
@@ -148,6 +153,10 @@ With MUST-MATCH an error will be raised if no project types could be matched."
        (error "Could not determine any project types for %s" root-dir))
 
      (list projection-default-type))))
+
+(projection--declare-cache-var 'types
+  :title "Project types"
+  :description "All the project types matching the current project")
 
 (provide 'projection-core-match)
 

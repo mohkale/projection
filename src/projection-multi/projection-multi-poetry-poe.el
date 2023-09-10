@@ -62,6 +62,13 @@
     (t projection-multi-poetry-poe-cache-targets))
    #'projection-multi-poetry-poe--targets-from-file2))
 
+(projection--declare-cache-var
+  'projection-multi-poetry-poe-targets
+  :title "Multi Poetry poe targets"
+  :category "Poetry"
+  :description "Poetry poe targets"
+  :hide t)
+
 (defun projection-multi-poetry-poe--targets-from-file2 ()
   "Read poetry-poe targets."
   (projection--log :debug "Resolving available Poetry Poe targets")

@@ -164,6 +164,14 @@ retroactively applied to every buffer in the current project with
                      error-count)))))
     (projection--cache-put project 'hooks hook-entries projection-hook--cache)))
 
+(projection--declare-cache-var
+  'hooks
+  :title "Project hooks"
+  :category "Project hooks"
+  :description "Hooks setup for the current project"
+  :hide t
+  :cache-var 'projection-hook--cache)
+
 ;;;###autoload
 (defun projection-hook-clear (&optional no-update)
   "Clear all project hooks enabled for the current project.

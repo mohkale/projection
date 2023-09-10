@@ -53,6 +53,13 @@
     (t projection-multi-ctest-cache-targets))
    #'projection-multi-ctest--resolve-targets2))
 
+(projection--declare-cache-var
+  'projection-multi-cmake-targets
+  :title "Multi CTest command targets"
+  :category "CMake"
+  :description "CTest tests tied to this project"
+  :hide t)
+
 (defun projection-multi-ctest--resolve-targets2 ()
   "Resolve available ctest targets for a project.
 Returns a list of cons cells containing the kind of target and the target

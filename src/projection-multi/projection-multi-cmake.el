@@ -113,6 +113,13 @@ targets) with this option."
     (t projection-multi-cmake-cache-targets))
    #'projection-multi-cmake--targets-from-command2))
 
+(projection--declare-cache-var
+  'projection-multi-cmake-targets
+  :title "Multi CMake command targets"
+  :category "CMake"
+  :description "Yarn script targets associated with this project"
+  :hide t)
+
 (defun projection-multi-cmake--targets-from-command2 ()
   "Determine list of available CMake targets from the help target."
   (projection--log :debug "Resolving available CMake targets")

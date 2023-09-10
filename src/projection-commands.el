@@ -148,6 +148,13 @@ Accepts the same arguments as `%s'."
                   (symbol-name cmd-symbol)
                   (symbol-name pre-hook-symbol)))
 
+       (projection--declare-cache-var
+         ',cmd-type
+         :title ,(concat (capitalize (symbol-name cmd-type)) " command")
+         :category "Project commands"
+         :description ,(format "Command used to %s the current project"
+                               (symbol-name cmd-type)))
+
        ;; Save the just registered command to an alist so we can later reference it.
        (add-to-list 'projection-commands--registered-cmd-types
                     (list ',cmd-type #',cmd-get-symbol #',cmd-symbol) t)
