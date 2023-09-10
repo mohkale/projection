@@ -197,10 +197,12 @@ The result of this is intended to be used in a `completing-read' interface."
              (car (alist-get cand cache-vars nil nil #'string-equal)))))
         (annotation-function
          (lambda (cand)
-           (when-let* ((value (caddr (alist-get cand cache-vars nil nil #'string-equal)))
+           (when-let* ((value (cadr (alist-get cand cache-vars nil nil #'string-equal)))
                        (value-str (format "%S" value)))
              (when (> (length value-str) project--cache-vars-annotation-limit)
-               (setq value-str (concat (substring value-str 0 (- 1)) "…")))
+               (setq value-str (concat (substring value-str 0
+                                                  (1- project--cache-vars-annotation-limit))
+                                       "…")))
              (concat (propertize " " 'display `(space :align-to (- right 1 ,(length value-str))))
                      (propertize value-str 'face 'completions-annotations))))))
     (lambda (string predicate action)
