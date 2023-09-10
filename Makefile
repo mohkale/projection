@@ -51,9 +51,21 @@ clean: ## Remove build artifacts
 	    fi; \
 	done
 
-.PHONY: test
-test:
-	@echo "[test] buttercup-run-discover"
+define run-test
+	@echo "[test] buttercup-run-discover $(1)"
 	$(EMACS) \
         --eval '(push (concat default-directory "test/lib/") load-path)' \
-	    -batch -f package-initialize -L . -f buttercup-run-discover
+	    -batch -f package-initialize -L . -f buttercup-run-discover $(1)
+endef
+
+.PHONY: test
+test:
+	$(call run-test)
+
+.PHONY: test/unit
+test/unit:
+	$(call run-test,test/unit)
+
+.PHONY: test/integration
+test/integration:
+	$(call run-test,test/integration)
