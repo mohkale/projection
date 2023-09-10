@@ -142,6 +142,12 @@ Use this like so:
        (delete-directory --projection-test-directory t)
        (setq default-directory --projection-test-original-directory))
 
+     ;; Make compile synchronously block.
+     (before-each
+       (spy-on #'compile :and-call-fake
+               (lambda (command &rest _)
+                 (projection--shell-command-to-string command))))
+
      ;; Ensure any cached variables are pruned after a test finishes.
      (after-each (+projection-clear-all-cache))
 
