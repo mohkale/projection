@@ -152,6 +152,7 @@ Accepts the same arguments as `%s'."
          ',cmd-type
          :title ,(concat (capitalize (symbol-name cmd-type)) " command")
          :category "Project commands"
+         :hide t
          :description ,(format "Command used to %s the current project"
                                (symbol-name cmd-type)))
 
