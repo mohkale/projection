@@ -1,34 +1,23 @@
 ;; -*- lexical-binding: t -*-
 
 (require 'f)
-(require 'projection-types)
+
 (require 'projection-find)
+(require 'projection-core-type)
+
 (require 'projection-test-utils)
 
 (setq python-indent-guess-indent-offset-verbose nil)
 
 (describe "Projection find other file"
-  :var (original-directory
-        test-directory
-        (project-type-python-pip
+  :var ((project-type-python-pip
          (projection-type
           :name 'python-pip
           :predicate "requirements.txt"
           :test-prefix "test_"
           :test-suffix "_test")))
-  ;; Save the original directory before we run any tests.
-  (before-all
-    (setq original-directory default-directory))
-  ;; For each test change to a temporary working directory.
-  (before-each
-    (cd (setq test-directory (make-temp-file "buttercup-test-" t)))
-    (projection-reset-project-cache t))
-  ;; And change back to the original directory and delete the test directory
-  ;; after the test finishes.
-  (after-each
-    (when (file-equal-p default-directory test-directory)
-      (cd default-directory)
-      (delete-directory test-directory t)))
+
+  (+projection-test-setup)
 
   (before-each
     ;; Note: buttercup doesn't process lexical vars correctly so modifications to
@@ -42,7 +31,7 @@
     ;;   * A Makefile project with a matching header and cpp file pair in the same
     ;;   directory.
     ;;   * My Emacs being open on src/foo.h.
-    (projection-find-test--setup-project
+    (+projection-setup-project
      '("Makefile"
        ("src"
         "foo.h"
@@ -74,7 +63,7 @@
     ;;   * A Makefile project with a matching header and cpp file pair in separate
     ;;   directories.
     ;;   * My Emacs being open on src/foo.cpp.
-    (projection-find-test--setup-project
+    (+projection-setup-project
      '("Makefile"
        ("src"
         "foo.cpp"
@@ -106,7 +95,7 @@
     ;; GIVEN
     ;;   * A Makefile project with a cpp file having the same in 2 directories.
     ;;   * My Emacs being open on src/foo.cpp.
-    (projection-find-test--setup-project
+    (+projection-setup-project
      '("Makefile"
        ("src"
         "foo.cpp"
@@ -133,7 +122,7 @@
     (expect buffer-file-name :to-match "src/foo.cpp"))
 
   (it "Can jump between test and implementation files"
-    (projection-find-test--setup-project
+    (+projection-setup-project
      '("requirements.txt"
        ("src"
         "foo.py"
@@ -174,7 +163,7 @@
     ;;   * A project with a matching cpp header and implementation file but the header
     ;;   file is excluded from the project.
     ;;   * My Emacs being open on src/foo.cpp.
-    (projection-find-test--setup-project
+    (+projection-setup-project
      '("Makefile"
        ("src"
         "foo.cpp"

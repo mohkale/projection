@@ -1,7 +1,5 @@
 ;; -*- lexical-binding: t; eval: (evil-vimish-fold-mode +1) -*-
 
-(require 'projection-test-utils)
-
 (require 'projection-types)
 (require 'projection-utils)
 (require 'projection-utils-cmake)
@@ -9,23 +7,11 @@
 (require 'projection-multi-npm-scripts)
 (require 'projection-multi-yarn-scripts)
 
+(require 'projection-test-utils)
+
 (describe "Projection types"
-  :var (original-directory
-        test-directory
-        cmake-types)
-  ;; Save the original directory before we run any tests.
-  (before-all
-    (setq original-directory default-directory))
-  ;; For each test change to a temporary working directory.
-  (before-each
-    (cd (setq test-directory (make-temp-file "buttercup-test-" t)))
-    (projection-reset-project-cache t))
-  ;; And change back to the original directory and delete the test directory
-  ;; after the test finishes.
-  (after-each
-    (when (file-equal-p default-directory test-directory)
-      (cd default-directory)
-      (delete-directory test-directory t)))
+  (+projection-test-setup)
+
   ;; Make compile synchronously block.
   (before-each
     (spy-on #'compile :and-call-fake
@@ -37,7 +23,7 @@
       (setq projection-project-types (list projection-project-type-cmake))
 
       ;; Setup a simple CMake project.
-      (projection-find-test--setup-project
+      (+projection-setup-project
        '(("main.cpp" . "#include <stdio.h>
 
 int main() {
@@ -64,7 +50,7 @@ target_link_libraries(main main_lib)
       ;;   I call projection-configure-project.
       ;; THEN
       ;;   A compilation was started to configure the project.
-      (interactively-call-compile-command
+      (+expect-interactive-command-calls-compile-with
        #'projection-configure-project
        "cmake -S . -B build"))
 
@@ -78,19 +64,19 @@ target_link_libraries(main main_lib)
       ;; THEN
       ;;   A compilation was started to configure the project.
       (let ((projection-cmake-build-directory "blarg"))
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
          "cmake -S . -B blarg")))
 
     (it "Includes the configured CMake build-type"
       ;; GIVEN
       ;;   A simple CMake project where I've set the build type to Release.
-      (interactively-set-cmake-build-type "Release")
+      (+interactively-set-cmake-build-type "Release")
       ;; WHEN
       ;;   I call projection-configure-project.
       ;; THEN
       ;;   The invoked command includes the desired build type.
-      (interactively-call-compile-command
+      (+expect-interactive-command-calls-compile-with
        #'projection-configure-project
        "cmake -S . -B build -DCMAKE_BUILD_TYPE\\=Release"))
 
@@ -102,7 +88,7 @@ target_link_libraries(main main_lib)
         ;;   I call projection-configure-project.
         ;; THEN
         ;;   The invoked command includes the extra configure options.
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
          "cmake -S . -B build Foo Bar")))
 
@@ -111,7 +97,7 @@ target_link_libraries(main main_lib)
       (let ((projection-cmake-ctest-options)
             (projection-cmake-ctest-environment-variables))
         ;; WHEN/THEN
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-test-project
          "ctest --test-dir build test")))
 
@@ -121,7 +107,7 @@ target_link_libraries(main main_lib)
             (projection-cmake-ctest-environment-variables
              '(("foo" . "bar"))))
         ;; WHEN/THEN
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-test-project
          "env foo\\=bar ctest --test-dir build test")))
 
@@ -130,7 +116,7 @@ target_link_libraries(main main_lib)
       (let ((projection-cmake-ctest-options '("-foo" "-bar"))
             (projection-cmake-ctest-environment-variables))
         ;; WHEN/THEN
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-test-project
          "ctest --test-dir build -foo -bar test")))
 
@@ -145,7 +131,7 @@ target_link_libraries(main main_lib)
         (expect projection-cmake-target-backend :to-equal 'help-target)
 
         ;; WHEN
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
          "cmake -S . -B build")
 
@@ -196,7 +182,7 @@ target_link_libraries(main main_lib)
 
       (it "Constructs a CMake query file while configuring"
         ;; WHEN
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
          "cmake -S . -B build")
 
@@ -228,7 +214,7 @@ target_link_libraries(main main_lib)
       :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
             (build-presets '("buildPreset1")))
       (before-each
-        (projection-find-test--setup-project-tree
+        (+projection-setup-project-tree
          '(("CMakePresets.json" . "{
   \"version\": 6,
   \"cmakeMinimumRequired\": {
@@ -292,12 +278,12 @@ target_link_libraries(main main_lib)
           ;;   * The user was prompted once for a preset from the set configure
           ;;   presets.
           ;;   * The invoked command includes the preset option.
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset1")
 
           (expect 'completing-read :to-have-been-called-times 1)
-          (expect (get-completion-table-candidates
+          (expect (+completion-table-candidates
                    (spy-calls-args-for 'completing-read 0))
                   :to-equal configure-presets)))
 
@@ -315,12 +301,12 @@ target_link_libraries(main main_lib)
           ;;   * The user was prompted once for a preset from the set configure
           ;;   presets.
           ;;   * The invoked command includes the preset option.
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset1")
 
           (expect 'completing-read :to-have-been-called-times 1)
-          (expect (get-completion-table-candidates
+          (expect (+completion-table-candidates
                    (spy-calls-args-for 'completing-read 0))
                   :to-equal configure-presets)
 
@@ -330,8 +316,8 @@ target_link_libraries(main main_lib)
           ;;   * The user was not prompted for presets again.
           ;;   * The invoked command includes the preset option from the prior
           ;;   invocation.
-          (with-completing-read-not-called
-           (interactively-call-compile-command
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
             #'projection-configure-project
             "cmake -S . -B build --preset\\=configurePreset1"))
 
@@ -342,12 +328,12 @@ target_link_libraries(main main_lib)
           ;;   * The invoked command includes the preset option.
           (spy-on #'completing-read :and-return-value "buildPreset1")
 
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-build-project
            "cmake --build build --preset\\=buildPreset1")
 
           (expect 'completing-read :to-have-been-called-times 1)
-          (expect (get-completion-table-candidates
+          (expect (+completion-table-candidates
                    (spy-calls-args-for 'completing-read 0))
                   :to-equal build-presets)))
 
@@ -355,15 +341,15 @@ target_link_libraries(main main_lib)
         ;; GIVEN
         ;;   * A CMake project with a presets configuration.
         ;;   * I have interactively choosen an available configure preset.
-        (interactively-set-cmake-preset 'configure "configurePreset1")
+        (+interactively-set-cmake-preset 'configure "configurePreset1")
 
         ;; WHEN
         ;;   I call projection-configure-project.
         ;; THEN
         ;;   * I was not prompted for a CMake preset to use.
         ;;   * The invoked shell command references the configured preset.
-        (with-completing-read-not-called
-         (interactively-call-compile-command
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
           #'projection-configure-project
           "cmake -S . -B build --preset\\=configurePreset1")))
 
@@ -371,20 +357,20 @@ target_link_libraries(main main_lib)
         ;; GIVEN
         ;;   * A CMake project with a presets configuration.
         ;;   * I have interactively choosen an available configure preset.
-        (interactively-set-cmake-preset 'configure "configurePreset1")
+        (+interactively-set-cmake-preset 'configure "configurePreset1")
 
         ;; WHEN
         ;;   I call projection-configure-project.
         ;; THEN
         ;;   The invoked shell command references the configured preset.
-        (with-completing-read-not-called
-         (interactively-call-compile-command
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
           #'projection-configure-project
           "cmake -S . -B build --preset\\=configurePreset1"))
 
         ;; WHEN
         ;;   I call projection-cmake-set-preset and supply an empty string.
-        (interactively-set-cmake-preset 'configure "")
+        (+interactively-set-cmake-preset 'configure "")
 
         ;; WHEN
         ;;   I call projection-configure-project again.
@@ -393,12 +379,12 @@ target_link_libraries(main main_lib)
         ;;   * The invoked shell-command references the chosen preset.
         (spy-on #'completing-read :and-return-value "configurePreset2")
 
-        (interactively-call-compile-command
+        (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
          "cmake -S . -B build --preset\\=configurePreset2")
 
         (expect 'completing-read :to-have-been-called-times 1)
-        (expect (get-completion-table-candidates
+        (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
                 :to-equal configure-presets))
 
@@ -407,15 +393,15 @@ target_link_libraries(main main_lib)
         ;;   A CMake project with a presets configuration.
         ;; WHEN
         ;;   I have interactively choosen an available preset for all build types.
-        (interactively-set-cmake-preset nil "defaultPreset")
+        (+interactively-set-cmake-preset nil "defaultPreset")
 
         ;; WHEN
         ;;   I call projection-configure-project.
         ;; THEN
         ;;   * The user was not prompted for a configure preset to use.
         ;;   * The invoked shell-command references the chosen default preset.
-        (with-completing-read-not-called
-         (interactively-call-compile-command
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
           #'projection-configure-project
           "cmake -S . -B build --preset\\=defaultPreset"))
 
@@ -424,8 +410,8 @@ target_link_libraries(main main_lib)
         ;; THEN
         ;;   * The user was not prompted for a build preset to use.
         ;;   * The invoked shell-command references the chosen default preset.
-        (with-completing-read-not-called
-         (interactively-call-compile-command
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
           #'projection-build-project
           "cmake --build build --preset\\=defaultPreset")))
 
@@ -435,16 +421,16 @@ target_link_libraries(main main_lib)
         ;; WHEN
         ;;   I have interactively choosen an available preset for configure
         ;;   and then for all build types.
-        (interactively-set-cmake-preset 'configure "configurePreset1")
-        (interactively-set-cmake-preset nil "defaultPreset")
+        (+interactively-set-cmake-preset 'configure "configurePreset1")
+        (+interactively-set-cmake-preset nil "defaultPreset")
 
         ;; WHEN
         ;;   I call projection-configure-project.
         ;; THEN
         ;;   * The user was not prompted for a configure preset to use.
         ;;   * The invoked shell-command references the chosen configure preset.
-        (with-completing-read-not-called
-         (interactively-call-compile-command
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
           #'projection-configure-project
           "cmake -S . -B build --preset\\=configurePreset1"))
 
@@ -453,16 +439,16 @@ target_link_libraries(main main_lib)
         ;; THEN
         ;;   * The user was not prompted for a build preset to use.
         ;;   * The invoked shell-command references the chosen default preset.
-        (with-completing-read-not-called
-         (interactively-call-compile-command
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
           #'projection-build-project
           "cmake --build build --preset\\=defaultPreset")))
 
       (it "Never uses a preset when configured"
         ;; Try run configure
         (let ((projection-cmake-preset 'disable))
-          (with-completing-read-not-called
-           (interactively-call-compile-command
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
             #'projection-configure-project
             "cmake -S . -B build"))))
 
@@ -478,7 +464,7 @@ target_link_libraries(main main_lib)
           ;;   invoked compilation command.
           (spy-on #'completing-read :and-return-value "configurePreset1")
 
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset1")
 
@@ -491,7 +477,7 @@ target_link_libraries(main main_lib)
           ;;   invoked compilation command again.
           (spy-on #'completing-read :and-return-value "configurePreset2")
 
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset2")
 
@@ -507,22 +493,22 @@ target_link_libraries(main main_lib)
           ;; THEN
           ;;   The user was not prompted and no preset was included in the invoked
           ;;   shell command.
-          (with-completing-read-not-called
-           (interactively-call-compile-command
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
             #'projection-configure-project
             "cmake -S . -B build"))
 
           ;; WHEN
           ;;   I have interactively choosen an available configure preset.
-          (interactively-set-cmake-preset 'configure "configurePreset1")
+          (+interactively-set-cmake-preset 'configure "configurePreset1")
 
           ;; WHEN
           ;;   I call projection-configure-project again.
           ;; THEN
           ;;   The user was not prompted and the invoked shell command references
           ;;   the chosen preset.
-          (with-completing-read-not-called
-           (interactively-call-compile-command
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
             #'projection-configure-project
             "cmake -S . -B build --preset\\=configurePreset1"))))
 
@@ -537,8 +523,8 @@ target_link_libraries(main main_lib)
           ;; THEN
           ;;   The user was not prompted and the invoked shell command used the
           ;;   only available build preset.
-          (with-completing-read-not-called
-           (interactively-call-compile-command
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
             #'projection-build-project
             "cmake --build build --preset\\=buildPreset1"))
 
@@ -550,7 +536,7 @@ target_link_libraries(main main_lib)
           ;;   * The invoked command includes the preset option.
           (spy-on #'completing-read :and-return-value "configurePreset1")
 
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset1")
 
@@ -562,7 +548,7 @@ target_link_libraries(main main_lib)
           ;;   * The user was not prompted for presets again.
           ;;   * The invoked command includes the preset option from the prior
           ;;   invocation.
-          (interactively-call-compile-command
+          (+expect-interactive-command-calls-compile-with
            #'projection-configure-project
            "cmake -S . -B build --preset\\=configurePreset1")
 
@@ -585,7 +571,7 @@ target_link_libraries(main main_lib)
     (before-each
       (setq projection-project-types (list projection-project-type-npm))
 
-      (projection-find-test--setup-project
+      (+projection-setup-project
        '(("package.json" . "{
   \"name\": \"projection-test\",
   \"version\": \"1.0.0\",
@@ -629,7 +615,7 @@ target_link_libraries(main main_lib)
     (before-each
       (setq projection-project-types (list projection-project-type-yarn))
 
-      (projection-find-test--setup-project
+      (+projection-setup-project
        '(("package.json" . "{
   \"name\": \"projection-test\",
   \"version\": \"1.0.0\",
@@ -679,5 +665,4 @@ question Which command would you like to run?: ")))
                     ("yarn:baz" . "yarn run baz")
                     ("yarn:foo" . "yarn run foo"))))
 
-        (expect #'shell-command :to-have-been-called-times 1))))
-    )
+        (expect #'shell-command :to-have-been-called-times 1)))))

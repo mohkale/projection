@@ -1,24 +1,16 @@
 ;; -*- lexical-binding: t -*-
 
 (require 'f)
+
 (require 'projection-hook)
 
 (describe "Projection hook"
-  :var (projection-project-types dir default-directory projection-hook--cache)
-  (before-all
-    (setq dir (make-temp-file "buttercup-test-" t)
-          default-directory dir))
-  (after-all (delete-directory dir t))
+  (+projection-test-setup)
 
   (before-each
-    (setq projection-project-types nil)
-    (projection-reset-project-cache projection-hook--cache)
     (push (projection-type :name 'foo :predicate ".foo")
           projection-project-types)
-    (dolist (it (list ".foo" "foo" "bar" "baz"))
-      (f-touch it))
-    (call-process "git" nil nil nil "init")
-    (call-process "git" nil nil nil "commit" "-a" "-m" ""))
+    (+projection-setup-project '(".foo" "foo" "bar" "baz")))
 
   (describe "Hook cache"
     :var (result)
@@ -103,11 +95,10 @@
       ;; THEN
       ;;   * projection disabled read-only-mode in each project buffer.
       ;;   * projection enabled auto-fill-mode in each project buffer.
-      (expect 'projection-hook--execute-hook-list :to-have-been-called-times 8)
+      (expect 'projection-hook--execute-hook-list :to-have-been-called-times 10)
       (expect 'projection-hook--execute-hook-list
               :to-have-been-called-with
               "disabling" '(read-only-mode) 'silent)
       (expect 'projection-hook--execute-hook-list
               :to-have-been-called-with
               "enabling" '(auto-fill-mode) 'silent))))
-

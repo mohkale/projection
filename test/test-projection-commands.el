@@ -2,28 +2,27 @@
 
 (require 'f)
 (require 'vc)
+
 (require 'projection-commands)
 
-(describe "Projection registered commands"
-  :var (projection-project-types dir default-directory
+(require 'projection-test-utils)
+
+(describe "Projection commands"
+  :var (projection-project-types
         project-type-foo
         (real-call-interactively (symbol-function #'call-interactively)))
-  ;; Create a temporary project directory that will be re-used across each run.
-  (before-all
-    (setq dir (make-temp-file "buttercup-test-" t)
-          default-directory dir))
-  (after-all (delete-directory dir t))
+  (+projection-test-setup)
 
   ;; Register a new project type that matches the current project directory.
   (before-each
-    (setq
-     project-type-foo  (projection-type :name 'foo :predicate ".foo" :run "foo")
-     projection-project-types (list project-type-foo))
+    (setq project-type-foo (projection-type :name 'foo :predicate ".foo" :run "foo")
+          projection-project-types (list project-type-foo))
+
     (f-touch ".git")
     (f-touch ".foo"))
 
   ;; Bust the project cache for each test-case, it isn't needed for tests.
-  (after-each (projection-reset-project-cache 'all-projects))
+  (after-each (+projection-clear-all-cache))
 
   (describe "Project compile commands"
     (before-each
@@ -84,7 +83,7 @@
         ;;   could be found.
         (expect (funcall real-call-interactively #'projection-commands-package-project)
               :to-throw 'projection-command-error
-              (list (format "No project type matching project %s/ found and the default \
+              (list (format "No project type matching project %s found and the default \
 project-type does not support the command: package"
                           default-directory)))))
 
@@ -124,7 +123,8 @@ project-type does not support the command: package"
       ;;   * The cached command for the run task for the current project is
       ;;   equal to the command we just ran.
       (expect 'read-shell-command :to-have-been-called-with
-              (format "[%s] Run project: " (file-name-nondirectory default-directory))
+              (format "[%s] Run project: "
+                      (file-name-nondirectory (string-remove-suffix "/" default-directory)))
               "foo"
               'compile-history)
       (expect 'compile :to-have-been-called-with "result")
@@ -141,13 +141,14 @@ project-type does not support the command: package"
       ;; WHEN
       ;;   I try to run the run command for the current project with prompt.
       (let ((current-prefix-arg '(4)))
-       (funcall real-call-interactively #'projection-commands-run-project))
+        (funcall real-call-interactively #'projection-commands-run-project))
 
       ;; THEN
       ;;   Prompt used the initial input from the cached command value and
       ;;   passed it through to compile.
       (expect 'read-shell-command :to-have-been-called-with
-              (format "[%s] Run project: " (file-name-nondirectory default-directory))
+              (format "[%s] Run project: "
+                      (file-name-nondirectory (string-remove-suffix "/" default-directory)))
               "result"
               'compile-history)
       (expect 'compile :to-have-been-called-with "prompted"))
