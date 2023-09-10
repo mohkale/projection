@@ -159,12 +159,13 @@ Accepts the same arguments as `%s'."
        (add-to-list 'projection-commands--registered-cmd-types
                     (list ',cmd-type #',cmd-get-symbol #',cmd-symbol) t)
 
-       (defun ,cmd-get-symbol (project &rest rest)
+       (defun ,cmd-get-symbol (project project-type &rest rest)
          ,(format "Get the %s command for PROJECT
 When PROMPT interactively ask the user to set the %s command."
                   (symbol-name cmd-type) (symbol-name cmd-type))
          (let* ((default-directory (project-root project))
-                (project-type (projection-project-type (project-root project))))
+                (project-type (or project-type
+                                  (projection-project-type (project-root project)))))
            (apply #'projection-commands--get-command
             project project-type ',cmd-type ,cmd-var-symbol rest)))
 
@@ -179,7 +180,7 @@ When PROMPT interactively ask the user to set the %s command."
          ,(format "Run COMMAND as the %s command for PROJECT." (symbol-name cmd-type))
          (interactive
           (let* ((project (projection--current-project))
-                 (command (,cmd-get-symbol project :prompt current-prefix-arg)))
+                 (command (,cmd-get-symbol project nil :prompt current-prefix-arg)))
             (list project command)))
          (projection-commands--run-command-for-type
           project command ',cmd-type ',pre-hook-symbol ',post-hook-symbol)))))

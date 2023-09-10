@@ -70,7 +70,7 @@ prefix:project-type:project-command."
         (dolist (cmd-type-config projection-commands--registered-cmd-types)
           (when-let ((cmd
                       (projection-commands--ignore-no-command
-                       (funcall (cadr cmd-type-config) project :use-cache nil))))
+                       (funcall (cadr cmd-type-config) project project-config :use-cache nil))))
             (push `(,(concat project-type-prefix ":"
                              (symbol-name (oref project-config name)) ":"
                              (symbol-name (car cmd-type-config)))
