@@ -250,6 +250,7 @@ Prompt for the `completing-read' session will be PROMPT."
   '(configure build test package workflow)
   "List of build-types that support CMake preset configurations.")
 
+;;;###autoload
 (defun projection-cmake-set-preset (project build-type preset)
   "Set CMake preset for BUILD-TYPE to PRESET for PROJECT."
   (interactive
