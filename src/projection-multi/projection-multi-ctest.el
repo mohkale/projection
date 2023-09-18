@@ -54,7 +54,7 @@
    #'projection-multi-ctest--resolve-targets2))
 
 (projection--declare-cache-var
-  'projection-multi-cmake-targets
+  'projection-multi-ctest-targets
   :title "Multi CTest command targets"
   :category "CMake"
   :description "CTest tests tied to this project"
