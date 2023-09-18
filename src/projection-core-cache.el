@@ -92,7 +92,8 @@ When CACHE is given retrieve the entry from CACHE instead of
           (setcdr existing
                   (append `((,key . ,value)
                             ,@(cdr existing)))))
-      (puthash project-key `((,key . ,value)) cache))))
+      (puthash project-key `((,key . ,value)) cache)))
+  value)
 
 (defun projection--cache-remove (project key &optional cache)
   "Remove the entry for KEY in PROJECT.

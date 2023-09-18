@@ -86,14 +86,17 @@
 ;; Go should take higher precedence than Make because Go projects often have a
 ;; Makefile.
 
+(autoload 'projection-golang-run-build "projection-utils-golang")
+(autoload 'projection-golang-run-test  "projection-utils-golang")
+
 (defvar projection-project-type-golang
   (projection-type
    :name 'golang
    :predicate (defun projection-golang-project-p ()
                 (or (file-exists-p "go.mod")
                     (file-expand-wildcards "*.go")))
-   :build "go build"
-   :test "go test ./..."
+   :build #'projection-golang-run-build
+   :test #'projection-golang-run-test
    :test-suffix "_test"))
 
 (add-to-list 'projection-project-types projection-project-type-golang)

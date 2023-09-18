@@ -72,7 +72,9 @@ Use this like so:
 
 (defun +completion-table-candidates (call-args)
   (let ((completion-table (cadr call-args)))
-    (funcall completion-table "" nil t)))
+    (if (functionp completion-table)
+        (funcall completion-table "" nil t)
+      completion-table)))
 
 (defmacro +with-completing-read-not-called (&rest body)
   "Run BODY with the assertion that `completing-read' was not called."
