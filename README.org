@@ -10,6 +10,8 @@
 
 Project type support for Emacs builtin ~project.el~.
 
+#+html: <img src="https://user-images.githubusercontent.com/23294780/268754300-152f0bcc-7423-4bf7-a52c-350cc52f69d3.gif" align="middle" />
+
 This Emacs package provides a [[https://github.com/bbatsov/projectile][Projectile]] like project management library atop Emacs
 built-in ~project.el~. The end goal is to provide a stable and reliable out-of-the-box
 project management experience for as many project types as possible while supporting
@@ -118,8 +120,6 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
    compilation commands and fallback to basic shell-commands when those aren't
    defined. See [[file:src/projection-types.el][projection-types]] for how this is configured.
 
-#+html: <img src="https://user-images.githubusercontent.com/23294780/241755558-cadd9e02-aafc-4f2f-8ca2-58b72affcf27.gif" alt="Demo" align="left" title="Projection Commands Demo" class="img" />
-
 ** Projection Hook
    Provides a more general purpose parallel to ~projectile-toggle-project-read-only~.
    With this you can hook certain functions (Example: ~read-only-mode~) into a project
@@ -161,6 +161,8 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
 #+html: <a href="https://melpa.org/#/projection-multi"><img alt="MELPA" src="https://melpa.org/packages/projection-multi-badge.svg"/></a>
 #+html: </p>
 
+#+html: <img src="https://user-images.githubusercontent.com/23294780/268754522-1f561a67-d32f-4c1c-9d07-a93d9c368190.png" alt="Demo" align="middle" title="Projection Multi Demo" class="img" />
+
    [[https://github.com/mohkale/compile-multi][compile-multi]] is a multi target interface to =M-x compile=. It allows you to
    configure and interactively select compilation targets based on arbitrary
    projects.
@@ -188,8 +190,6 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
    - Poetry Poe
    - Tox
 
-
-#+html: <img src="https://user-images.githubusercontent.com/23294780/241755864-b9bc5e13-b78d-426d-9598-a3f535554e5c.gif" alt="Demo" align="left" title="Projection Commands Demo" class="img" />
 
 ** Projection multi-embark
 #+html: <p align="right">
