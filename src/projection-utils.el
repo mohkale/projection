@@ -70,20 +70,17 @@ otherwise it will return SHELL-COMMAND."
 
 (defun projection--shell-command-to-string-1 (command)
   "Run COMMAND in a subshell and return (stdout . stderr)."
-  (let ((stderr nil)
-        (stdout nil))
-    (setq stdout
-          (let ((stderr-buffer
-                 (generate-new-buffer " *projection-stderr*" 'inhibit-buffer-hooks)))
-            (unwind-protect
-                (with-output-to-string
-                  (with-current-buffer standard-output
-                    (shell-command command standard-output stderr-buffer))
-                  (setq stderr
-                        (with-current-buffer stderr-buffer
-                          (buffer-substring-no-properties (point-min) (point-max)))))
-              (kill-buffer stderr-buffer))))
-    (cons stdout stderr)))
+  (let ((stderr-buffer (generate-new-buffer " *projection-stderr*" 'inhibit-buffer-hooks)))
+    (unwind-protect
+        (cons
+         (with-output-to-string
+           (with-current-buffer standard-output
+             (save-window-excursion
+               (shell-command command standard-output stderr-buffer))))
+
+         (with-current-buffer stderr-buffer
+           (buffer-substring-no-properties (point-min) (point-max))))
+      (kill-buffer stderr-buffer))))
 
 (defmacro projection--with-shell-command-buffer (command &rest body)
   "Run BODY in a temporary buffer with the output of COMMAND."
