@@ -32,6 +32,27 @@ If NO-ERROR then don't raise an error if the project could not be resolved."
     (unless no-error
       (user-error "No project found relative to %s" default-directory))))
 
+(defun projection--expand-file-name-in-project (file-name remote)
+  "Helper to expand a file-name in the current project.
+FILE-NAME is a path to a file optionally under the current project.
+If absolute it is returned as is otherwise it is prefixed with the path
+to the current project root. REMOTE is an option configuring the behaviour
+of remote projects. When set to a path that is considered a remote TRAMP
+component used to reach the current project. Otherwise when set to a truthy
+value we prefix the remote component of the current project."
+  (let ((project-root
+         (or (when-let ((project
+                         (projection--current-project 'no-error)))
+               (project-root project))
+             default-directory)))
+    (if (file-name-absolute-p file-name)
+        (concat
+         (cond
+          ((stringp remote) remote)
+          (remote (file-remote-p project-root)))
+         file-name)
+      (expand-file-name file-name project-root))))
+
 (defun projection--prompt (prompt project &rest format-args)
   "Generate a prompt string for PROJECT with PROMPT.
 FORMAT-ARGS will be used to format PROMPT if provided."

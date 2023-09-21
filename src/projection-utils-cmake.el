@@ -506,16 +506,9 @@ including any remote components of the project when
 `projection-cmake-build-directory-remote' is configured correctly."
   (when projection-cmake-build-directory
     (if expand
-        (let ((project (projection--current-project 'no-error)))
-          (if (file-name-absolute-p projection-cmake-build-directory)
-              (concat
-               (cond
-                ((stringp projection-cmake-build-directory-remote)
-                 projection-cmake-build-directory-remote)
-                (projection-cmake-build-directory-remote
-                 (file-remote-p (project-root project))))
-               projection-cmake-build-directory)
-            (expand-file-name projection-cmake-build-directory (project-root project))))
+        (projection--expand-file-name-in-project
+         projection-cmake-build-directory
+         projection-cmake-build-directory-remote)
       projection-cmake-build-directory)))
 
 (defun projection--cmake-command (&optional build-type target)
