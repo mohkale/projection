@@ -157,11 +157,7 @@ targets) with this option."
        (mapcar (apply-partially #'alist-get 'targets))
        (apply #'append)
        (mapcar (apply-partially #'alist-get 'name))
-       (append (list (make-hash-table :test 'equal)))
-       (cl-reduce (lambda (hash-table target)
-                    (puthash target t hash-table)
-                    hash-table))
-       (hash-table-keys))
+       (projection--uniquify))
      projection-multi-cmake--code-model-meta-targets)))
 
 

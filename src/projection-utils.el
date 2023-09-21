@@ -99,6 +99,20 @@ otherwise it will return SHELL-COMMAND."
 
 
 
+;; Collections
+
+(defun projection--uniquify (collection)
+  "Helper to remove duplicates from COLLECTION."
+  (thread-last
+    collection
+    (append (list (make-hash-table :test 'equal)))
+    (cl-reduce (lambda (hash-table target)
+                 (puthash target t hash-table)
+                 hash-table))
+    (hash-table-keys)))
+
+
+
 ;; General
 
 (defun projection--all-files-exists (&rest files)
