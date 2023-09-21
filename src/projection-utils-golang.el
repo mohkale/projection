@@ -131,6 +131,14 @@ test."
 
 ;; Golang compilation commands.
 
+(defun projection-golang-run-run ()
+  "Run command generator for Golang projects."
+  (projection--join-shell-command
+   `("go"
+     "run"
+     ,@(when-let ((package (projection-golang--package)))
+         (list package)))))
+
 (defun projection-golang-run-build ()
   "Build command generator for Golang projects."
   (projection--join-shell-command

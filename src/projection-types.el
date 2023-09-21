@@ -87,17 +87,25 @@
 ;; Makefile.
 
 (autoload 'projection-golang-run-build "projection-utils-golang")
+(autoload 'projection-golang-run-run   "projection-utils-golang")
 (autoload 'projection-golang-run-test  "projection-utils-golang")
 
 (defvar projection-project-type-golang
   (projection-type
    :name 'golang
    :predicate (defun projection-golang-project-p ()
-                (or (file-exists-p "go.mod")
+                (or (file-exists-p "go.work")
+                    (file-exists-p "go.mod")
                     (file-expand-wildcards "*.go")))
+   :configure "go get"
    :build #'projection-golang-run-build
    :test #'projection-golang-run-test
-   :test-suffix "_test"))
+   :run #'projection-golang-run-run
+   :test-suffix "_test"
+   :compile-multi-targets
+   '(("go:mod:tidy" . "go mod tidy")
+     ("go:mod:verify" . "go mod verify")
+     ("go:mod:why" . "go mod why"))))
 
 (add-to-list 'projection-project-types projection-project-type-golang)
 
