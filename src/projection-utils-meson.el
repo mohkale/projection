@@ -21,6 +21,11 @@
 
 ;;; Code:
 
+(require 'projection-core-cache)
+(require 'projection-core-misc)
+(require 'projection-core-type)
+(require 'projection-utils)
+
 (defgroup projection-type-meson nil
   "Projection Meson project type."
   :group 'projection-types)
@@ -35,30 +40,88 @@
   :type 'string
   :group 'projection-type-meson)
 
+(defcustom projection-meson-build-directory-remote t
+  "Assert whether build directory is on the same host as the project.
+This option only has significance when `projection-meson-build-directory' is
+absolute. It has the same purpose and usage as
+`projection-cmake-build-directory-remote'."
+  :type '(choice
+          (const t :tag "Reuse the remote component of the project")
+          (string :tag "Specify the remote component directly")
+          (const nil :tag "Do not do remote matching, the build area will always be local"))
+  :group 'projection-type-meson)
+
+
+
+(defun projection-meson--build-directory (&optional expand)
+  "Fetch the path for the meson build directory.
+When EXPAND return the absolute path to the build directory."
+  (if expand
+      (projection--expand-file-name-in-project
+       projection-meson-build-directory
+       projection-meson-build-directory-remote)
+    projection-meson-build-directory))
+
+;; See: https://github.com/mesonbuild/meson/blob/master/docs/markdown/IDE-integration.md
+(defconst projection-meson--cache-file "meson-info/intro-projectinfo.json"
+  "Path within build directory for a file regenerated on meson configuration.")
+
+(defun projection--meson-configure-modtime-p ()
+  "Helper function to return the time Meson was last configured."
+  (projection--cache-modtime-predicate
+   (expand-file-name
+    projection-meson--cache-file
+    (projection-meson--build-directory 'expand))))
+
+
+
+;;;###autoload (autoload 'projection-meson-set-build-type "projection-utils-meson" nil 'interactive)
+(projection--declare-project-type-option 'build-type
+  :project 'projection-meson
+  :options '("plain" "debug" "debugoptimized" "release")
+  :category "Meson"
+  :title "Meson build type"
+  :custom-group 'project-type-meson
+  :custom-type '(choice (const nil :tag "Do not supply")
+                        (string :tag "Build type value"))
+  :custom-docstring "Build type for a Meson project.")
+
 
 
 ;; Meson compilation commands.
 
 (defun projection-meson-get-configure-command ()
   "Generate a shell command to run a Meson configure."
-  (concat "meson setup "
-          (shell-quote-argument projection-meson-build-directory)))
+  (projection--join-shell-command
+   `("meson"
+     "setup"
+     ,(projection-meson--build-directory)
+     "--reconfigure"                                        ; Meson requires this to allow reconfiguring.
+     ,@(when-let ((build-type (projection-meson--build-type)))
+         (list (concat "--buildtype=" build-type))))))
 
-(defun projection-meson-get-build-command ()
-  "Generate a shell command to run a Meson build."
-  (concat "meson compile -C "
-          (shell-quote-argument projection-meson-build-directory)))
+(defun projection-meson-get-build-command (&optional target)
+  "Generate a shell command to run a Meson build optionally for TARGET."
+  (projection--join-shell-command
+   `("meson"
+     "compile"
+     "-C" ,(projection-meson--build-directory)
+     ,@(when target (list target)))))
 
 (defun projection-meson-get-test-command ()
   "Generate a shell command to run a Meson test."
-  (concat "meson test -C "
-          (shell-quote-argument projection-meson-build-directory)))
+  (projection--join-shell-command
+   `("meson"
+     "test"
+     "-C" ,(projection-meson--build-directory))))
 
 (defun projection-meson-get-install-command ()
   "Generate a shell command to run a Meson installation."
-  (format "meson install -C %s --destdir %s"
-          (shell-quote-argument projection-meson-build-directory)
-          (shell-quote-argument projection-meson-install-directory)))
+  (projection--join-shell-command
+   `("meson"
+     "install"
+     "-C" ,(projection-meson--build-directory)
+     "--destdir" ,projection-meson-install-directory)))
 
 (provide 'projection-utils-meson)
 ;;; projection-utils-meson.el ends here
