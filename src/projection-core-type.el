@@ -170,6 +170,70 @@ Used when no other registered type matches the current project."
 
 
 
+(cl-defmacro projection--declare-project-type-option
+    (option &key project options category title
+            custom-group custom-type custom-docstring)
+  "Helper to declare boilerplate for OPTION in project-type PROJECT.
+This function will declare a defcustom, interactive setter and non-interactive
+getter for OPTION. OPTIONS is the set of available values for the option.
+CATEGORY and TITLE have the same semantics as they do in
+`projection--declare-cache-var'. CUSTOM-GROUP, CUSTOM-TYPE, and
+CUSTOM-DOCSTRING are attached to the defcustom.
+
+The end result of this macro invocation is a custom variable called
+PROJECT-OPTION, a getter called PROJECT--OPTION, and a setter called
+PROJECT-set-OPTION."
+  (declare (indent defun))
+  (setq option (eval option) category (eval category) title (eval title) project (eval project))
+
+  (let ((cache-var (intern (concat (symbol-name project) "-" (symbol-name option))))
+        (history-var (intern (concat (symbol-name project) "--" (symbol-name option) "-history")))
+        (set-func-var (intern (concat (symbol-name project) "-set-" (symbol-name option))))
+        (get-func-var (intern (concat (symbol-name project) "--" (symbol-name option)))))
+    `(progn
+       (defcustom ,cache-var nil
+         ,custom-docstring
+         :type ,custom-type
+         :group ,custom-group)
+
+       (defvar ,history-var nil
+         ,(format "History variable for `%s'." set-func-var))
+
+       (defun ,set-func-var (project value)
+         ,(format "Set `%s' for the current project." cache-var)
+         (interactive
+          (let* ((project (projection--current-project))
+                 (value
+                  (completing-read
+                   (projection--prompt ,(format "Set %s: " title) project)
+                   (seq-uniq
+                    (append (ensure-list (,get-func-var project)) ,options)
+                    #'string-equal)
+                   nil nil nil (quote ,history-var))))
+            (when (string-empty-p value)
+              (setq value nil))
+            (list project value)))
+         (projection--cache-put project (quote ,cache-var) value))
+
+       (projection--declare-cache-var
+         (quote ,cache-var)
+         :title ,title
+         :category ,category
+         :description ,(format "The %s for this project" title)
+         :hide t)
+
+       (defun ,get-func-var (&optional project)
+         ,(format "Fetch the value of `%s' for PROJECT.
+PROJECT will default to the current project when not set."
+                  cache-var)
+         (or
+          (when-let ((project (or project
+                                  (projection--current-project 'no-error))))
+            (projection--cache-get project (quote ,cache-var)))
+          ,cache-var)))))
+
+
+
 (cl-defmethod projection--project-info (project (_project-type (eql t)))
   "Determine an alist of configurations for the PROJECT-TYPE in PROJECT."
   ;; The default list just contains the project directory.
