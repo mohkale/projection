@@ -71,8 +71,8 @@
   (projection--with-shell-command-buffer
     (projection--join-shell-command
      `("meson" "introspect"
-       "--targets" "--force-object-output"
-       ,(projection-meson--build-directory)))
+       ,(projection-meson--build-directory)
+       "--targets" "--force-object-output"))
     (condition-case err
         (let ((json-array-type 'list)) (json-read))
       (json-readtable-error

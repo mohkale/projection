@@ -23,7 +23,7 @@ RUN apt-get update \
   | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
  && apt-add-repository "deb https://apt.kitware.com/ubuntu/ focal main" \
  && apt-get update \
- && apt-get install -y cmake npm yarn ninja-build golang \
+ && apt-get install -y cmake npm yarn ninja-build golang meson \
  && apt-get clean \
  && npm install -g yarn \
  && rm -rf /var/lib/apt/lists/*

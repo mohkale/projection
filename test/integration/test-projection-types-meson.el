@@ -3,6 +3,7 @@
 (require 'projection-types)
 (require 'projection-utils)
 (require 'projection-utils-meson)
+(require 'projection-multi-meson)
 
 (require 'projection-test-utils)
 
@@ -63,4 +64,16 @@ test('simple test', exe)")
     (+expect-interactive-command-calls-compile-with
      #'projection-configure-project
      "meson setup builddir --buildtype\\=plain"))
+
+  (describe "Multi compile"
+    (it "Can extract available build targets"
+      ;; GIVEN
+      (call-interactively #'projection-configure-project)
+      ;; WHEN
+      (let ((targets (projection-multi-meson-targets)))
+        ;; THEN
+        (expect targets :to-equal
+                '(("meson:clean" . "meson compile -C builddir --clean")
+                  ("meson:myexe" . "meson compile -C builddir myexe")))))
+    )
   )
