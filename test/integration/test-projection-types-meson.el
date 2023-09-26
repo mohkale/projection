@@ -27,7 +27,7 @@ test('simple test', exe)")
   (it "Can configure/build/test/install a Meson project"
     (+expect-interactive-command-calls-compile-with
      #'projection-configure-project
-     "meson setup builddir --reconfigure")
+     "meson setup builddir")
 
     (+expect-interactive-command-calls-compile-with
      #'projection-build-project
@@ -41,11 +41,20 @@ test('simple test', exe)")
      #'projection-install-project
      "meson install -C builddir --destdir install"))
 
+  (it "Can reconfigure when build directory already exists"
+    ;; GIVEN
+    (mkdir (projection-meson--build-directory) 'parents)
+
+    ;; WHEN/THEN
+    (+expect-interactive-command-calls-compile-with
+     #'projection-configure-project
+     "meson setup builddir --reconfigure"))
+
   (it "Adapts configuring to the configured Meson build directory"
     (let ((projection-meson-build-directory "blarg"))
       (+expect-interactive-command-calls-compile-with
        #'projection-configure-project
-       "meson setup blarg --reconfigure")))
+       "meson setup blarg")))
 
   (it "Includes the configured Meson build-type"
     ;; GIVEN
@@ -53,5 +62,5 @@ test('simple test', exe)")
     ;; WHEN/THEN
     (+expect-interactive-command-calls-compile-with
      #'projection-configure-project
-     "meson setup builddir --reconfigure --buildtype\\=plain"))
+     "meson setup builddir --buildtype\\=plain"))
   )

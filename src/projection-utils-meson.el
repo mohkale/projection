@@ -92,13 +92,17 @@ When EXPAND return the absolute path to the build directory."
 
 (defun projection-meson-get-configure-command ()
   "Generate a shell command to run a Meson configure."
-  (projection--join-shell-command
-   `("meson"
-     "setup"
-     ,(projection-meson--build-directory)
-     "--reconfigure"                                        ; Meson requires this to allow reconfiguring.
-     ,@(when-let ((build-type (projection-meson--build-type)))
-         (list (concat "--buildtype=" build-type))))))
+  (let ((expanded-build-directory (projection-meson--build-directory 'expand)))
+    (projection--join-shell-command
+     `("meson"
+       "setup"
+       ,(projection-meson--build-directory)
+       ;; Meson requires this to allow reconfiguring but versions older than 2.0
+       ;; will fail the first time configuration when this flag is supplied.
+       ,@(when (file-exists-p expanded-build-directory)
+           (list "--reconfigure"))
+       ,@(when-let ((build-type (projection-meson--build-type)))
+           (list (concat "--buildtype=" build-type)))))))
 
 (defun projection-meson-get-build-command (&optional target)
   "Generate a shell command to run a Meson build optionally for TARGET."
