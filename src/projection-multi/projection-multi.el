@@ -151,10 +151,12 @@ result of each function should be deterministic."
          (compile-multi-config triggers))
     ;; KLUDGE: We can't cache any functions until they've been loaded.
     (require 'projection-utils-cmake)
+    (require 'projection-utils-meson)
     (projection-multi--cache-command-helpers
         (project-current
          projection-cmake--preset
          projection-cmake--build-directory
+         projection-meson--build-directory
          projection-cmake-ctest--jobs)
       (call-interactively #'compile-multi))))
 
