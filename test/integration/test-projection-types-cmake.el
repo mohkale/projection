@@ -5,9 +5,6 @@
 (require 'projection-utils)
 (require 'projection-utils-cmake)
 
-(require 'projection-multi-npm-scripts)
-(require 'projection-multi-yarn-scripts)
-
 (require 'projection-test-utils)
 
 (describe "Project type CMake"
