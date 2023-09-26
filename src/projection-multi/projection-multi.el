@@ -156,7 +156,9 @@ result of each function should be deterministic."
         (project-current
          projection-cmake--preset
          projection-cmake--build-directory
+         projection-cmake--file-api-code-model
          projection-meson--build-directory
+         projection-meson--code-model
          projection-cmake-ctest--jobs)
       (call-interactively #'compile-multi))))
 
