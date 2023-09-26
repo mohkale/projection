@@ -38,7 +38,7 @@
 (defcustom projection-multi-npm-scripts-cache-targets 'auto
   "When true cache the NPM script targets of each project."
   :type '(choice
-          (const auto :tag "Cache targets and invalidate cache automatically")
+          (const :tag "Cache targets and invalidate cache automatically" auto)
           (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-npm-scripts)
 

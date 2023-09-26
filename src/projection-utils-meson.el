@@ -46,9 +46,9 @@ This option only has significance when `projection-meson-build-directory' is
 absolute. It has the same purpose and usage as
 `projection-cmake-build-directory-remote'."
   :type '(choice
-          (const t :tag "Reuse the remote component of the project")
+          (const :tag "Reuse the remote component of the project" t)
           (string :tag "Specify the remote component directly")
-          (const nil :tag "Do not do remote matching, the build area will always be local"))
+          (const :tag "Do not do remote matching, the build area will always be local" nil))
   :group 'projection-type-meson)
 
 
@@ -82,7 +82,7 @@ When EXPAND return the absolute path to the build directory."
   :category "Meson"
   :title "Meson build type"
   :custom-group 'project-type-meson
-  :custom-type '(choice (const nil :tag "Do not supply")
+  :custom-type '(choice (const :tag "Do not supply" nil)
                         (string :tag "Build type value"))
   :custom-docstring "Build type for a Meson project.")
 

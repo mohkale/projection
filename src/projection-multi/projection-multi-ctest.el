@@ -32,7 +32,7 @@
 (defcustom projection-multi-ctest-cache-targets 'auto
   "When true cache the CMake ctest targets of each project."
   :type '(choice
-          (const auto :tag "Cache targets and invalidate cache automatically")
+          (const :tag "Cache targets and invalidate cache automatically" auto)
           (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-cmake)
 

@@ -37,11 +37,11 @@
 This is used to infer the package argument passed to go tools like build or
 test."
   :type '(choice
-          (const prompt-once :tag "Ask user to set package and then reuse chosen package")
-          (const prompt-once-when-multiple
-                 :tag "Ask user to set package and then cache only when there are multiple")
-          (const all :tag "Always use ./...")
-          (const nil :tag "Never supply an explicit package arg")
+          (const :tag "Ask user to set package and then reuse chosen package" prompt-once)
+          (const :tag "Ask user to set package and then cache only when there are multiple"
+                 prompt-once-when-multiple)
+          (const :tag "Always use ./..." all)
+          (const :tag "Never supply an explicit package arg" nil)
           (string :tag "Explicit package path"))
   :group 'projection-type-golang)
 

@@ -35,10 +35,11 @@
 (defcustom projection-cmake-target-backend 'help-target
   "Which data source to query CMake targets from."
   :type '(choice
-          (const help-target :tag "Call the help target and parse the output.")
-          (const code-model :tag "Use the CMake file api and parse the targets from the codemodel.
+          (const :tag "Call the help target and parse the output." help-target)
+          (const :tag "Use the CMake file api and parse the targets from the codemodel.
 This is a much more reliable source for querying CMake targets because it doesn't include any phony
-targets CMake might add just for build framework integrations or dummy tasks like directory creation."))
+targets CMake might add just for build framework integrations or dummy tasks like directory creation."
+                 code-model))
   :group 'projection-type-cmake)
 
 
@@ -52,7 +53,7 @@ targets CMake might add just for build framework integrations or dummy tasks lik
 (defcustom projection-cmake-cache-presets 'auto
   "When true cache the list of CMake presets associated with each project."
   :type '(choice
-          (const auto :tag "Cache presets and invalidate cache automatically")
+          (const :tag "Cache presets and invalidate cache automatically" auto)
           (boolean :tag "Always/Never cache presets"))
   :group 'projection-type-cmake)
 
@@ -131,15 +132,15 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
   :type
   '(choice
     (choice (string :tag "Default preset")
-            (const nil :tag "No default preset"))
-    (const disable :tag "Do not supply a preset value to CMake")
-    (const silent :tag "Return configured preset non-interactively")
+            (const :tag "No default preset" nil))
+    (const :tag "Do not supply a preset value to CMake" disable)
+    (const :tag "Return configured preset non-interactively" silent)
 
-    (const prompt-always :tag "Always prompt for which preset to use")
-    (const prompt-once
-           :tag "Always prompt and then reuse the chosen preset")
-    (const prompt-once-when-multiple
-           :tag "Prompt when multiple presets available and then reuse the chosen preset")
+    (const :tag "Always prompt for which preset to use" prompt-always)
+    (const :tag "Always prompt and then reuse the chosen preset"
+           prompt-once)
+    (const :tag "Prompt when multiple presets available and then reuse the chosen preset"
+           prompt-once-when-multiple)
     (alist :key-type (symbol :tag "Build type")
            :value-type (sexp :tag "One of the other possible preset values")))
   :group 'projection-type-cmake)
@@ -300,7 +301,7 @@ Prompt for the `completing-read' session will be PROMPT."
   :options '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
   :category "CMake"
   :title "CMake build type"
-  :custom-type '(choice (const nil :tag "Do not supply")
+  :custom-type '(choice (const :tag "Do not supply" nil)
                         (string :tag "Build type value"))
   :custom-group 'projection-type-cmake
   :custom-docstring "Build type for a CMake project.
@@ -315,7 +316,7 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set.")
 (defcustom projection-cmake-cache-code-model 'auto
   "When true cache the CMake code-model of each project."
   :type '(choice
-          (const auto :tag "Cache targets and invalidate cache automatically")
+          (const :tag "Cache targets and invalidate cache automatically" auto)
           (boolean :tag "Always/Never cache targets"))
   :group 'projection-type-cmake)
 
@@ -444,9 +445,9 @@ When set to true projection will prefix the absolute build directory path
 with the remote part of the project. This is done automatically when the
 build path is relative."
   :type '(choice
-          (const t :tag "Reuse the remote component of the project")
+          (const :tag "Reuse the remote component of the project" t)
           (string :tag "Specify the remote component directly")
-          (const nil :tag "Do not do remote matching, the build area will always be local"))
+          (const :tag "Do not do remote matching, the build area will always be local" nil))
   :group 'projection-type-cmake)
 
 (defcustom projection-cmake-configure-options nil

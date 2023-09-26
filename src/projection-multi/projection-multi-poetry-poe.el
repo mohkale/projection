@@ -37,7 +37,7 @@
 (defcustom projection-multi-poetry-poe-cache-targets 'auto
   "When true cache the Poetry poe targets of each project."
   :type '(choice
-          (const auto :tag "Cache targets and invalidate cache automatically")
+          (const :tag "Cache targets and invalidate cache automatically" auto)
           (boolean :tag "Always/Never cache targets"))
   :group 'projection-multi-poetry-poe)
 
