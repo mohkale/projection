@@ -120,7 +120,8 @@ This function respects `projection-meson-cache-code-model'."
      `("meson" "introspect"
        ,(projection-meson--build-directory)
        "--force-object-output"
-       "--targets"))
+       "--targets"
+       "--tests"))
     (condition-case err
         (let ((json-array-type 'list)) (json-read))
       (json-readtable-error
@@ -152,12 +153,14 @@ This function respects `projection-meson-cache-code-model'."
      "-C" ,(projection-meson--build-directory)
      ,@(when target (list target)))))
 
-(defun projection-meson-get-test-command ()
-  "Generate a shell command to run a Meson test."
+(defun projection-meson-get-test-command (&optional name)
+  "Generate a shell command to run a Meson test.
+When NAME is provided the test command will only run the test with NAME."
   (projection--join-shell-command
    `("meson"
      "test"
-     "-C" ,(projection-meson--build-directory))))
+     "-C" ,(projection-meson--build-directory)
+     ,@(when name (list "--" name)))))
 
 (defun projection-meson-get-install-command ()
   "Generate a shell command to run a Meson installation."

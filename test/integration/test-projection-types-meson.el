@@ -74,6 +74,7 @@ test('simple test', exe)")
         ;; THEN
         (expect targets :to-equal
                 '(("meson:clean" . "meson compile -C builddir --clean")
-                  ("meson:myexe" . "meson compile -C builddir myexe")))))
+                  ("meson:myexe" . "meson compile -C builddir myexe")
+                  ("meson:test:simple test" . "meson test -C builddir -- simple\\ test")))))
     )
   )

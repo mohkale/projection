@@ -38,6 +38,13 @@
     (alist-get 'targets)
     (mapcar (apply-partially #'alist-get 'name))))
 
+(defun projection-multi-meson--tests ()
+  "Read Meson tests."
+  (thread-last
+    (projection-meson--code-model)
+    (alist-get 'tests)
+    (mapcar (apply-partially #'alist-get 'name))))
+
 
 
 ;;;###autoload
@@ -51,7 +58,11 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    (cl-loop
     for target in (projection-multi-meson--targets)
     collect (cons (concat project-type ":" target)
-                  (projection-meson-get-build-command target)))))
+                  (projection-meson-get-build-command target)))
+   (cl-loop
+    for target in (projection-multi-meson--tests)
+    collect (cons (concat project-type ":test:" target)
+                  (projection-meson-get-test-command target)))))
 
 ;;;###autoload
 (defun projection-multi-compile-meson ()
