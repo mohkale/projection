@@ -133,7 +133,7 @@ target_link_libraries(main main_lib)
     (describe "Multi compile"
       :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib")))
 
-      (it "Extracts CMake targets from the Make backends"
+      (it "Extracts CMake targets from the Ninja backends"
         ;; GIVEN
         (let ((projection-cmake-configure-options '("-GNinja")))
           (call-interactively #'projection-configure-project)
@@ -144,7 +144,7 @@ target_link_libraries(main main_lib)
             (dolist (expected-target expected-targets)
               (expect expected-target :to-be-in cmake-targets)))))
 
-      (it "Extracts CMake targets from the Ninja backends"
+      (it "Extracts CMake targets from the Make backends"
         ;; GIVEN
         (let ((projection-cmake-configure-options '("-GUnix Makefiles")))
           (call-interactively #'projection-configure-project)
