@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(require 'json)
+
 (require 'projection-core-cache)
 (require 'projection-core-misc)
 (require 'projection-core-type)
