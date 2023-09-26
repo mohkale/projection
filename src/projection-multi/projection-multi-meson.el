@@ -31,52 +31,12 @@
 (require 'projection-multi)
 (require 'projection-types)
 
-(defgroup projection-multi-meson nil
-  "Helpers for `compile-multi' and Meson projects."
-  :group 'projection-multi)
-
-(defcustom projection-multi-meson-cache-targets 'auto
-  "When true cache the Meson targets of each project."
-  :type '(choice
-          (const :tag "Cache targets and invalidate cache automatically" auto)
-          (boolean :tag "Always/Never cache targets"))
-  :group 'projection-multi-meson)
-
 (defun projection-multi-meson--targets ()
-  "Read Meson targets respecting project cache."
-  (projection--cache-get-with-predicate
-   (projection--current-project 'no-error)
-   'projection-multi-meson-targets
-   (pcase projection-multi-meson-cache-targets
-    ('auto (projection--meson-configure-modtime-p))
-    (_ projection-multi-meson-cache-targets))
-   #'projection-multi-meson--targets2))
-
-(projection--declare-cache-var
-  'projection-multi-meson-targets
-  :title "Multi Meson targets"
-  :category "Meson"
-  :description "Multi Meson command targets"
-  :hide t)
-
-(defun projection-multi-meson--targets2 ()
   "Read Meson targets."
   (thread-last
-    (projection-multi-meson--parse-targets)
+    (projection-meson--code-model)
     (alist-get 'targets)
     (mapcar (apply-partially #'alist-get 'name))))
-
-(defun projection-multi-meson--parse-targets ()
-  "Query targets metadata from Meson."
-  (projection--with-shell-command-buffer
-    (projection--join-shell-command
-     `("meson" "introspect"
-       ,(projection-meson--build-directory)
-       "--targets" "--force-object-output"))
-    (condition-case err
-        (let ((json-array-type 'list)) (json-read))
-      (json-readtable-error
-       (projection--log :error "error while querying Meson targets %s." (cdr err))))))
 
 
 

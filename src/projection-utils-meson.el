@@ -88,6 +88,46 @@ When EXPAND return the absolute path to the build directory."
 
 
 
+(defcustom projection-meson-cache-code-model 'auto
+  "When true cache the Meson code-model of each project."
+  :type '(choice
+          (const :tag "Cache model and invalidate cache automatically" auto)
+          (boolean :tag "Always/Never cache code-model"))
+  :group 'projection-meson)
+
+(defun projection-meson--code-model ()
+  "Query the current Meson projects code-model.
+This function respects `projection-meson-cache-code-model'."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-multi-meson-code-model
+   (pcase projection-meson-cache-code-model
+     ('auto (projection--meson-configure-modtime-p))
+     (_ projection-meson-cache-code-model))
+   #'projection-meson--parse-code-model2))
+
+(projection--declare-cache-var
+  'projection-multi-meson-code-model
+  :title "Meson code model"
+  :category "Meson"
+  :description "Meson build configuration"
+  :hide t)
+
+(defun projection-meson--parse-code-model2 ()
+  "Query the current Meson projects code-model."
+  (projection--with-shell-command-buffer
+    (projection--join-shell-command
+     `("meson" "introspect"
+       ,(projection-meson--build-directory)
+       "--force-object-output"
+       "--targets"))
+    (condition-case err
+        (let ((json-array-type 'list)) (json-read))
+      (json-readtable-error
+       (projection--log :error "error while querying Meson targets %s." (cdr err))))))
+
+
+
 ;; Meson compilation commands.
 
 (defun projection-meson-get-configure-command ()
