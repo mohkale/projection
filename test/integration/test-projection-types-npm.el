@@ -3,6 +3,7 @@
 (require 'projection-types)
 
 (require 'projection-test-utils)
+(require 'projection-multi-npm-scripts)
 
 (describe "Project type NPM"
   (+projection-test-setup)

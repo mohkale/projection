@@ -3,6 +3,7 @@
 (require 'projection-types)
 
 (require 'projection-test-utils)
+(require 'projection-multi-yarn-scripts)
 
 (describe "Project type Yarn"
   (+projection-test-setup)
