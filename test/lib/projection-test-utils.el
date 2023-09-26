@@ -122,6 +122,13 @@ Use this like so:
 
   (expect 'completing-read :to-have-been-called-times 1))
 
+(defun +interactively-set-meson-build-type (build-type)
+  (spy-on #'completing-read :and-return-value build-type)
+
+  (call-interactively #'projection-meson-set-build-type)
+
+  (expect 'completing-read :to-have-been-called-times 1))
+
 
 
 (defmacro +projection--cache-set (variable value)
