@@ -106,7 +106,7 @@ This function respects `projection-meson-cache-code-model'."
    (pcase projection-meson-cache-code-model
      ('auto (projection--meson-configure-modtime-p))
      (_ projection-meson-cache-code-model))
-   #'projection-meson--parse-code-model2))
+   #'projection-meson--code-model2))
 
 (projection--declare-cache-var
   'projection-multi-meson-code-model
@@ -115,7 +115,7 @@ This function respects `projection-meson-cache-code-model'."
   :description "Meson build configuration"
   :hide t)
 
-(defun projection-meson--parse-code-model2 ()
+(defun projection-meson--code-model2 ()
   "Query the current Meson projects code-model."
   (projection--with-shell-command-buffer
     (projection--join-shell-command
