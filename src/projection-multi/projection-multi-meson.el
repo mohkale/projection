@@ -39,7 +39,7 @@
     (mapcar (apply-partially #'alist-get 'name))))
 
 (defun projection-multi-meson--tests ()
-  "Read Meson tests."
+  "Read Meson test targets."
   (thread-last
     (projection-meson--code-model)
     (alist-get 'tests)
