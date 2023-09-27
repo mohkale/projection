@@ -142,5 +142,17 @@ REMOVE-TYPES is a list of project types to stop associating with PROJECT."
     concat ": "
     concat value)))
 
+
+
+(defun projection--shell-command (project cmd)
+  "Variant of `project-shell-command' to run CMD in PROJECT."
+  ;; (interactive
+  ;;  (let ((project (projection--current-project)))
+  ;;    (list project
+  ;;          (read-shell-command
+  ;;           (projection--prompt "Shell command: " project)))))
+  (let ((default-directory (project-root project)))
+    (funcall-interactively #'shell-command cmd)))
+
 (provide 'projection-core-commands)
 ;;; projection-core-commands.el ends here

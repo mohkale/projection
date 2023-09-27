@@ -26,6 +26,7 @@
 (require 'projection-core-cache)
 (require 'projection-core-misc)
 (require 'projection-core-type)
+(require 'projection-core-commands)
 (require 'projection-utils)
 
 (defgroup projection-type-meson nil
@@ -90,6 +91,23 @@ When EXPAND return the absolute path to the build directory."
 
 
 
+(defun projection-meson--introspect (targets)
+  "Run projection introspect and return the parsed output.
+TARGETS are specific commands to pass to meson introspect and determines what
+the Meson backend will return."
+  (projection--with-shell-command-buffer
+    (projection--join-shell-command
+     `("meson" "introspect"
+       ,(projection-meson--build-directory)
+       "--force-object-output"
+       ,@targets))
+    (condition-case err
+        (let ((json-array-type 'list)) (json-read))
+      (json-readtable-error
+       (projection--log :error "error while querying Meson targets %s." (cdr err))))))
+
+
+
 (defcustom projection-meson-cache-code-model 'auto
   "When true cache the Meson code-model of each project."
   :type '(choice
@@ -106,7 +124,7 @@ This function respects `projection-meson-cache-code-model'."
    (pcase projection-meson-cache-code-model
      ('auto (projection--meson-configure-modtime-p))
      (_ projection-meson-cache-code-model))
-   #'projection-meson--code-model2))
+   (apply-partially #'projection-meson--introspect '("--targets" "--tests"))))
 
 (projection--declare-cache-var
   'projection-multi-meson-code-model
@@ -115,19 +133,123 @@ This function respects `projection-meson-cache-code-model'."
   :description "Meson build configuration"
   :hide t)
 
-(defun projection-meson--code-model2 ()
-  "Query the current Meson projects code-model."
-  (projection--with-shell-command-buffer
-    (projection--join-shell-command
-     `("meson" "introspect"
-       ,(projection-meson--build-directory)
-       "--force-object-output"
-       "--targets"
-       "--tests"))
-    (condition-case err
-        (let ((json-array-type 'list)) (json-read))
-      (json-readtable-error
-       (projection--log :error "error while querying Meson targets %s." (cdr err))))))
+
+
+;; Meson project build options.
+
+;; See https://mesonbuild.com/Configuring-a-build-directory.html
+;; and https://mesonbuild.com/Build-options.html
+
+(defun projection-meson--build-options ()
+  "Query build options for the current Meson build directory."
+  (thread-last
+    (projection-meson--introspect '("--buildoptions"))
+    (alist-get 'buildoptions)
+    ;; Emacs doesn't have a nice interface for modifying collections of values
+    ;; such as adding or removing from an array. For now we just skip over these.
+    (seq-filter (lambda (props)
+                  (not (equal (alist-get 'type props)
+                              "array"))))))
+
+(defvar projection-meson--build-option-history nil)
+
+(defconst projection-meson--build-option-annotation-limit 60
+  "Maximum size of an annotation for `projection-meson--build-option-choose'.")
+
+(defun projection-meson--build-option-choose (prompt build-options)
+  "Choose a Meson build option from BUILD-OPTIONS interactively with PROMPT.
+Build options should be a collection of build options queried from the Meson
+backend."
+  (let* ((build-option-alist
+          (cl-loop for it in build-options
+                   collect (cons (alist-get 'name it) it)))
+         (annotation-function
+          (lambda (cand)
+            (when-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
+                        (desc (alist-get 'description props)))
+              ;; TODO: Unify annotation function commonality.
+              (when (> (length desc) projection-meson--build-option-annotation-limit)
+                (setq desc (concat (substring desc 0
+                                              (1- projection-meson--build-option-annotation-limit))
+                                   "…")))
+              (concat (propertize
+                       " " 'display
+                       `(space :align-to (- right 1 ,(length desc))))
+                      (propertize desc 'face 'completions-annotations)))))
+         (completion-table
+          (lambda (str pred action)
+            (if (eq action 'metadata)
+                `(metadata (annotation-function . ,annotation-function))
+              (complete-with-action action build-option-alist str pred))))
+         (build-option
+          (completing-read
+           prompt
+           completion-table
+           nil 'require-match nil
+           'projection-meson--build-option-history)))
+    (alist-get build-option build-option-alist nil nil #'string-equal)))
+
+(defvar projection-meson--build-option-value-history nil)
+
+(cl-defgeneric projection-meson--build-option-read (type prompt props)
+  "Helper to read a new value for build-option PROPS of type TYPE with PROMPT."
+  (ignore type prompt)
+  (error "Cannot read build option with unknown type: %S" props))
+
+(cl-defmethod projection-meson--build-option-read ((_type (eql combo)) prompt props)
+  "Helper to read a new value for build-option PROPS of type combo with PROMPT."
+  (completing-read
+   prompt
+   (alist-get 'choices props)
+   nil 'require-match nil 'projection-meson--build-option-value-history
+   (alist-get 'value props)))
+
+(cl-defmethod projection-meson--build-option-read ((_type (eql boolean)) prompt _props)
+  "Helper to read a new value for build-option PROPS of type bool with PROMPT."
+  (if (yes-or-no-p prompt) "true" "false"))
+
+(cl-defmethod projection-meson--build-option-read ((_type (eql integer)) prompt props)
+  "Helper to read a new value for build-option PROPS of type integer with PROMPT."
+  (number-to-string
+   (read-number
+    prompt
+    (alist-get 'value props)
+    'projection-meson--build-option-value-history)))
+
+(cl-defmethod projection-meson--build-option-read ((_type (eql string)) prompt props)
+  "Helper to read a new value for build-option PROPS of type string with PROMPT."
+  (read-string
+   prompt
+   nil
+   (alist-get 'value props)
+   'projection-meson--build-option-value-history))
+
+;;;###autoload
+(defun projection-meson-set-build-option (project option value)
+  "Interactively set a Meson build-option OPTION for PROJECT to VALUE."
+  (interactive
+   (let ((project (projection--current-project))
+         (build-options (projection-meson--build-options))
+         build-option option-value)
+     (unless build-options
+       (error "Failed to query any project options for %S" project))
+     ;; (message "%S" build-options)
+     (setq build-option (projection-meson--build-option-choose
+                         (projection--prompt "Set build option: " project)
+                         build-options)
+           option-value (projection-meson--build-option-read
+                         (intern (alist-get 'type build-option))
+                         (projection--prompt "Set Meson build option `%s': "
+                                             project (alist-get 'name build-option))
+                         build-option))
+     (list project (alist-get 'name build-option) option-value)))
+  (projection--shell-command
+   project
+   (projection--join-shell-command
+    `("meson"
+      "configure"
+      ,(projection-meson--build-directory)
+      "-D" ,(concat option "=" value)))))
 
 
 
@@ -135,17 +257,17 @@ This function respects `projection-meson-cache-code-model'."
 
 (defun projection-meson-get-configure-command ()
   "Generate a shell command to run a Meson configure."
-  (let ((expanded-build-directory (projection-meson--build-directory 'expand)))
-    (projection--join-shell-command
-     `("meson"
-       "setup"
-       ,(projection-meson--build-directory)
-       ;; Meson requires this to allow reconfiguring but versions older than 2.0
-       ;; will fail the first time configuration when this flag is supplied.
-       ,@(when (file-exists-p expanded-build-directory)
-           (list "--reconfigure"))
-       ,@(when-let ((build-type (projection-meson--build-type)))
-           (list (concat "--buildtype=" build-type)))))))
+  (projection--join-shell-command
+   `("meson"
+     "setup"
+     ,(projection-meson--build-directory)
+     ;; Meson requires this to allow reconfiguring but versions older than 2.0
+     ;; will fail the first time configuration when this flag is supplied.
+     ,@(when-let* ((build-directory (projection-meson--build-directory 'expand))
+                   (build-directory-exists (file-exists-p build-directory)))
+         (list "--reconfigure"))
+     ,@(when-let ((build-type (projection-meson--build-type)))
+         (list (concat "--buildtype=" build-type))))))
 
 (defun projection-meson-get-build-command (&optional target)
   "Generate a shell command to run a Meson build optionally for TARGET."
