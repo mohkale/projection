@@ -163,6 +163,13 @@ backend."
   (let* ((build-option-alist
           (cl-loop for it in build-options
                    collect (cons (alist-get 'name it) it)))
+         (group-function
+          (lambda (cand transform)
+            (if transform cand
+              (if-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
+                        (section (alist-get 'section props)))
+                  (concat (capitalize section) " options")
+                "Unknown options"))))
          (annotation-function
           (lambda (cand)
             (when-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
@@ -179,7 +186,9 @@ backend."
          (completion-table
           (lambda (str pred action)
             (if (eq action 'metadata)
-                `(metadata (annotation-function . ,annotation-function))
+                `(metadata
+                  (annotation-function . ,annotation-function)
+                  (group-function . ,group-function))
               (complete-with-action action build-option-alist str pred))))
          (build-option
           (completing-read
