@@ -23,6 +23,7 @@
 ;;; Code:
 
 (require 'project)
+(require 's)
 
 (require 'projection-core-misc)
 
@@ -199,11 +200,9 @@ The result of this is intended to be used in a `completing-read' interface."
         (annotation-function
          (lambda (cand)
            (when-let* ((value (cadr (alist-get cand cache-vars nil nil #'string-equal)))
-                       (value-str (format "%S" value)))
-             (when (> (length value-str) projection--cache-vars-annotation-limit)
-               (setq value-str (concat (substring value-str 0
-                                                  (1- projection--cache-vars-annotation-limit))
-                                       "…")))
+                       (value-str (s-truncate projection--cache-vars-annotation-limit
+                                              (format "%S" value)
+                                              "…")))
              (concat (propertize " " 'display `(space :align-to (- right 1 ,(length value-str))))
                      (propertize value-str 'face 'completions-annotations))))))
     (lambda (string predicate action)

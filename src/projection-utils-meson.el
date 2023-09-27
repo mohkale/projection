@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'json)
+(require 's)
 
 (require 'projection-core-cache)
 (require 'projection-core-misc)
@@ -173,12 +174,10 @@ backend."
          (annotation-function
           (lambda (cand)
             (when-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
-                        (desc (alist-get 'description props)))
+                        (desc (alist-get 'description props))
+                        (desc (s-truncate projection-meson--build-option-annotation-limit
+                                          desc "…")))
               ;; TODO: Unify annotation function commonality.
-              (when (> (length desc) projection-meson--build-option-annotation-limit)
-                (setq desc (concat (substring desc 0
-                                              (1- projection-meson--build-option-annotation-limit))
-                                   "…")))
               (concat (propertize
                        " " 'display
                        `(space :align-to (- right 1 ,(length desc))))
