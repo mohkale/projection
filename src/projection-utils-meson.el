@@ -22,12 +22,12 @@
 ;;; Code:
 
 (require 'json)
-(require 's)
 
 (require 'projection-core-cache)
 (require 'projection-core-misc)
 (require 'projection-core-type)
 (require 'projection-core-commands)
+(require 'projection-core-completion)
 (require 'projection-utils)
 
 (defgroup projection-type-meson nil
@@ -154,9 +154,6 @@ This function respects `projection-meson-cache-code-model'."
 
 (defvar projection-meson--build-option-history nil)
 
-(defconst projection-meson--build-option-annotation-limit 60
-  "Maximum size of an annotation for `projection-meson--build-option-choose'.")
-
 (defun projection-meson--build-option-choose (prompt build-options)
   "Choose a Meson build option from BUILD-OPTIONS interactively with PROMPT.
 Build options should be a collection of build options queried from the Meson
@@ -172,16 +169,12 @@ backend."
                   (concat (capitalize section) " options")
                 "Unknown options"))))
          (annotation-function
-          (lambda (cand)
-            (when-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
-                        (desc (alist-get 'description props))
-                        (desc (s-truncate projection-meson--build-option-annotation-limit
-                                          desc "…")))
-              ;; TODO: Unify annotation function commonality.
-              (concat (propertize
-                       " " 'display
-                       `(space :align-to (- right 1 ,(length desc))))
-                      (propertize desc 'face 'completions-annotations)))))
+          (projection-completion--annotation-function
+           :key-function (lambda (cand)
+                           (thread-last
+                             (assoc cand build-option-alist)
+                             (cdr)
+                             (alist-get 'description)))))
          (completion-table
           (lambda (str pred action)
             (if (eq action 'metadata)

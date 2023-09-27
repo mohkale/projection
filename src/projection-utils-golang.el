@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'projection-core-cache)
+(require 'projection-core-completion)
 (require 'projection-utils)
 
 (defgroup projection-type-golang nil
@@ -90,12 +91,8 @@ test."
   (setq packages (append '(("*All*" . "./...")) packages))
 
   (let* ((annotation-function
-          (lambda (cand)
-            (when-let ((value (alist-get cand packages nil nil #'string-equal)))
-              (concat (propertize
-                       " " 'display
-                       `(space :align-to (- right 1 ,(length value))))
-                      (propertize value 'face 'completions-annotations)))))
+          (projection-completion--annotation-function
+           :key-function (lambda (cand) (cdr (assoc cand packages)))))
          (group-function
           (lambda (cand transform)
             (if transform cand

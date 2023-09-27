@@ -23,8 +23,8 @@
 ;;; Code:
 
 (require 'project)
-(require 's)
 
+(require 'projection-core-completion)
 (require 'projection-core-misc)
 
 (defmacro projection--define-cache (symbol &optional docstring)
@@ -188,9 +188,6 @@ The result of this is intended to be used in a `completing-read' interface."
               (push (list title category value (car cache-config) cache) result))))))
     (nreverse result)))
 
-(defconst projection--cache-vars-annotation-limit 40
-  "Maximum size of an annotation for `projection--cache-vars-completion-table'.")
-
 (defun projection--cache-vars-completion-table (cache-vars)
   "Generate a completion-table for reading CACHE-VARS."
   (let ((group-function
@@ -198,13 +195,12 @@ The result of this is intended to be used in a `completing-read' interface."
            (if transform cand
              (car (alist-get cand cache-vars nil nil #'string-equal)))))
         (annotation-function
-         (lambda (cand)
-           (when-let* ((value (cadr (alist-get cand cache-vars nil nil #'string-equal)))
-                       (value-str (s-truncate projection--cache-vars-annotation-limit
-                                              (format "%S" value)
-                                              "…")))
-             (concat (propertize " " 'display `(space :align-to (- right 1 ,(length value-str))))
-                     (propertize value-str 'face 'completions-annotations))))))
+         (projection-completion--annotation-function
+          :key-function (lambda (cand)
+                          (thread-last
+                            (assoc cand cache-vars)
+                            (cdr)
+                            (format "%S"))))))
     (lambda (string predicate action)
       (if (eq action 'metadata)
           `(metadata
