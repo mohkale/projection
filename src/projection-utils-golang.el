@@ -90,23 +90,21 @@ test."
   "Interactively read a golang package from PACKAGES for PROJECT."
   (setq packages (append '(("*All*" . "./...")) packages))
 
-  (let* ((annotation-function
-          (projection-completion--annotation-function
-           :key-function (lambda (cand) (cdr (assoc cand packages)))))
-         (group-function
-          (lambda (cand transform)
-            (if transform cand
-              (if (string-prefix-p "*" cand) "Builtin" "Package"))))
+  (let* ((completion-table
+          (projection-completion--completion-table
+           :candidates packages
+           :category 'projection-golang-packages
+           :annotation-function
+           (projection-completion--annotation-function
+            :key-function (lambda (cand) (cdr (assoc cand packages))))
+           :group-function
+           (lambda (cand transform)
+             (if transform cand
+               (if (string-prefix-p "*" cand) "Builtin" "Package")))))
          (package
           (completing-read
            (projection--prompt "Set Golang package: " project)
-           (lambda (string predicate action)
-             (if (eq action 'metadata)
-                 `(metadata
-                   (category . projection-golang-packages)
-                   (annotation-function . ,annotation-function)
-                   (group-function . ,group-function))
-               (complete-with-action action packages string predicate))))))
+           completion-table)))
     (or (alist-get package packages nil nil #'string-equal)
         package)))
 

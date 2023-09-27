@@ -22,6 +22,7 @@
 
 ;;; Code:
 
+(require 'projection-core-completion)
 (require 'projection-core)
 (require 'recentf)
 
@@ -50,10 +51,9 @@
         (expand-file-name
          (completing-read
           (projection--prompt "Open recent file: " project)
-          (lambda (str pred action)
-            (if (eq action 'metadata)
-                `(metadata (category . project-file))
-              (complete-with-action action recent-project-files str pred)))
+          (projection-completion--completion-table
+           :candidates recent-project-files
+           :category 'project-file)
           nil t)
          (project-root project))
       (user-error "No recent-files found in the current project"))))

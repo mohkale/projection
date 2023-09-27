@@ -24,6 +24,7 @@
 ;;; Code:
 
 (require 'projection-core)
+(require 'projection-core-completion)
 
 (defgroup projection-hook nil
   "Setup hooks for all files in a project."
@@ -135,10 +136,9 @@ retroactively applied to every buffer in the current project with
      ;; TODO: Auto enable any functions that are already enabled.
      (completing-read-multiple
       (projection--prompt "Project hook: " (projection--current-project))
-      (lambda (str pred action)
-        (if (eq action 'metadata)
-            '(metadata (category . function))
-          (complete-with-action action projection-hook-functions str pred)))
+      (projection-completion--completion-table
+       :candidates projection-hook-functions
+       :category 'function)
       nil t))
     current-prefix-arg))
 

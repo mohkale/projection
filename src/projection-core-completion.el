@@ -37,5 +37,23 @@ KEY-FUNCTION will be used to query the annotation for each candidate."
                  `(space :align-to (- right 1 ,(length annotation))))
                 (propertize annotation 'face 'completions-annotations))))))
 
+(cl-defun projection-completion--completion-table
+    (&key candidates category annotation-function group-function
+                cycle-sort-function display-sort-function)
+  "Construct a completion-table for CANDIDATES.
+CATEGORY, ANNOTATION-FUNCTION, GROUP-FUNCTION, CYCLE-SORT-FUNCTION, and
+DISPLAY-SORT-FUNCTION are optional metadata for the completion-table."
+  (let ((metadata
+         `(metadata
+           ,@(when category `((category . ,category)))
+           ,@(when annotation-function `((annotation-function . ,annotation-function)))
+           ,@(when group-function `((group-function . ,group-function)))
+           ,@(when cycle-sort-function `((cycle-sort-function . ,cycle-sort-function)))
+           ,@(when display-sort-function `((display-sort-function . ,display-sort-function))))))
+    (lambda (string predicate action)
+      (if (eq action 'metadata)
+          metadata
+        (complete-with-action action candidates string predicate)))))
+
 (provide 'projection-core-completion)
 ;;; projection-core-completion.el ends here

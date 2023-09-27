@@ -159,29 +159,24 @@ This function respects `projection-meson-cache-code-model'."
 Build options should be a collection of build options queried from the Meson
 backend."
   (let* ((build-option-alist
-          (cl-loop for it in build-options
-                   collect (cons (alist-get 'name it) it)))
-         (group-function
-          (lambda (cand transform)
-            (if transform cand
-              (if-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
-                        (section (alist-get 'section props)))
-                  (concat (capitalize section) " options")
-                "Unknown options"))))
-         (annotation-function
-          (projection-completion--annotation-function
-           :key-function (lambda (cand)
-                           (thread-last
-                             (assoc cand build-option-alist)
-                             (cdr)
-                             (alist-get 'description)))))
+          (cl-loop for it in build-options collect (cons (alist-get 'name it) it)))
          (completion-table
-          (lambda (str pred action)
-            (if (eq action 'metadata)
-                `(metadata
-                  (annotation-function . ,annotation-function)
-                  (group-function . ,group-function))
-              (complete-with-action action build-option-alist str pred))))
+          (projection-completion--completion-table
+           :candidates build-option-alist
+           :annotation-function
+           (projection-completion--annotation-function
+            :key-function (lambda (cand)
+                            (thread-last
+                              (assoc cand build-option-alist)
+                              (cdr)
+                              (alist-get 'description))))
+           :group-function
+           (lambda (cand transform)
+             (if transform cand
+               (if-let* ((props (alist-get cand build-option-alist nil nil #'string-equal))
+                         (section (alist-get 'section props)))
+                   (concat (capitalize section) " options")
+                 "Unknown options")))))
          (build-option
           (completing-read
            prompt

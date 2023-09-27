@@ -207,12 +207,10 @@ See related function for a description of SELECT-INTERACTIVELY."
         (expand-file-name
          (completing-read
           (projection--prompt "Find other file: " project)
-          (lambda (str pred action)
-            (if (eq action 'metadata)
-                `(metadata (category . file)
-                           (cycle-sort-function . ,#'identity)
-                           (display-sort-function . ,#'identity))
-              (complete-with-action action files-not-current str pred)))
+          (projection-completion--completion-table
+           :candidates files-not-current
+           :cycle-sort-function #'identity
+           :display-sort-function #'identity)
           nil t nil 'file-name-history))))
      ;; Select the next file relative to the current one
      (t

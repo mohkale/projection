@@ -25,6 +25,7 @@
 (require 'json)
 
 (require 'projection-core)
+(require 'projection-core-completion)
 (require 'projection-core-commands)
 (require 'projection-core-log)
 (require 'projection-utils)
@@ -154,15 +155,12 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
 (defun projection-cmake--read-preset (prompt presets)
   "Interactively select a preset from PRESETS.
 Prompt for the `completing-read' session will be PROMPT."
-  (let* ((annotation-function
-          (projection-completion--annotation-function
-           :key-function (lambda (cand) (cdr (assoc cand presets)))))
-         (completion-table
-          (lambda (str pred action)
-            (if (eq action 'metadata)
-                `(metadata
-                  (annotation-function . ,annotation-function))
-              (complete-with-action action presets str pred))))
+  (let* ((completion-table
+          (projection-completion--completion-table
+           :candidates presets
+           :annotation-function
+           (projection-completion--annotation-function
+            :key-function (lambda (cand) (cdr (assoc cand presets))))))
          (result (completing-read prompt completion-table)))
     (unless (string-empty-p result)
       result)))

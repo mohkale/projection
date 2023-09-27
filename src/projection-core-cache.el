@@ -190,24 +190,20 @@ The result of this is intended to be used in a `completing-read' interface."
 
 (defun projection--cache-vars-completion-table (cache-vars)
   "Generate a completion-table for reading CACHE-VARS."
-  (let ((group-function
-         (lambda (cand transform)
-           (if transform cand
-             (car (alist-get cand cache-vars nil nil #'string-equal)))))
-        (annotation-function
-         (projection-completion--annotation-function
-          :key-function (lambda (cand)
-                          (thread-last
-                            (assoc cand cache-vars)
-                            (cdr)
-                            (format "%S"))))))
-    (lambda (string predicate action)
-      (if (eq action 'metadata)
-          `(metadata
-            (category . projection-cache-vars)
-            (annotation-function . ,annotation-function)
-            (group-function . ,group-function))
-        (complete-with-action action cache-vars string predicate)))))
+  (projection-completion--completion-table
+   :candidates cache-vars
+   :category 'projection-cache-vars
+   :annotation-function
+   (projection-completion--annotation-function
+    :key-function (lambda (cand)
+                    (thread-last
+                      (assoc cand cache-vars)
+                      (cdr)
+                      (format "%S"))))
+   :group-function
+   (lambda (cand transform)
+     (if transform cand
+       (car (alist-get cand cache-vars nil nil #'string-equal))))))
 
 (defun projection-cache-clear--read-cache-var ()
   "Read cache vars for the current project.
