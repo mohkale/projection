@@ -187,7 +187,7 @@ The result of this is intended to be used in a `completing-read' interface."
               (push (list title category value (car cache-config) cache) result))))))
     (nreverse result)))
 
-(defconst project--cache-vars-annotation-limit 40
+(defconst projection--cache-vars-annotation-limit 40
   "Maximum size of an annotation for `projection--cache-vars-completion-table'.")
 
 (defun projection--cache-vars-completion-table (cache-vars)
@@ -200,9 +200,9 @@ The result of this is intended to be used in a `completing-read' interface."
          (lambda (cand)
            (when-let* ((value (cadr (alist-get cand cache-vars nil nil #'string-equal)))
                        (value-str (format "%S" value)))
-             (when (> (length value-str) project--cache-vars-annotation-limit)
+             (when (> (length value-str) projection--cache-vars-annotation-limit)
                (setq value-str (concat (substring value-str 0
-                                                  (1- project--cache-vars-annotation-limit))
+                                                  (1- projection--cache-vars-annotation-limit))
                                        "…")))
              (concat (propertize " " 'display `(space :align-to (- right 1 ,(length value-str))))
                      (propertize value-str 'face 'completions-annotations))))))
