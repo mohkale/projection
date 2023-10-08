@@ -55,7 +55,7 @@
 
 ;;;###autoload
 (defun projection-multi-embark-setup-command-map ()
-  "Setup `projection-multi-embark' command map in relevent embark maps.'"
+  "Setup `projection-multi-embark' command map in relevent embark maps."
   (define-key compile-multi-embark-command-map "p" (cons "projection" projection-multi-embark-command-map)))
 
 (provide 'projection-multi-embark)
