@@ -68,10 +68,10 @@ PACKAGE-JSON is the file that will be used to invalidate the cache of targets."
     (let (result)
       (save-match-data
         (while (search-forward-regexp
-                (rx bol "  " (group (+ (not " "))) eol)
+                (rx bol (repeat 2 space) (group (+ (not space))) eol)
                 nil 'noerror)
-          (push (match-string 1) result))
-        (nreverse result)))))
+          (push (match-string 1) result)))
+      (nreverse result))))
 
 ;;;###autoload
 (defun projection-multi-npm-script-targets (&optional project-type)
