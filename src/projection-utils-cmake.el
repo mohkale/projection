@@ -316,7 +316,7 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set.")
 
 (cl-defsubst projection-cmake--file-api-reply-directory-suffix ()
   "Subpath to the CMake reply directory for the projection client."
-  "reply")
+  (identity "reply"))
 
 (defun projection-cmake--file-api-code-model ()
   "Get the generated code-model object for the projection client.
