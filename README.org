@@ -73,8 +73,8 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
 
       ;; Access pre-configured projection commands from a keybinding of your choice.
       ;; Run `M-x describe-keymap projection-map` for a list of available commands.
-      :init
-      (define-key global-map "C-x P" projection-map))
+      :bind-keymap
+      ("C-x P" . projection-map))
 
     (use-package projection-multi
       :ensure t
