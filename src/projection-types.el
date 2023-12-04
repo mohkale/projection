@@ -48,7 +48,7 @@
    :run   "cabal run"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-haskell-cabal)
+(add-to-list 'projection-project-types projection-project-type-haskell-cabal 'append)
 
 
 
@@ -63,7 +63,7 @@
    :test  "dotnet run"
    :run   "dotnet test"))
 
-(add-to-list 'projection-project-types projection-project-type-dotnet)
+(add-to-list 'projection-project-types projection-project-type-dotnet 'append)
 
 
 
@@ -79,7 +79,7 @@
    :src-dir "src"
    :test-dir "tests"))
 
-(add-to-list 'projection-project-types projection-project-type-nim-nimble)
+(add-to-list 'projection-project-types projection-project-type-nim-nimble 'append)
 
 
 
@@ -107,7 +107,7 @@
      ("go:mod:verify" . "go mod verify")
      ("go:mod:why" . "go mod why"))))
 
-(add-to-list 'projection-project-types projection-project-type-golang)
+(add-to-list 'projection-project-types projection-project-type-golang 'append)
 
 
 
@@ -119,7 +119,7 @@
    :test "task test"
    :install "task install"))
 
-(add-to-list 'projection-project-types projection-project-type-go-task)
+(add-to-list 'projection-project-types projection-project-type-go-task 'append)
 
 
 
@@ -131,7 +131,7 @@
    :test "scons test"
    :test-suffix "test"))
 
-(add-to-list 'projection-project-types projection-project-type-scons)
+(add-to-list 'projection-project-types projection-project-type-scons 'append)
 
 
 
@@ -149,7 +149,7 @@
    :test #'projection-meson-get-test-command
    :install #'projection-meson-get-install-command))
 
-(add-to-list 'projection-project-types projection-project-type-meson)
+(add-to-list 'projection-project-types projection-project-type-meson 'append)
 
 
 
@@ -160,7 +160,7 @@
    :build "nix-build"
    :test  "nix-build"))
 
-(add-to-list 'projection-project-types projection-project-type-nix)
+(add-to-list 'projection-project-types projection-project-type-nix 'append)
 
 
 
@@ -172,7 +172,7 @@
    :test  "nix flake check"
    :run   "nix run"))
 
-(add-to-list 'projection-project-types projection-project-type-nix-flake)
+(add-to-list 'projection-project-types projection-project-type-nix-flake 'append)
 
 
 
@@ -184,7 +184,7 @@
    :test  "bazel test"
    :run   "bazel run"))
 
-(add-to-list 'projection-project-types projection-project-type-bazel)
+(add-to-list 'projection-project-types projection-project-type-bazel 'append)
 
 
 
@@ -194,7 +194,7 @@
    :predicate "debian/control"
    :build "debuild -uc -us"))
 
-(add-to-list 'projection-project-types projection-project-type-debian)
+(add-to-list 'projection-project-types projection-project-type-debian 'append)
 
 
 
@@ -206,7 +206,7 @@
    :test    "make test"
    :install "make install"))
 
-(add-to-list 'projection-project-types projection-project-type-make)
+(add-to-list 'projection-project-types projection-project-type-make 'append)
 
 
 
@@ -231,7 +231,7 @@
    :build     "make"
    :install   "make install"))
 
-(add-to-list 'projection-project-types projection-project-type-autotools)
+(add-to-list 'projection-project-types projection-project-type-autotools 'append)
 
 
 
@@ -249,7 +249,7 @@
    :test      #'projection-cmake-run-test
    :install   #'projection-cmake-run-install))
 
-(add-to-list 'projection-project-types projection-project-type-cmake)
+(add-to-list 'projection-project-types projection-project-type-cmake 'append)
 
 
 
@@ -261,7 +261,7 @@
    :test "phpunit -c app"
    :test-suffix "Test"))
 
-(add-to-list 'projection-project-types projection-project-type-php-symfony)
+(add-to-list 'projection-project-types projection-project-type-php-symfony 'append)
 
 
 
@@ -273,7 +273,7 @@
    :test "rebar3 do eunit,ct"
    :test-suffix "_SUITE"))
 
-(add-to-list 'projection-project-types projection-project-type-rebar)
+(add-to-list 'projection-project-types projection-project-type-rebar 'append)
 
 
 
@@ -285,7 +285,7 @@
    :test "mix test"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-elixir)
+(add-to-list 'projection-project-types projection-project-type-elixir 'append)
 
 
 
@@ -296,7 +296,7 @@
    :build "grunt"
    :test "grunt test"))
 
-(add-to-list 'projection-project-types projection-project-type-grunt)
+(add-to-list 'projection-project-types projection-project-type-grunt 'append)
 
 
 
@@ -307,7 +307,7 @@
    :build "gulp"
    :test "gulp test"))
 
-(add-to-list 'projection-project-types projection-project-type-gulp)
+(add-to-list 'projection-project-types projection-project-type-gulp 'append)
 
 
 
@@ -319,7 +319,7 @@
    :test "yarn test"
    :test-suffix ".test"))
 
-(add-to-list 'projection-project-types projection-project-type-yarn)
+(add-to-list 'projection-project-types projection-project-type-yarn 'append)
 
 
 
@@ -331,7 +331,7 @@
    :test "npm test"
    :test-suffix ".test"))
 
-(add-to-list 'projection-project-types projection-project-type-npm)
+(add-to-list 'projection-project-types projection-project-type-npm 'append)
 
 
 
@@ -344,7 +344,7 @@
    :test "ng test"
    :test-suffix ".spec"))
 
-(add-to-list 'projection-project-types projection-project-type-angular)
+(add-to-list 'projection-project-types projection-project-type-angular 'append)
 
 
 
@@ -357,7 +357,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-django)
+(add-to-list 'projection-project-types projection-project-type-django 'append)
 
 
 
@@ -370,7 +370,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-python-pip)
+(add-to-list 'projection-project-types projection-project-type-python-pip 'append)
 
 
 
@@ -383,7 +383,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-python-pkg)
+(add-to-list 'projection-project-types projection-project-type-python-pkg 'append)
 
 
 
@@ -396,7 +396,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-python-toml)
+(add-to-list 'projection-project-types projection-project-type-python-toml 'append)
 
 
 
@@ -409,7 +409,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-python-tox)
+(add-to-list 'projection-project-types projection-project-type-python-tox 'append)
 
 
 
@@ -422,7 +422,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-python-pipenv)
+(add-to-list 'projection-project-types projection-project-type-python-pipenv 'append)
 
 
 
@@ -435,7 +435,7 @@
    :test-prefix "test_"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-python-poetry)
+(add-to-list 'projection-project-types projection-project-type-python-poetry 'append)
 
 
 
@@ -448,7 +448,7 @@
    :src-dir "src/main/"
    :test-dir "src/test/"))
 
-(add-to-list 'projection-project-types projection-project-type-maven)
+(add-to-list 'projection-project-types projection-project-type-maven 'append)
 
 
 
@@ -460,7 +460,7 @@
    :test "gradle test"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-gradle)
+(add-to-list 'projection-project-types projection-project-type-gradle 'append)
 
 
 
@@ -472,7 +472,7 @@
    :test "./gradlew test"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-gradlew)
+(add-to-list 'projection-project-types projection-project-type-gradlew 'append)
 
 
 
@@ -484,7 +484,7 @@
    :test "grails test-app"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-grails)
+(add-to-list 'projection-project-types projection-project-type-grails 'append)
 
 
 
@@ -498,7 +498,7 @@
    :test-dir "test"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-sbt)
+(add-to-list 'projection-project-types projection-project-type-sbt 'append)
 
 
 
@@ -512,7 +512,7 @@
    :src-dir "src/"
    :test-dir "test/src/"))
 
-(add-to-list 'projection-project-types projection-project-type-mill)
+(add-to-list 'projection-project-types projection-project-type-mill 'append)
 
 
 
@@ -524,7 +524,7 @@
    :test "lein test"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-lein-test)
+(add-to-list 'projection-project-types projection-project-type-lein-test 'append)
 
 
 
@@ -536,7 +536,7 @@
    :test "lein midje"
    :test-prefix "t_"))
 
-(add-to-list 'projection-project-types projection-project-type-lein-midje)
+(add-to-list 'projection-project-types projection-project-type-lein-midje 'append)
 
 
 
@@ -548,7 +548,7 @@
    :test "boot test"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-boot-clj)
+(add-to-list 'projection-project-types projection-project-type-boot-clj 'append)
 
 
 
@@ -558,7 +558,7 @@
    :predicate "deps.edn"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-clojure-cli)
+(add-to-list 'projection-project-types projection-project-type-clojure-cli 'append)
 
 
 
@@ -572,7 +572,7 @@
    :test-dir "src/test/"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-bloop)
+(add-to-list 'projection-project-types projection-project-type-bloop 'append)
 
 
 
@@ -586,7 +586,7 @@
    :test-dir "spec/"
    :test-suffix "_spec"))
 
-(add-to-list 'projection-project-types projection-project-type-ruby-rspec)
+(add-to-list 'projection-project-types projection-project-type-ruby-rspec 'append)
 
 
 
@@ -598,7 +598,7 @@
    :test "bundle exec rake test"
    :test-suffix "_spec"))
 
-(add-to-list 'projection-project-types projection-project-type-ruby-test)
+(add-to-list 'projection-project-types projection-project-type-ruby-test 'append)
 
 
 
@@ -612,7 +612,7 @@
    :test "bundle exec rake test"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-rails-test)
+(add-to-list 'projection-project-types projection-project-type-rails-test 'append)
 
 
 
@@ -626,7 +626,7 @@
    :test-dir "spec/"
    :test-suffix "_test"))
 
-(add-to-list 'projection-project-types projection-project-type-rails-rspec)
+(add-to-list 'projection-project-types projection-project-type-rails-rspec 'append)
 
 
 
@@ -639,7 +639,7 @@
    :test-dir "spec/"
    :test-suffix "_spec"))
 
-(add-to-list 'projection-project-types projection-project-type-crystal-rspec)
+(add-to-list 'projection-project-types projection-project-type-crystal-rspec 'append)
 
 
 
@@ -651,7 +651,7 @@
    :test-prefix "test-"
    :test-suffix "-test"))
 
-(add-to-list 'projection-project-types projection-project-type-emacs-cask)
+(add-to-list 'projection-project-types projection-project-type-emacs-cask 'append)
 
 
 
@@ -664,7 +664,7 @@
    :run "eldev emacs"
    :package "eldev package"))
 
-(add-to-list 'projection-project-types projection-project-type-emacs-eldev)
+(add-to-list 'projection-project-types projection-project-type-emacs-eldev 'append)
 
 
 
@@ -675,7 +675,7 @@
    :build "R CMD INSTALL --with-keep.source ."
    :test (concat "R CMD check -o " temporary-file-directory " .")))
 
-(add-to-list 'projection-project-types projection-project-type-r)
+(add-to-list 'projection-project-types projection-project-type-r 'append)
 
 
 
@@ -687,7 +687,7 @@
    :test "stack build --test"
    :test-suffix "Spec"))
 
-(add-to-list 'projection-project-types projection-project-type-haskell-stack)
+(add-to-list 'projection-project-types projection-project-type-haskell-stack 'append)
 
 
 
@@ -700,7 +700,7 @@
    :install (projection--command-or-shell 'rustic-cargo-install "cargo install")
    :run (projection--command-or-shell 'rustic-cargo-run "cargo run")))
 
-(add-to-list 'projection-project-types projection-project-type-rust-cargo)
+(add-to-list 'projection-project-types projection-project-type-rust-cargo 'append)
 
 
 
@@ -712,7 +712,7 @@
    :install "raco pkg install"
    :package "raco pkg create --source $(pwd)"))
 
-(add-to-list 'projection-project-types projection-project-type-racket)
+(add-to-list 'projection-project-types projection-project-type-racket 'append)
 
 
 
@@ -725,7 +725,7 @@
    :run "dart"
    :test-suffix "_test.dart"))
 
-(add-to-list 'projection-project-types projection-project-type-dart)
+(add-to-list 'projection-project-types projection-project-type-dart 'append)
 
 
 
@@ -735,7 +735,7 @@
    :predicate "elm.json"
    :build "elm make"))
 
-(add-to-list 'projection-project-types projection-project-type-elm)
+(add-to-list 'projection-project-types projection-project-type-elm 'append)
 
 
 
@@ -748,7 +748,7 @@
    :src-dir "src"
    :test-dir "test"))
 
-(add-to-list 'projection-project-types projection-project-type-julia)
+(add-to-list 'projection-project-types projection-project-type-julia 'append)
 
 
 
@@ -759,7 +759,7 @@
    :build "dune build"
    :test "dune runtest"))
 
-(add-to-list 'projection-project-types projection-project-type-ocaml-dune)
+(add-to-list 'projection-project-types projection-project-type-ocaml-dune 'append)
 
 
 
