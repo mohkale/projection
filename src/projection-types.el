@@ -250,7 +250,7 @@
    :test      #'projection-cmake-run-test
    :install   #'projection-cmake-run-install
    :compile-multi-targets
-   `(("cmake:clear:build" . #'projection-cmake-clear-build-directory))))
+   `(("cmake:clear" . ,#'projection-cmake-clear-build-directory))))
 
 (add-to-list 'projection-project-types projection-project-type-cmake 'append)
 
