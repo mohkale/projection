@@ -53,8 +53,26 @@
   :link '(url-link :tag "GitHub" "https://github.com/mohkale/projection"))
 
 ;;;###autoload
+(defvar projection-per-project-type-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "c" '("CMake" . nil))
+    (define-key map "cp" 'projection-cmake-set-preset)
+    (define-key map "cb" 'projection-cmake-set-build-type)
+
+    (define-key map "g" '("Golang" . nil))
+    (define-key map "gp" 'projection-golang-set-package)
+
+    (define-key map "m" '("Meson" . nil))
+    (define-key map "mb" 'projection-meson-set-build-type)
+    (define-key map "mc" 'projection-meson-set-build-option)
+
+    map)
+  "Keymap containing commands specific to each project type.")
+
+;;;###autoload
 (defvar projection-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "SPC" '("Extensions" . (projection-per-project-type-map)))
     ;; `projection-core'
     (define-key map "1" 'projection-set-primary-project-type)
     (define-key map "2" 'projection-update-extra-project-types)
