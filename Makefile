@@ -55,7 +55,7 @@ define run-test
 	@echo "[test] buttercup-run-discover $(1)"
 	$(EMACS) \
         --eval '(push (concat default-directory "test/lib/") load-path)' \
-	    -batch -f package-initialize -L . -f buttercup-run-discover $(1)
+	    -batch -f package-initialize -L . -f buttercup-run-discover $(1) $(2)
 endef
 
 .PHONY: test
