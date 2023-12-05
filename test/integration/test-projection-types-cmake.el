@@ -111,6 +111,54 @@ target_link_libraries(main main_lib)
        #'projection-test-project
        "ctest --test-dir build -foo -bar test")))
 
+  (describe "Clear build directory"
+    (it "Fails when no build directory configured"
+      ;; GIVEN
+      (let* ((projection-cmake-build-directory nil)
+             ;; WHEN
+             (err (should-error (projection-cmake-clear-build-directory))))
+        ;; THEN
+        (expect (cadr err) :to-match
+                "Cannot remove build directory at unconfigured location")))
+
+    (it "Fails build directory does not exist"
+      ;; GIVEN/WHEN
+      (let* ((err (should-error (projection-cmake-clear-build-directory))))
+        ;; THEN
+        (expect (cadr err) :to-match
+                "Build directory .* already does not exist")))
+
+    (describe "With existing build-directory"
+      (before-each
+        (mkdir (projection-cmake--build-directory 'expand) 'parents))
+
+      (it "Aborts when user decides not to clear build directory"
+        ;; GIVEN
+        (spy-on #'compile :and-return-value nil)
+        (spy-on #'yes-or-no-p :and-return-value nil)
+        (spy-on #'message :and-return-value nil)
+
+        ;; WHEN
+        (projection-cmake-clear-build-directory)
+
+        ;; THEN
+        (expect 'yes-or-no-p :to-have-been-called-times 1)
+        (expect 'compile :to-have-been-called-times 0))
+
+      (it "Removes the build directory"
+        ;; GIVEN
+        (spy-on #'compile :and-return-value nil)
+        (spy-on #'yes-or-no-p :and-return-value t)
+        (spy-on #'message :and-return-value nil)
+
+        ;; WHEN
+        (projection-cmake-clear-build-directory)
+
+        ;; THEN
+        (expect 'yes-or-no-p :to-have-been-called-times 1)
+        (expect 'compile :to-have-been-called-times 1)
+        (expect (spy-calls-args-for 'compile 0) :to-equal '("rm -rf build")))))
+
   (describe "With the CMake help-target backend"
     :var ((existing-target-backend projection-cmake-target-backend))
     (before-all (require 'projection-multi-cmake))

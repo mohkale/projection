@@ -593,6 +593,24 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 
 
+;;;###autoload
+(defun projection-cmake-clear-build-directory ()
+  "Interactively run a compilation command to remove the build directory."
+  (interactive)
+  (let ((build (projection-cmake--build-directory))
+        (build-expanded (projection-cmake--build-directory 'expand)))
+    (cond
+     ((or (not build) (not build-expanded))
+      (user-error "Cannot remove build directory at unconfigured location. \
+See `projection-cmake-build-directory'"))
+     ((not (file-exists-p build-expanded))
+      (user-error "Build directory %s already does not exist" build-expanded))
+     ((yes-or-no-p (format "Really remove build directory at `%s'?" build-expanded))
+      (compile (projection--join-shell-command (list "rm" "-rf" build))))
+     (t (message "Aborted removal of build directory at %s" build-expanded)))))
+
+
+
 ;; CMake compilation commands.
 
 ;; The configure step takes the source directory and the output build
