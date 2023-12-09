@@ -198,7 +198,7 @@ The result of this is intended to be used in a `completing-read' interface."
     :key-function (lambda (cand)
                     (thread-last
                       (assoc cand cache-vars)
-                      (cdr)
+                      (caddr)
                       (format "%S"))))
    :group-function
    (lambda (cand transform)
