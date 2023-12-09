@@ -137,7 +137,7 @@ targets) with this option."
 ;;; Code model target backend
 
 (defconst projection-multi-cmake--code-model-meta-targets
-  ;; CMake targets [[https://github.com/kitware/CMake/blob/master/Source/cmGlobalGenerator.cxx#L3145][defined]] by CMake itself instead of the generator.
+  ;; CMake targets [[https://github.com/Kitware/CMake/blob/6e7a1b5b8c42e8d5d0d70aaa9b929ae6d81a79b7/Source/cmGlobalGenerator.cxx#L3179-L3183][defined]] by CMake itself instead of the generator.
   '("all" "install" "clean"))
 
 (defun projection-multi-cmake--targets-from-code-model ()

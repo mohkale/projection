@@ -416,7 +416,7 @@ This function respects `projection-cmake-cache-code-model'."
 (progn
   (defun projection-cmake--cmake-project-p (project-types)
     "Helper to check whether one of the types in PROJECT-TYPES is CMake.
-Advise this if you need more than just the CMake project type to be have a
+Advise this if you need more than just the CMake project type to have a
 query file created before configuring."
     (member 'cmake (mapcar #'projection-type--name project-types)))
 
