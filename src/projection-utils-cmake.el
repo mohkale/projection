@@ -427,7 +427,16 @@ query file created before configuring."
      (when (and (projection-cmake--cmake-project-p
                  (projection-project-types (project-root project)))
                 (eq projection-cmake-target-backend 'code-model))
-       (projection-cmake--file-api-create-query-file)))))
+       (projection-cmake--file-api-create-query-file))))
+
+  (add-hook
+   'projection-commands-post-configure-hook
+   (cl-defun projection-cmake--file-api-clear-cache-on-configure (&key project &allow-other-keys)
+     "Clear CMake cache on reconfiguring the project."
+     (when (eq projection-cmake-target-backend 'code-model)
+       (dolist (cache-var '(projection-cmake-code-model
+                            projection-multi-ctest-targets))
+         (projection-cache-clear-single project cache-var projection--project-cache))))))
 
 
 
