@@ -331,7 +331,7 @@ This function respects `projection-cmake-cache-code-model'."
    #'projection-cmake--file-api-code-model2))
 
 (projection--declare-cache-var
-  'projection-cmake-presets
+  'projection-cmake-code-model
   :title "CMake code model"
   :category "CMake"
   :description "CMake file-API code-model from last configure time"
