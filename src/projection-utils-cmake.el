@@ -422,7 +422,7 @@ query file created before configuring."
 
   (add-hook
    'projection-commands-pre-configure-hook
-   (defun projection-cmake--file-api-create-query-hook (project)
+   (cl-defun projection-cmake--file-api-create-query-hook (&key project &allow-other-keys)
      "Helper to create a CMake query file before configuring for CMake projects."
      (when (and (projection-cmake--cmake-project-p
                  (projection-project-types (project-root project)))

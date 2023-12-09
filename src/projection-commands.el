@@ -109,7 +109,7 @@ Is a list of cmd-type records of the form
 
 (defun projection-commands--run-command-for-type (project command cmd-type pre-hook post-hook)
   "Run COMMAND for PROJECT as CMD-TYPE."
-  (run-hook-with-args pre-hook project)
+  (run-hook-with-args pre-hook :project project)
   (let ((default-directory (project-root project)))
     (cond
      ((stringp command)
@@ -118,7 +118,7 @@ Is a list of cmd-type records of the form
       (call-interactively command))
      (t
       (user-error "Do not know how to run %s command %s" cmd-type command))))
-  (run-hook-with-args post-hook project))
+  (run-hook-with-args post-hook :project project))
 
 (defmacro projection-commands--register (cmd-type)
   "Define an interactive function to run a CMD-TYPE command on the current project."
@@ -139,7 +139,7 @@ Should be set via .dir-locals.el."
 
        (defvar ,pre-hook-symbol nil
          ,(format "Hook variable run immediately before `%s'.
-Currently this hook will be invoked with a single argument the project.
+Currently this hook will be invoked with a plist containing the project.
 It may be updated to take more arguments at a later date."
                   (symbol-name cmd-symbol)))
        (defvar ,post-hook-symbol nil
