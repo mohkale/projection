@@ -148,11 +148,10 @@ targets) with this option."
   ;; contains the active targets for now we just return the set union of all
   ;; targets even if some may not be runnable for the current project config.
   (when-let ((code-model (projection-cmake--file-api-code-model)))
-    (cl-assert (string-equal (alist-get 'kind code-model) "codemodel"))
-
     (append
      (thread-last
        code-model
+       (alist-get 'codemodel)
        (alist-get 'configurations)
        (mapcar (apply-partially #'alist-get 'targets))
        (apply #'append)

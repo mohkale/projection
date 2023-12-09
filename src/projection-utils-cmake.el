@@ -341,29 +341,38 @@ This function respects `projection-cmake-cache-code-model'."
   "Get the generated code-model object for the projection client."
   (projection--log :debug "Reading CMake code-model")
 
-  (let ((api-directory (projection-cmake--file-api-directory)))
-    (if-let* ((index-pattern (f-join api-directory
-                                     (projection-cmake--file-api-reply-directory-suffix)
-                                     "index-*.json"))
-              (indexes (cl-sort (file-expand-wildcards index-pattern) #'string>)))
-        (condition-case err
-            (with-temp-buffer
-              (projection--log :debug "Reading codemodel from file=%s." (car indexes))
-              (insert-file-contents (car indexes))
+  (if-let* ((api-directory (projection-cmake--file-api-directory))
+            (reply-directory
+             (f-join api-directory (projection-cmake--file-api-reply-directory-suffix)))
+            (index-file
+             (car (cl-sort (file-expand-wildcards (f-join reply-directory "index-*.json"))
+                           #'string>))))
+      (condition-case err
+          (let* ((codemodel (thread-last
+                              index-file
+                              (projection-cmake--file-api-read-file)
+                              (projection-cmake--file-api-query-code-model-file)
+                              (f-join reply-directory)
+                              (projection-cmake--file-api-read-file)))
+                 (targets-by-config
+                  (thread-last
+                    codemodel
+                    (alist-get 'configurations)
+                    (mapcar (apply-partially
+                             #'projection-cmake--file-api-query-config-targets
+                             reply-directory)))))
+            `((codemodel . ,codemodel)
+              (targets-by-config . ,targets-by-config)))
+        ((file-missing json-readtable-error projection-cmake-code-model)
+         (projection--log :error "error while querying CMake code-model %s." (cdr err))))
+    (projection--log :warning "Cannot query cmake codemodel because no indexes exist.")))
 
-              (if-let ((code-model-file
-                        (projection-cmake--file-api-query-code-model-file
-                         (let ((json-array-type 'list)) (json-read)))))
-                  (progn
-                    (insert-file-contents
-                     (f-join api-directory
-                             (projection-cmake--file-api-reply-directory-suffix)
-                             code-model-file))
-                    (let ((json-array-type 'list)) (json-read)))
-                (projection--log :error "Failed to query code-model from file=%s." (car indexes))))
-          ((file-missing json-readtable-error)
-           (projection--log :error "error while querying CMake code-model %s." (cdr err))))
-      (projection--log :warning "Cannot query cmake codemodel because no indexes exist."))))
+(cl-defsubst projection-cmake--file-api-read-file (file)
+  "Read JSON file FILE for the CMake file-api."
+  (with-temp-buffer
+    (projection--log :debug "Reading codemodel file=%s." file)
+    (insert-file-contents file)
+    (let ((json-array-type 'list)) (json-read))))
 
 (cl-defsubst projection-cmake--file-api-query-code-model-file (index-obj)
   "Read the base-name of the code-model file through INDEX-OBJ."
@@ -375,6 +384,18 @@ This function respects `projection-cmake-cache-code-model'."
     (alist-get 'responses)
     (car-safe)
     (alist-get 'jsonFile)))
+
+(cl-defsubst projection-cmake--file-api-query-config-targets (reply-directory config-obj)
+  "Read target entries from the code-model CONFIG-OBJ in REPLY-DIRECTORY."
+  (if-let ((name (alist-get 'name config-obj)))
+      (cons name
+            (thread-last
+              config-obj
+              (alist-get 'targets)
+              (mapcar (apply-partially #'alist-get 'jsonFile))
+              (mapcar (apply-partially #'f-join reply-directory))
+              (mapcar #'projection-cmake--file-api-read-file)))
+    (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
 
 ;;;###autoload
 (defun projection-cmake--file-api-create-query-file ()
