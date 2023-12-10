@@ -182,7 +182,8 @@ Candidates will be prefixed with PROJECT-TYPE."
   "`compile-multi' target generator using CMake workflow presets.
 Candidates will be prefixed with PROJECT-TYPE."
   (cl-loop
-   for (preset) in (projection-cmake--list-presets-for-build-type 'workflow)
+   for preset in (projection-cmake--list-presets-for-build-type 'workflow)
+   do (setq preset (alist-get 'name preset))
    collect `(,(concat project-type ":workflow:" preset)
              :command
              ,(projection--cmake-workflow-command preset)

@@ -102,18 +102,9 @@ Use this like so:
 ;; Projection state modifiers
 
 (defun +interactively-set-cmake-preset (build-type preset)
-  (let ((call-list
-         (if build-type
-             (list (symbol-name build-type) preset)
-           (list preset))))
-    (spy-on #'completing-read :and-call-fake
-            (apply #'+fake-completing-read call-list))
-
-    (let ((current-prefix-arg (unless build-type
-                                '(4))))
-      (call-interactively #'projection-cmake-set-preset))
-
-    (expect 'completing-read :to-have-been-called-times (length call-list))))
+  (spy-on #'completing-read :and-return-value (concat (symbol-name build-type) ":" preset))
+  (call-interactively #'projection-cmake-set-preset)
+  (expect 'completing-read :to-have-been-called-times 1))
 
 (defun +interactively-set-cmake-build-type (build-type)
   (spy-on #'completing-read :and-return-value build-type)

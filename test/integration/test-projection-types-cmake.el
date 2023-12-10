@@ -251,6 +251,9 @@ target_link_libraries(main main_lib)
 
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
+          (configure-presets-display-names '("Preset number 1 for configuring"
+                                             "Preset number 2 for configuring"
+                                             "Preset number 3 for configuring"))
           (build-presets '("buildPreset1")))
     (before-each
       (+projection-setup-project-tree
@@ -309,7 +312,7 @@ target_link_libraries(main main_lib)
       ;;   * The projection CMake config specifies to prompt once and then
       ;;   cache the chosen preset.
       (let ((projection-cmake-preset 'prompt-once))
-        (spy-on #'completing-read :and-return-value "configurePreset1")
+        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
 
         ;; WHEN
         ;;   I call projection-configure-project.
@@ -324,7 +327,7 @@ target_link_libraries(main main_lib)
         (expect 'completing-read :to-have-been-called-times 1)
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
-                :to-equal configure-presets)))
+                :to-equal configure-presets-display-names)))
 
     (it "Caches chosen presets per build-type after first invocation"
       ;; GIVEN
@@ -332,7 +335,7 @@ target_link_libraries(main main_lib)
       ;;   * The projection CMake config specifies to prompt once and then
       ;;   cache the chosen preset.
       (let ((projection-cmake-preset 'prompt-once))
-        (spy-on #'completing-read :and-return-value "configurePreset1")
+        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
 
         ;; WHEN
         ;;   I call projection-configure-project.
@@ -347,7 +350,7 @@ target_link_libraries(main main_lib)
         (expect 'completing-read :to-have-been-called-times 1)
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
-                :to-equal configure-presets)
+                :to-equal configure-presets-display-names)
 
         ;; WHEN
         ;;   I call projection-configure-project again.
@@ -380,7 +383,7 @@ target_link_libraries(main main_lib)
       ;; GIVEN
       ;;   * A CMake project with a presets configuration.
       ;;   * I have interactively choosen an available configure preset.
-      (+interactively-set-cmake-preset 'configure "configurePreset1")
+      (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
 
       ;; WHEN
       ;;   I call projection-configure-project.
@@ -391,97 +394,6 @@ target_link_libraries(main main_lib)
        (+expect-interactive-command-calls-compile-with
         #'projection-configure-project
         "cmake -S . -B build --preset\\=configurePreset1")))
-
-    (it "Allows the user to interactively clear the configured preset"
-      ;; GIVEN
-      ;;   * A CMake project with a presets configuration.
-      ;;   * I have interactively choosen an available configure preset.
-      (+interactively-set-cmake-preset 'configure "configurePreset1")
-
-      ;; WHEN
-      ;;   I call projection-configure-project.
-      ;; THEN
-      ;;   The invoked shell command references the configured preset.
-      (+with-completing-read-not-called
-       (+expect-interactive-command-calls-compile-with
-        #'projection-configure-project
-        "cmake -S . -B build --preset\\=configurePreset1"))
-
-      ;; WHEN
-      ;;   I call projection-cmake-set-preset and supply an empty string.
-      (+interactively-set-cmake-preset 'configure "")
-
-      ;; WHEN
-      ;;   I call projection-configure-project again.
-      ;; THEN
-      ;;   * The user was prompted for a configure preset to use.
-      ;;   * The invoked shell-command references the chosen preset.
-      (spy-on #'completing-read :and-return-value "configurePreset2")
-
-      (+expect-interactive-command-calls-compile-with
-       #'projection-configure-project
-       "cmake -S . -B build --preset\\=configurePreset2")
-
-      (expect 'completing-read :to-have-been-called-times 1)
-      (expect (+completion-table-candidates
-               (spy-calls-args-for 'completing-read 0))
-              :to-equal configure-presets))
-
-    (it "Allows users to interactively set a default preset for all build types"
-      ;; GIVEN
-      ;;   A CMake project with a presets configuration.
-      ;; WHEN
-      ;;   I have interactively choosen an available preset for all build types.
-      (+interactively-set-cmake-preset nil "defaultPreset")
-
-      ;; WHEN
-      ;;   I call projection-configure-project.
-      ;; THEN
-      ;;   * The user was not prompted for a configure preset to use.
-      ;;   * The invoked shell-command references the chosen default preset.
-      (+with-completing-read-not-called
-       (+expect-interactive-command-calls-compile-with
-        #'projection-configure-project
-        "cmake -S . -B build --preset\\=defaultPreset"))
-
-      ;; WHEN
-      ;;   I call projection-build-project.
-      ;; THEN
-      ;;   * The user was not prompted for a build preset to use.
-      ;;   * The invoked shell-command references the chosen default preset.
-      (+with-completing-read-not-called
-       (+expect-interactive-command-calls-compile-with
-        #'projection-build-project
-        "cmake --build build --preset\\=defaultPreset")))
-
-    (it "Prefers a build-type specific preset over the default preset"
-      ;; GIVEN
-      ;;   A CMake project with a presets configuration.
-      ;; WHEN
-      ;;   I have interactively choosen an available preset for configure
-      ;;   and then for all build types.
-      (+interactively-set-cmake-preset 'configure "configurePreset1")
-      (+interactively-set-cmake-preset nil "defaultPreset")
-
-      ;; WHEN
-      ;;   I call projection-configure-project.
-      ;; THEN
-      ;;   * The user was not prompted for a configure preset to use.
-      ;;   * The invoked shell-command references the chosen configure preset.
-      (+with-completing-read-not-called
-       (+expect-interactive-command-calls-compile-with
-        #'projection-configure-project
-        "cmake -S . -B build --preset\\=configurePreset1"))
-
-      ;; WHEN
-      ;;   I call projection-build-project.
-      ;; THEN
-      ;;   * The user was not prompted for a build preset to use.
-      ;;   * The invoked shell-command references the chosen default preset.
-      (+with-completing-read-not-called
-       (+expect-interactive-command-calls-compile-with
-        #'projection-build-project
-        "cmake --build build --preset\\=defaultPreset")))
 
     (it "Never uses a preset when configured"
       ;; Try run configure
@@ -501,7 +413,7 @@ target_link_libraries(main main_lib)
         ;; THEN
         ;;   The user was prompted and the chosen prest was included in the
         ;;   invoked compilation command.
-        (spy-on #'completing-read :and-return-value "configurePreset1")
+        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
 
         (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
@@ -514,7 +426,7 @@ target_link_libraries(main main_lib)
         ;; THEN
         ;;   The user was prompted and the chosen prest was included in the
         ;;   invoked compilation command again.
-        (spy-on #'completing-read :and-return-value "configurePreset2")
+        (spy-on #'completing-read :and-return-value "Preset number 2 for configuring")
 
         (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
@@ -539,7 +451,7 @@ target_link_libraries(main main_lib)
 
         ;; WHEN
         ;;   I have interactively choosen an available configure preset.
-        (+interactively-set-cmake-preset 'configure "configurePreset1")
+        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
 
         ;; WHEN
         ;;   I call projection-configure-project again.
@@ -573,7 +485,7 @@ target_link_libraries(main main_lib)
         ;;   * The user was prompted once for a preset from the set configure
         ;;   presets.
         ;;   * The invoked command includes the preset option.
-        (spy-on #'completing-read :and-return-value "configurePreset1")
+        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
 
         (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
