@@ -142,19 +142,19 @@ targets) with this option."
 
 (defun projection-multi-cmake--targets-from-code-model ()
   "Determine list of available CMake targets from the code-model."
-  ;; KLUDGE: The code-model contains targets for all build-type configurations.
-  ;; For a single build-type generator like Ninja this is fine. For multi type
-  ;; configs like Ninja Multi-Config projection won't know which configuration
-  ;; contains the active targets for now we just return the set union of all
-  ;; targets even if some may not be runnable for the current project config.
-  (when-let ((code-model (projection-cmake--file-api-code-model)))
+  (when-let* ((code-model (projection-cmake--file-api-code-model))
+              (build-type (or (projection-cmake--build-type)
+                              (let* ((projection-cmake-preset 'silent)
+                                     (configure-preset-config
+                                      (projection-cmake--preset-config 'build)))
+                                (alist-get 'configuration configure-preset-config))
+                              ""))
+              (target-configurations (alist-get 'targets-by-config code-model))
+              (targets (or (cdr (assoc build-type target-configurations))
+                           (cadr target-configurations))))
     (append
      (thread-last
-       code-model
-       (alist-get 'codemodel)
-       (alist-get 'configurations)
-       (mapcar (apply-partially #'alist-get 'targets))
-       (apply #'append)
+       targets
        (mapcar (apply-partially #'alist-get 'name))
        (projection--uniquify))
      projection-multi-cmake--code-model-meta-targets)))

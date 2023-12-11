@@ -479,6 +479,20 @@ target_link_libraries(main main_lib)
          #'projection-test-project
          "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test")))
 
+    (it "Ignores build or test preset when active configure preset conflicts with it"
+      (let ((projection-cmake-preset '((configure . prompt-always)
+                                       (test . "testPreset1WithConfigurePreset1"))))
+        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
+
+        ;; WHEN/THEN
+        (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset2")
+        (+expect-interactive-command-calls-compile-with
+         #'projection-test-project
+         "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset2 test")
+
+        ;; THEN
+        (expect #'completing-read :to-have-been-called-times 1)))
+
     (describe "Multi compile"
       (before-all (require 'projection-multi-cmake))
 
