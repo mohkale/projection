@@ -590,7 +590,8 @@ including any remote components of the project when
 
 ;; CTest command utils.
 
-(defcustom projection-cmake-ctest-options '("--output-on-failure")
+(defcustom projection-cmake-ctest-options '("--output-on-failure"
+                                            "--schedule-random")
   "Default CTest invocation options.
 Set the extra command line options to pass to ctest."
   :type '(list string)
