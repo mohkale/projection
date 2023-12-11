@@ -281,17 +281,15 @@ Prompt for the `completing-read' session will be PROMPT."
                 (preset (alist-get 'name preset-config)))
            (list project build-type preset))
        (user-error "No CMake presets found for th ecurrent project"))))
-  (projection--cache-put
-   project (projection-cmake--preset-cache-var build-type) preset)
-  (when (eq build-type 'configure)
-    ;; Invalidate cache vars for related build-types when the chosen configure preset
-    ;; is no longer applicable.
-    ;;
-    ;; TODO(me): Clear only presets wher the new configure preset is not applicable.
-    (dolist (related-build-type
-             projection-cmake--preset-build-types-tied-to-configure)
-      (projection--cache-remove
-       project (projection-cmake--preset-cache-var related-build-type)))))
+  (let ((cache-var (projection-cmake--preset-cache-var build-type)))
+    (unless (equal (projection--cache-get project cache-var) preset)
+      (projection--cache-put project cache-var preset)
+      (when (eq build-type 'configure)
+        ;; Invalidate cache vars for related build-types when the configure preset
+        ;; has been reset.
+        (dolist (related-build-type projection-cmake--preset-build-types-tied-to-configure)
+          (projection--cache-remove
+           project (projection-cmake--preset-cache-var related-build-type)))))))
 
 (dolist (build-type projection-cmake--preset-build-types)
   (projection--declare-cache-var
