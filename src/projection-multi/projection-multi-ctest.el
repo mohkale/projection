@@ -29,64 +29,34 @@
 (require 'projection-multi)
 (require 'projection-types)
 
-(defcustom projection-multi-ctest-cache-targets 'auto
-  "When true cache the CMake ctest targets of each project."
-  :type '(choice
-          (const :tag "Cache targets and invalidate cache automatically" auto)
-          (boolean :tag "Always/Never cache targets"))
-  :group 'projection-multi-cmake)
+(define-obsolete-variable-alias 'projection-multi-ctest-cache-targets 'projection-cmake-ctest-cache-targets "0.1")
 
 (defcustom projection-multi-ctest-add-exclude-label-targets t
   "When true add targets to run all tests except a given label."
   :type 'boolean
-  :group 'projection-types
+  :group 'projection-type-cmake
   :group 'projection-multi)
 
 (defun projection-multi-ctest--resolve-targets ()
   "Resolve available ctest targets for a project respecting the project cache."
-  (projection--cache-get-with-predicate
-   (projection--current-project 'no-error)
-   'projection-multi-ctest-targets
-   (cond
-    ((eq projection-multi-ctest-cache-targets 'auto)
-     (projection--cmake-configure-modtime-p))
-    (t projection-multi-ctest-cache-targets))
-   #'projection-multi-ctest--resolve-targets2))
+  (cl-loop for test in (alist-get 'tests (projection-cmake-ctest--targets))
+           with test-name = nil
+           do (setq test-name (alist-get 'name test))
+           when test-name
+             collect (cons :test test-name)
 
-(projection--declare-cache-var
-  'projection-multi-ctest-targets
-  :title "Multi CTest command targets"
-  :category "CMake"
-  :description "CTest tests tied to this project"
-  :hide t)
-
-(defun projection-multi-ctest--resolve-targets2 ()
-  "Resolve available ctest targets for a project.
-Returns a list of cons cells containing the kind of target and the target
-value. Supported target types include test for tests and label for labels."
-  (projection--log :debug "Resolving available CMake ctest targets")
-
-  (projection--with-shell-command-buffer
-    (projection--cmake-ctest-command "--show-only=json-v1")
-    (let ((json-array-type 'list))
-      (cl-loop for test in (alist-get 'tests (json-read))
-               with test-name = nil
-               do (setq test-name (alist-get 'name test))
-               when test-name
-               collect (cons :test test-name)
-
-               with label-set = (make-hash-table :test #'equal)
-               with test-labels = nil
-               do (setq test-labels
-                        (seq-filter
-                         (lambda (label)
-                           (when-let ((doesnt-exist (not (gethash label label-set))))
-                             (puthash label t label-set)
-                             t))
-                         (cl-dolist (prop (alist-get 'properties test))
-                           (when (string-equal "LABELS" (alist-get 'name prop))
-                             (cl-return (alist-get 'value prop))))))
-               append (mapcar (apply-partially #'cons :label) test-labels)))))
+           with label-set = (make-hash-table :test #'equal)
+           with test-labels = nil
+           do (setq test-labels
+                    (seq-filter
+                     (lambda (label)
+                       (when-let ((doesnt-exist (not (gethash label label-set))))
+                         (puthash label t label-set)
+                         t))
+                     (cl-dolist (prop (alist-get 'properties test))
+                       (when (string-equal "LABELS" (alist-get 'name prop))
+                         (cl-return (alist-get 'value prop))))))
+           append (mapcar (apply-partially #'cons :label) test-labels)))
 
 ;;;###autoload
 (defun projection-multi-ctest-targets (&optional project-type)

@@ -461,8 +461,45 @@ query file created before configuring."
      "Clear CMake cache on reconfiguring the project."
      (when (eq projection-cmake-target-backend 'code-model)
        (dolist (cache-var '(projection-cmake-code-model
-                            projection-multi-ctest-targets))
+                            projection-cmake-ctest-targets))
          (projection-cache-clear-single project cache-var projection--project-cache))))))
+
+
+
+;; CMake CTest targets
+
+(defcustom projection-cmake-ctest-cache-targets 'auto
+  "When true cache the CMake CTest targets of each project."
+  :type '(choice
+          (const :tag "Cache targets and invalidate cache automatically" auto)
+          (boolean :tag "Always/Never cache targets"))
+  :group 'projection-type-cmake)
+
+(defun projection-cmake-ctest--targets ()
+  "Resolve available ctest targets for a project respecting the project cache."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-cmake-ctest-targets
+   (cond
+    ((eq projection-cmake-ctest-cache-targets 'auto)
+     (projection--cmake-configure-modtime-p))
+    (t projection-cmake-ctest-cache-targets))
+   #'projection-cmake-ctest--targets2))
+
+(projection--declare-cache-var
+  'projection-cmake-ctest-targets
+  :title "CMake CTest targets"
+  :category "CMake"
+  :description "CTest tests tied to this project"
+  :hide t)
+
+(defun projection-cmake-ctest--targets2 ()
+  "Resolve available CTest targets for a project."
+  (projection--log :debug "Resolving available CMake CTest targets")
+  (projection--with-shell-command-buffer
+    (projection--cmake-ctest-command "--show-only=json-v1")
+    (let ((json-array-type 'list))
+      (json-read))))
 
 
 
@@ -551,7 +588,7 @@ including any remote components of the project when
 
 
 
-;; ctest command utils.
+;; CTest command utils.
 
 (defcustom projection-cmake-ctest-options '("--output-on-failure")
   "Default CTest invocation options.
@@ -628,10 +665,10 @@ ARGV if provided will be appended to the command."
 (defcustom projection-cmake-cache-file "CMakeCache.txt"
   "Path to configuration cache file relative to the CMake build directory.
 This is used to detect if CMake has been configured and whether it has been
-reconfigured by since we last may have cached some CMake state (like targets).
+reconfigured since we last may have cached some CMake state (like targets).
 This file should change on every build reconfiguration."
   :type 'string
-  :group 'projection-multi-cmake)
+  :group 'projection-type-cmake)
 
 (defun projection--cmake-configure-modtime-p ()
   "Get when CMake was last configured based on `projection-cmake-cache-file'."
