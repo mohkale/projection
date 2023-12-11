@@ -147,7 +147,7 @@ with the active configure preset."
                                        (alist-get 'hidden (cdr preset-config)))
                                      presets)))
     ;; Remove preset options that don't match the active configure preset (when there is one).
-    (when-let* ((build-type-is-not-configure (eq build-type 'configure))
+    (when-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
                 (projection-cmake-preset 'silent)
                 (active-configure-preset (projection-cmake--preset 'configure)))
       (setq presets
@@ -157,8 +157,8 @@ with the active configure preset."
                                               projection-cmake--preset-build-types-tied-to-configure))
                                      (required-configure-preset
                                       (alist-get 'configurePreset preset-config)))
-                                (equal required-configure-preset active-configure-preset)
-                              t))
+                                (not (equal required-configure-preset active-configure-preset))
+                              nil))
                           presets)))
     presets))
 
@@ -199,7 +199,10 @@ Prompt for the `completing-read' session will be PROMPT."
                             (alist-get 'description (funcall preset-display-name-to-preset cand))))))
          (result (completing-read prompt completion-table nil 'require-match)))
     (unless (string-empty-p result)
-      (funcall preset-display-name-to-preset result))))
+      (or (funcall preset-display-name-to-preset result)
+          ;; This should only ever happen in tests which don't properly set expectations.
+          (user-error (format "Read preset-name with unsupported preset target=%s from presets=%S"
+                              result (mapcar #'car presets)))))))
 
 (defun projection-cmake--preset (build-type)
   "Fetch the CMake preset for BUILD-TYPE respecting project cache."

@@ -153,7 +153,10 @@ Use this like so:
 
      ;; Ensure the following properties are in a clean state between tests.
      (+projection--cache-set projection-project-types projection-project-types)
-     (+projection--cache-set projection-primary-project-type nil)))
+     (+projection--cache-set projection-primary-project-type nil)
+     (+projection--cache-set projection-cmake-ctest-options nil)
+     (+projection--cache-set projection-cmake-ctest-jobs nil)
+     (+projection--cache-set projection-cmake-ctest-environment-variables nil)))
 
 (provide 'projection-test-utils)
 ;;; projection-test-utils.el ends here

@@ -66,8 +66,7 @@ target_link_libraries(main main_lib)
 
   (it "Runs tests through a separate ctest binary"
     ;; GIVEN
-    (let ((projection-cmake-ctest-options)
-          (projection-cmake-ctest-environment-variables))
+    (let ((projection-cmake-ctest-environment-variables))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-test-project
@@ -75,13 +74,20 @@ target_link_libraries(main main_lib)
 
   (it "Assigns any configured environment variables when running tests"
     ;; GIVEN
-    (let ((projection-cmake-ctest-options)
-          (projection-cmake-ctest-environment-variables
+    (let ((projection-cmake-ctest-environment-variables
            '(("foo" . "bar"))))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-test-project
        "env foo\\=bar ctest --test-dir build test")))
+
+  (it "Runs ctest with a customized number of jobs in parallel"
+    ;; GIVEN
+    (let ((projection-cmake-ctest-jobs 10))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-test-project
+       "ctest --test-dir build --parallel\\=10 test")))
 
   (it "Forwards any configured options when running tests"
     ;; GIVEN
@@ -265,6 +271,20 @@ target_link_libraries(main main_lib)
       \"configurePreset\": \"configurePreset1\"
     }
   ],
+  \"testPresets\": [
+    {
+      \"name\": \"testPreset1WithConfigurePreset1\",
+      \"configurePreset\": \"configurePreset1\"
+    },
+    {
+      \"name\": \"testPreset1WithConfigurePreset2\",
+      \"configurePreset\": \"configurePreset2\"
+    },
+    {
+      \"name\": \"testPreset2WithConfigurePreset2\",
+      \"configurePreset\": \"configurePreset2\"
+    }
+  ],
   \"workflowPresets\": [
     {
       \"name\": \"default\",
@@ -431,12 +451,40 @@ target_link_libraries(main main_lib)
         ;; THEN
         (expect 'completing-read :to-have-been-called-times 1)))
 
+    (it "Prompts with only related targets matching the active configuration target for building and testing"
+      ;; GIVEN
+      (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
+      (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset2")
+
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-test-project
+       "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset2 test")
+
+      ;; THEN
+      (expect #'completing-read :to-have-been-called-times 1)
+      (expect (+completion-table-candidates
+               (spy-calls-args-for 'completing-read 0))
+              :to-equal '("testPreset1WithConfigurePreset2" "testPreset2WithConfigurePreset2")))
+
+    (it "Clears cached test preset when re-setting a configure preset"
+      (let ((projection-cmake-preset 'prompt-always))
+        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
+        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
+        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+
+        ;; WHEN/THEN
+        (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset1")
+        (+expect-interactive-command-calls-compile-with
+         #'projection-test-project
+         "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test")))
+
     (describe "Multi compile"
       (before-all (require 'projection-multi-cmake))
 
       (it "Includes targets for any workflow presets"
         ;; GIVEN
-        (spy-on #'completing-read :and-return-value "configurePreset1")
+        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
         (call-interactively #'projection-configure-project)
 
         ;; WHEN
