@@ -323,13 +323,6 @@ Prompt for the `completing-read' session will be PROMPT."
     :description (concat "The CMake preset for the " (symbol-name build-type))
     :hide t))
 
-(projection--declare-cache-var
-  (projection-cmake--preset-cache-var nil)
-  :title "CMake default preset"
-  :category "CMake"
-  :description (concat "The default CMake preset")
-  :hide t)
-
 
 
 ;;;###autoload (autoload 'projection-cmake-set-build-type "projection-utils-cmake" nil 'interactive)
