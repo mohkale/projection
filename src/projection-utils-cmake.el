@@ -46,7 +46,7 @@ targets CMake might add just for build framework integrations or dummy tasks lik
 
 
 
-;; CMake reading presets.
+;; List CMake presets.
 
 (defconst projection-cmake-preset-files
   '("CMakePresets.json" "CMakeUserPresets.json")
@@ -111,6 +111,84 @@ incompatible with the active configure preset.")
 
 
 
+;; List CMake presets with passing conditions.
+
+(defcustom projection-cmake-respect-preset-conditions t
+  "When true filter available presets with CMake list-presets.
+CMake presets can specify a condition to restrict a preset to specific platforms
+or environment. The only way to respect these conditions is to let CMake itself
+tell you which presets are valid or not. `projection' can exclude such presets
+when this option is set by spawning an extra sub-process. If unset projection
+will let you interactively set a preset that you may not actually be able to
+use."
+  :type 'boolean
+  :group 'projection-type-cmake)
+
+(defcustom projection-cmake-cache-available-presets 'auto
+  "When true cache presets for `projection-cmake-respect-preset-conditions'."
+  :type '(choice
+          (const :tag "Cache presets and invalidate cache automatically" auto)
+          (boolean :tag "Always/Never cache presets"))
+  :group 'projection-type-cmake)
+
+(defun projection-cmake--available-presets ()
+  "List CMake presets that pass their condition check respecting cache."
+  (when projection-cmake-respect-preset-conditions
+    (when-let ((preset-files
+                (seq-filter #'file-exists-p projection-cmake-preset-files)))
+      (projection--cache-get-with-predicate
+       (projection--current-project 'no-error)
+       'projection-cmake-available-presets
+       (cond
+        ((eq projection-cmake-cache-available-presets 'auto)
+         (apply #'projection--cache-modtime-predicate preset-files))
+        (t projection-cmake-cache-available-presets))
+       #'projection-cmake--available-presets2))))
+
+(projection--declare-cache-var
+  'projection-cmake-available-presets
+  :title "Available CMake presets"
+  :category "CMake"
+  :description "CMake presets passing condition checks"
+  :hide t)
+
+(defun projection-cmake--available-presets2 ()
+  "List CMake presets that pass their condition check."
+  (projection--log :debug "Resolving CMake presets passing condition checks")
+
+  (projection--with-shell-command-buffer "cmake --list-presets=all"
+    (let (result
+          (build-type 'default)
+          (presets nil))
+      (save-match-data
+        (while (search-forward-regexp
+                (rx
+                 (or (and bol "Available " (group-n 1 (one-or-more any)) " presets:" )
+                     (and bol (+ space) "\"" (group-n 2 (+ (not "\""))) "\""
+                          (optional (+ space) "-" (+ space) (group-n 3 (+ any))))))
+                nil 'noerror)
+          (cond
+           ((match-string 1)
+            (when presets
+              (if build-type
+                  (push (cons build-type (nreverse presets)) result)
+                (projection--log :warning "Parsed presets=%S for no build type"
+                                 presets)))
+            (setq build-type (intern (match-string 1))
+                  presets nil))
+           ((match-string 2)
+            (push (cons (match-string 2)
+                        (match-string 3))
+                  presets)))))
+      ;; Add any presets remaining at the end of parsing.
+      (when presets
+        (if build-type
+            (push (cons build-type (nreverse presets)) result)
+          (projection--log :warning "Parsed preset=%S for no build type" presets)))
+      (nreverse result))))
+
+
+
 ;; CMake presets.
 
 (defcustom projection-cmake-preset 'prompt-once-when-multiple
@@ -142,26 +220,38 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
 When BUILD-TYPE is nil return all presets ignoring those incompatible
 with the active configure preset."
   (when-let* ((presets (projection-cmake--list-presets))
+              ;; Flatten presets to avoid `build-type' nesting.
               (presets (if build-type
                            (alist-get build-type presets)
                          (apply #'append (mapcar #'cdr presets))))
+              ;; Remove preset options that are explicitly marked hidden.
               (presets (cl-remove-if (lambda (preset-config)
                                        (alist-get 'hidden (cdr preset-config)))
-                                     presets)))
+                                     presets))
+              ;; Filter out presets that are not available in the current environment.
+              (presets (if-let ((available-presets (projection-cmake--available-presets)))
+                           (cl-remove-if-not (lambda (preset-config)
+                                               (assoc (alist-get 'name preset-config)
+                                                      (alist-get
+                                                       (alist-get 'projection--preset-type preset-config)
+                                                       available-presets)))
+                                             presets)
+                         presets))
+              )
     ;; Remove preset options that don't match the active configure preset (when there is one).
     (when-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
                 (projection-cmake-preset 'silent)
                 (active-configure-preset (projection-cmake--preset 'configure)))
-      (setq presets
-            (cl-remove-if (lambda (preset-config)
-                            (if-let ((build-type-has-required-configure-preset
-                                      (member (alist-get 'projection--preset-type preset-config)
-                                              projection-cmake--preset-build-types-tied-to-configure))
-                                     (required-configure-preset
-                                      (alist-get 'configurePreset preset-config)))
-                                (not (equal required-configure-preset active-configure-preset))
-                              nil))
-                          presets)))
+      (setq presets (cl-remove-if
+                     (lambda (preset-config)
+                       (if-let ((build-type-has-required-configure-preset
+                                 (member (alist-get 'projection--preset-type preset-config)
+                                         projection-cmake--preset-build-types-tied-to-configure))
+                                (required-configure-preset
+                                 (alist-get 'configurePreset preset-config)))
+                           (not (equal required-configure-preset active-configure-preset))
+                         nil))
+                     presets)))
     presets))
 
 (defun projection-cmake--read-preset (prompt presets)
