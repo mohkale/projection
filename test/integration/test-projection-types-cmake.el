@@ -468,16 +468,15 @@ target_link_libraries(main main_lib)
               :to-equal '("testPreset1WithConfigurePreset2" "testPreset2WithConfigurePreset2")))
 
     (it "Clears cached test preset when re-setting a configure preset"
-      (let ((projection-cmake-preset 'prompt-always))
-        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
-        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
-        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+      (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
+      (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
+      (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
 
-        ;; WHEN/THEN
-        (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset1")
-        (+expect-interactive-command-calls-compile-with
-         #'projection-test-project
-         "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test")))
+      ;; WHEN/THEN
+      (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset1")
+      (+expect-interactive-command-calls-compile-with
+       #'projection-test-project
+       "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test"))
 
     (it "Ignores build or test preset when active configure preset conflicts with it"
       (let ((projection-cmake-preset '((configure . prompt-always)
@@ -487,10 +486,19 @@ target_link_libraries(main main_lib)
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-test-project
-         "ctest --test-dir build test")
+         "ctest --test-dir build test")))
 
-        ;; THEN
-        (expect #'completing-read :to-have-been-called-times 1)))
+    (it "Can configure alternate preset setting for preset invalidation"
+      (let ((projection-cmake-preset '((configure . "configurePreset1")
+                                       (on-invalid . prompt-once-when-multiple))))
+        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
+        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
+        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+
+        ;; WHEN/THEN
+        (+expect-interactive-command-calls-compile-with
+         #'projection-test-project
+         "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test")))
 
     (describe "Multi compile"
       (before-all (require 'projection-multi-cmake))
