@@ -216,6 +216,14 @@ target_link_libraries(main main_lib)
       (expect (file-expand-wildcards "build/.cmake/api/v1/query/*/query.json")
               :not :to-be nil))
 
+    (it "Does not throw an error on build directory missing reply for projection"
+      ;; GIVEN
+      (let ((projection-cmake--file-api-client "alternate-client"))
+        (call-interactively #'projection-configure-project))
+
+      ;; WHEN/THEN
+      (expect (projection-multi-cmake-targets) :not :to-throw))
+
     (it "Extracts CMake targets from the code-model"
       ;; GIVEN
       (call-interactively #'projection-configure-project)

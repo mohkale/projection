@@ -498,21 +498,22 @@ This function respects `projection-cmake-cache-code-model'."
              (car (cl-sort (file-expand-wildcards (f-join reply-directory "index-*.json"))
                            #'string>))))
       (condition-case err
-          (let* ((codemodel (thread-last
-                              index-file
-                              (projection-cmake--file-api-read-file)
-                              (projection-cmake--file-api-query-code-model-file)
-                              (f-join reply-directory)
-                              (projection-cmake--file-api-read-file)))
-                 (targets-by-config
-                  (thread-last
-                    codemodel
-                    (alist-get 'configurations)
-                    (mapcar (apply-partially
-                             #'projection-cmake--file-api-query-config-targets
-                             reply-directory)))))
-            `((codemodel . ,codemodel)
-              (targets-by-config . ,targets-by-config)))
+          (when-let* ((codemodel-base-name (thread-last
+                                             index-file
+                                             (projection-cmake--file-api-read-file)
+                                             (projection-cmake--file-api-query-code-model-file)))
+                      (codemodel (thread-last
+                                   codemodel-base-name
+                                   (f-join reply-directory)
+                                   (projection-cmake--file-api-read-file))))
+            (let ((targets-by-config (thread-last
+                                       codemodel
+                                       (alist-get 'configurations)
+                                       (mapcar (apply-partially
+                                                #'projection-cmake--file-api-query-config-targets
+                                                reply-directory)))))
+              `((codemodel . ,codemodel)
+                (targets-by-config . ,targets-by-config))))
         ((file-missing json-readtable-error projection-cmake-code-model)
          (projection--log :error "error while querying CMake code-model %s." (cdr err))))
     (projection--log :warning "Cannot query cmake codemodel because no indexes exist.")))
