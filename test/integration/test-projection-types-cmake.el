@@ -263,6 +263,15 @@ target_link_libraries(main main_lib)
     {
       \"name\": \"configurePreset3\",
       \"displayName\": \"Preset number 3 for configuring\"
+    },
+    {
+      \"name\": \"windowsOnlyPreset\",
+      \"displayName\": \"Windows only preset\",
+      \"condition\": {
+        \"type\": \"equals\",
+        \"lhs\": \"${hostSystemName}\",
+        \"rhs\": \"Windows\"
+      }
     }
   ],
   \"buildPresets\": [
@@ -306,6 +315,21 @@ target_link_libraries(main main_lib)
     }
   }
 }"))))
+
+    (it "Can includes presets failing condition checks"
+      (let ((projection-cmake-respect-preset-conditions nil))
+        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
+
+        ;; WHEN/THEN
+        (+expect-interactive-command-calls-compile-with
+         #'projection-configure-project
+         "cmake -S . -B build --preset\\=configurePreset1")
+
+        ;; THEN
+        (expect 'completing-read :to-have-been-called-times 1)
+        (expect (+completion-table-candidates
+                 (spy-calls-args-for 'completing-read 0))
+                :to-contain "Windows only preset")))
 
     (it "Prompts for the current projects preset interactively"
       ;; GIVEN
