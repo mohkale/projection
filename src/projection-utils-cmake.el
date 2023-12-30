@@ -330,10 +330,12 @@ Prompt for the `completing-read' session will be PROMPT."
         (throw 'preset-value
                (projection-cmake--preset2 build-type build-type-preset-option list-presets-cached)))
       (catch 'invalid-preset
-        (projection-cmake--preset2 build-type on-invalid-preset-option list-presets-cached)))))
+        (throw 'preset-value
+               (projection-cmake--preset2 build-type on-invalid-preset-option list-presets-cached)))
+      (projection--log :debug "Double invalid preset resolution"))))
 
 (defun projection-cmake--preset2 (build-type preset-option list-presets-callback)
-  "Fetch a CMake preset for BUILD-TYPE respecting config options and project cache.
+  "Fetch a CMake preset for BUILD-TYPE respecting PRESET-OPTION and project cache.
 LIST-PRESETS-CALLBACK is a injectable method for accessing the presets for
 BUILD-TYPE. It should cache presets after the first list call."
   (cl-block nil
@@ -344,6 +346,9 @@ BUILD-TYPE. It should cache presets after the first list call."
           preset                 ; The preset value chosen by the user (for caching)
           )
 
+      (when (stringp preset-option)
+        (setq preset preset-option))
+
       ;; If we have a cached preset value it takes priority over the configuration
       ;; options. This is so you can update the options interactively and don't have
       ;; to tweak around with configuration variables.
@@ -353,9 +358,7 @@ BUILD-TYPE. It should cache presets after the first list call."
       ;; changes and is no longer applicable.
       (when-let* ((project project)
                   (cached-preset (projection--cache-get project cache-var)))
-        (if (eq preset-option 'prompt-always)
-            (setq preset-option cached-preset)
-          (cl-return cached-preset)))
+        (setq preset cached-preset))
 
       ;; Always prefer the configured entries over prompting the user.
       (when (eq preset-option 'disable)
@@ -363,18 +366,19 @@ BUILD-TYPE. It should cache presets after the first list call."
 
       (cond
        ((and (not (member build-type projection-cmake--preset-build-types-tied-to-configure))
-             (stringp preset-option))
-        ;; Preset is a string and not affected by the configure preset so return immediately.
-        (cl-return preset-option))
+             preset)
+        ;; Preset is set and not affected by the configure preset so return immediately.
+        (cl-return preset))
        ((not (setq presets (funcall list-presets-callback)))
         ;; No presets for `build-type' that are compatible with our configure preset.
         nil)
-       ((stringp preset-option)
-        ;; Presets for `build-type' are set and is compatible with the configure preset.
+       (preset
+        ;; Preset for `build-type' are set and is compatible with the configure preset.
         (if (seq-find (lambda (preset-config)
-                        (equal (alist-get 'name preset-config) preset-option))
+                        (equal (alist-get 'name preset-config) preset))
                       presets)
-            (cl-return preset-option)
+            (cl-return preset)
+          (projection-cmake-set-preset project build-type nil)
           (throw 'invalid-preset nil)))
        ((eq preset-option 'silent)
         nil)
@@ -385,7 +389,7 @@ BUILD-TYPE. It should cache presets after the first list call."
                      (eq (length presets) 1))
                 (alist-get 'name (car presets)))
 
-               ((member projection-cmake-preset
+               ((member preset-option
                         '(prompt-always prompt-once prompt-once-when-multiple))
                 (alist-get 'name
                            (projection-cmake--read-preset
@@ -415,15 +419,7 @@ BUILD-TYPE. It should cache presets after the first list call."
                 (preset (alist-get 'name preset-config)))
            (list project build-type preset))
        (user-error "No CMake presets found for th ecurrent project"))))
-  (let ((cache-var (projection-cmake--preset-cache-var build-type)))
-    (unless (equal (projection--cache-get project cache-var) preset)
-      (projection--cache-put project cache-var preset)
-      (when (eq build-type 'configure)
-        ;; Invalidate cache vars for related build-types when the configure preset
-        ;; has been reset.
-        (dolist (related-build-type projection-cmake--preset-build-types-tied-to-configure)
-          (projection--cache-remove
-           project (projection-cmake--preset-cache-var related-build-type)))))))
+  (projection--cache-put project (projection-cmake--preset-cache-var build-type) preset))
 
 (dolist (build-type projection-cmake--preset-build-types)
   (projection--declare-cache-var
