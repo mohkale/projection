@@ -485,10 +485,9 @@ target_link_libraries(main main_lib)
         (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
 
         ;; WHEN/THEN
-        (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset2")
         (+expect-interactive-command-calls-compile-with
          #'projection-test-project
-         "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset2 test")
+         "ctest --test-dir build test")
 
         ;; THEN
         (expect #'completing-read :to-have-been-called-times 1)))

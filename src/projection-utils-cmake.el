@@ -196,17 +196,19 @@ use."
 See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
   :type
   '(choice
-    (choice (string :tag "Configure preset")
-            (const :tag "No configure preset" nil))
+    (string :tag "Sole preset value")
+    (const :tag "No preset" nil)
     (const :tag "Do not supply a preset value to CMake" disable)
     (const :tag "Return configured preset non-interactively" silent)
-
     (const :tag "Always prompt for which preset to use" prompt-always)
     (const :tag "Always prompt and then reuse the chosen preset"
            prompt-once)
     (const :tag "Prompt when multiple presets available and then reuse the chosen preset"
            prompt-once-when-multiple)
-    (alist :key-type (symbol :tag "Build type")
+    (alist :key-type (choice (symbol :tag "Build type")
+                             (const :tag "Failover build type" t)
+                             (const :tag "Used when the active preset is not compatible with the configure preset"
+                                    on-invalid))
            :value-type (sexp :tag "One of the other possible preset values")))
   :group 'projection-type-cmake)
 
@@ -236,8 +238,7 @@ with the active configure preset."
                                                        (alist-get 'projection--preset-type preset-config)
                                                        available-presets)))
                                              presets)
-                         presets))
-              )
+                         presets)))
     ;; Remove preset options that don't match the active configure preset (when there is one).
     (when-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
                 (projection-cmake-preset 'silent)
@@ -304,67 +305,88 @@ Prompt for the `completing-read' session will be PROMPT."
               (projection-cmake--list-presets-for-build-type build-type))))
 
 (defun projection-cmake--preset (build-type)
-  "Fetch the CMake preset for BUILD-TYPE respecting project cache."
-  (cl-block nil
-    ;; When an alist preset configuration re-invoke with the configuration for
-    ;; the build type instead of the alist. This allows reusing the preset choice
-    ;; for each build-type independently.
-    (when-let ((projection-cmake-preset
-                (when (consp projection-cmake-preset)
-                  (alist-get build-type projection-cmake-preset))))
-      (cl-return (projection-cmake--preset build-type)))
+  "Fetch a CMake preset for BUILD-TYPE respecting config options."
+  (let (build-type-preset-option
+        on-invalid-preset-option
+        (list-presets-cached
+         (let ((presets-value nil))
+           (lambda ()
+             (unless presets-value
+               (setq presets-value
+                     (cons t (projection-cmake--list-presets-for-build-type build-type))))
+             (cdr presets-value)))))
+    (if (consp projection-cmake-preset)
+        (setq build-type-preset-option (alist-get
+                                        build-type projection-cmake-preset
+                                        (alist-get t projection-cmake-preset))
+              on-invalid-preset-option (alist-get
+                                        'on-invalid projection-cmake-preset
+                                        (alist-get t projection-cmake-preset)))
+      (setq build-type-preset-option projection-cmake-preset
+            on-invalid-preset-option projection-cmake-preset))
 
-    (let* ((project (projection--current-project 'no-error))
-           (cache-var
-            (projection-cmake--preset-cache-var build-type))
-           presets ; Collection of actual presets for BUILD-TYPE
-           preset  ; The preset value chosen by the user (for caching)
-           )
+    (catch 'preset-value
+      (catch 'invalid-preset
+        (throw 'preset-value
+               (projection-cmake--preset2 build-type build-type-preset-option list-presets-cached)))
+      (catch 'invalid-preset
+        (projection-cmake--preset2 build-type on-invalid-preset-option list-presets-cached)))))
+
+(defun projection-cmake--preset2 (build-type preset-option list-presets-callback)
+  "Fetch a CMake preset for BUILD-TYPE respecting config options and project cache.
+LIST-PRESETS-CALLBACK is a injectable method for accessing the presets for
+BUILD-TYPE. It should cache presets after the first list call."
+  (cl-block nil
+    (let ((project (projection--current-project 'no-error))
+          (cache-var
+           (projection-cmake--preset-cache-var build-type))
+          presets                ; Collection of actual presets for BUILD-TYPE
+          preset                 ; The preset value chosen by the user (for caching)
+          )
 
       ;; If we have a cached preset value it takes priority over the configuration
-      ;; options. This is so you can update the options interactively and don't
-      ;; have to tweak around with configuration variables.
+      ;; options. This is so you can update the options interactively and don't have
+      ;; to tweak around with configuration variables.
       ;;
-      ;; NOTE We don't have to validate this preset against the active configure
-      ;; preset because the set-preset command will clear the related presets when
-      ;; this changes.
-      (when-let ((cached-preset
-                  (when (and project
-                             (not (eq projection-cmake-preset 'prompt-always)))
-                    (projection--cache-get project cache-var))))
-        (cl-return cached-preset))
+      ;; NOTE This preset is not validated against the active configure preset here
+      ;; because the set-preset command will clear the related presets when this
+      ;; changes and is no longer applicable.
+      (when-let* ((project project)
+                  (cached-preset (projection--cache-get project cache-var)))
+        (if (eq preset-option 'prompt-always)
+            (setq preset-option cached-preset)
+          (cl-return cached-preset)))
 
       ;; Always prefer the configured entries over prompting the user.
-      (when (eq projection-cmake-preset 'disable)
+      (when (eq preset-option 'disable)
         (cl-return nil))
 
       (cond
        ((and (not (member build-type projection-cmake--preset-build-types-tied-to-configure))
-             (stringp projection-cmake-preset))
+             (stringp preset-option))
         ;; Preset is a string and not affected by the configure preset so return immediately.
-        (cl-return projection-cmake-preset))
-       ((not (setq presets (projection-cmake--list-presets-for-build-type build-type)))
+        (cl-return preset-option))
+       ((not (setq presets (funcall list-presets-callback)))
         ;; No presets for `build-type' that are compatible with our configure preset.
         nil)
-       ((and (stringp projection-cmake-preset)
-             (seq-find (lambda (preset-config)
-                         (equal (alist-get 'name preset-config) projection-cmake-preset))
-                       presets))
-        ;; Presets for `build-type' are avilable but not the one we already have configured.
-        (cl-return projection-cmake-preset))
-       ((eq projection-cmake-preset 'silent)
+       ((stringp preset-option)
+        ;; Presets for `build-type' are set and is compatible with the configure preset.
+        (if (seq-find (lambda (preset-config)
+                        (equal (alist-get 'name preset-config) preset-option))
+                      presets)
+            (cl-return preset-option)
+          (throw 'invalid-preset nil)))
+       ((eq preset-option 'silent)
         nil)
        ((setq preset
               (cond
-               ((and (member projection-cmake-preset
+               ((and (member preset-option
                              '(prompt-when-multiple prompt-once-when-multiple))
                      (eq (length presets) 1))
                 (alist-get 'name (car presets)))
 
-               ;; TODO: Prompting when an invalid string may not make sense.
-               ((or (stringp projection-cmake-preset)
-                    (member projection-cmake-preset
-                            '(prompt-always prompt-once prompt-once-when-multiple)))
+               ((member projection-cmake-preset
+                        '(prompt-always prompt-once prompt-once-when-multiple))
                 (alist-get 'name
                            (projection-cmake--read-preset
                             (projection--prompt
@@ -374,9 +396,7 @@ Prompt for the `completing-read' session will be PROMPT."
                                ""))
                             presets)))))
         ;; Cache the preset if configured to only prompt once.
-        (when (and build-type
-                   (member projection-cmake-preset
-                           '(prompt-once prompt-once-when-multiple)))
+        (when (member preset-option '(prompt-once prompt-once-when-multiple))
           (projection-cmake-set-preset project build-type preset))
         (cl-return preset))))))
 
