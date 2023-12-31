@@ -142,16 +142,7 @@ targets) with this option."
 
 (defun projection-multi-cmake--targets-from-code-model ()
   "Determine list of available CMake targets from the code-model."
-  (when-let* ((code-model (projection-cmake--file-api-code-model))
-              (build-type (or (projection-cmake--build-type)
-                              (let* ((projection-cmake-preset 'silent)
-                                     (configure-preset-config
-                                      (projection-cmake--preset-config 'build)))
-                                (alist-get 'configuration configure-preset-config))
-                              ""))
-              (target-configurations (alist-get 'targets-by-config code-model))
-              (targets (or (cdr (assoc build-type target-configurations))
-                           (cadr target-configurations))))
+  (when-let ((targets (projection-cmake--file-api-target-config)))
     (append
      (thread-last
        targets

@@ -51,6 +51,17 @@ otherwise it will return SHELL-COMMAND."
      (mapcar #'projection--join-shell-command))
    " && "))
 
+(defun projection--env-shell-command-prefix (env-alist &optional cwd)
+  "Construct a shell command prefix for ENV-ALIST and CWD.
+If ENV-ALIST and CWD is empty then return nil."
+  (when (or env-alist cwd)
+    `("env"
+      ,@(when cwd
+          (list (concat "--chdir=" cwd)))
+      ,@(cl-loop for (key . value) in
+                     env-alist
+                     collect (concat key "=" value)))))
+
 (defun projection--shell-command-to-string (command)
   "Run COMMAND in a subshell and return the standard output."
   (projection--log :debug "Running shell command='%s'" command)

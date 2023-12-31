@@ -125,6 +125,14 @@ being test_.")
     :documentation "Possible suffixes for a file to treat as a test file.
 For example foo.cpp could have a related test foo_test.cpp file with the suffix being
 _test.")
+   (artifacts-list
+    :initarg :artifacts-list
+    :initform nil
+    :custom '(choice
+              function
+              (list (repeat function)))
+    :documentation "Function used to query available artifacts for this project type.
+See `projection-artifacts'.")
    ;; Multi compile
    (compile-multi-targets
     :initarg :compile-multi-targets

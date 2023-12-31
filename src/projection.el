@@ -79,6 +79,8 @@
     (define-key map "2" 'projection-update-extra-project-types)
     (define-key map "I" 'projection-show-project-info)
     (define-key map "DEL" 'projection-cache-clear)
+    ;; `projection-artifacts'
+    (define-key map "l" 'projection-artifacts-list)
     ;; `projection-find'
     (define-key map "TAB" 'projection-find-other-file)
     (define-key map "o"   'projection-find-other-file)

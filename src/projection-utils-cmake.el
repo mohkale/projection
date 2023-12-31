@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'f)
+(require 's)
 (require 'json)
 
 (require 'projection-core)
@@ -563,6 +564,21 @@ This function respects `projection-cmake-cache-code-model'."
         (make-directory (f-dirname query-file) 'parents)
         (write-region nil nil query-file nil 'silent)))))
 
+(defun projection-cmake--file-api-target-config ()
+  "Get target metadata for the active CMake build config.
+If none is active or we could not deduce the active config we default to the
+first configured."
+  (when-let* ((code-model (projection-cmake--file-api-code-model))
+              (build-type (or (projection-cmake--build-type)
+                              (let* ((projection-cmake-preset 'silent)
+                                     (configure-preset-config
+                                      (projection-cmake--preset-config 'build)))
+                                (alist-get 'configuration configure-preset-config))
+                              ""))
+              (target-configurations (alist-get 'targets-by-config code-model)))
+    (or (cdr (assoc build-type target-configurations))
+        (cdar target-configurations))))
+
 ;;;###autoload
 (progn
   (defun projection-cmake--cmake-project-p (project-types)
@@ -758,11 +774,8 @@ key value pair set."
   "Helper function to  generate a CTest command.
 ARGV if provided will be appended to the command."
   (projection--join-shell-command
-   `(,@(when projection-cmake-ctest-environment-variables
-         (append (list "env")
-                 (cl-loop for (key . value) in
-                          projection-cmake-ctest-environment-variables
-                          collect (concat key "=" value))))
+   `(,@(projection--env-shell-command-prefix
+        projection-cmake-ctest-environment-variables)
      "ctest"
      ,@(when-let ((build (projection-cmake--build-directory)))
          (list "--test-dir" build))
@@ -812,6 +825,74 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 
 
+;;; Artifacts
+
+(defconst projection-cmake--artifact-types
+  '(("EXECUTABLE"
+     (type . executable)
+     (debuggable . t))
+    ("STATIC_LIBRARY"  (type . library))
+    ("SHARED_LIBRARY" (type . library))))
+
+(defun projection-cmake-list-artifacts ()
+  "List CMake target artifacts."
+  (let ((build-directory (projection-cmake--build-directory))
+        (targets (projection-cmake--file-api-target-config)))
+    (let ((result nil))
+      (dolist (target targets)
+        (let-alist target
+          (when-let ((props
+                      (alist-get .type projection-cmake--artifact-types nil nil #'string-equal)))
+            (dolist (artifact .artifacts)
+              (setq artifact (alist-get 'path artifact))
+              (push
+               `((name . ,artifact)
+                 ,@props
+                 (category . ,(concat "CMake " (symbol-name (alist-get 'type props))))
+                 (arg0 . ,(f-join build-directory artifact)))
+               result)))))
+      (nreverse result))))
+
+(defun projection-ctest--read-property (props name)
+  "Fetch the property from the CMake target PROPS with NAME."
+  (alist-get
+   'value
+   (seq-find
+    (lambda (it)
+      (let-alist it
+        (string-equal .name name)))
+    props)))
+
+(defun projection-ctest-list-artifacts ()
+  "List CTest target artifacts."
+  (let (result)
+    (dolist (test-target (alist-get 'tests (projection-cmake-ctest--targets)))
+      (let-alist test-target
+        (push
+         `((name . ,.name)
+           (category . "CTest")
+           (arg0 . ,(car .command))
+           ,@(when-let ((argv (cdr .command)))
+               `((argv . ,argv)))
+           (type . executable)
+           (debuggable . t)
+           ,@(when-let ((working-directory
+                         (projection-ctest--read-property .properties "WORKING_DIRECTORY")))
+               `((working-directory . ,working-directory)))
+           ,@(when-let ((environment
+                         (projection-ctest--read-property .properties "ENVIRONMENT")))
+               (setq environment
+                     (cl-loop
+                      for env-variable in environment
+                      do (setq env-variable (s-split-up-to "=" env-variable 1))
+                      collect (cons (car env-variable)
+                                    (or (cadr env-variable) ""))))
+               `((environment . ,environment))))
+         result)))
+    (nreverse result)))
+
+
+
 ;;;###autoload
 (defun projection-cmake-clear-build-directory ()
   "Interactively run a compilation command to remove the build directory."
@@ -841,7 +922,7 @@ See `projection-cmake-build-directory'"))
    `("cmake"
      "-S" "."
      ,@(when-let ((build (projection-cmake--build-directory)))
-        (list "-B" build))
+         (list "-B" build))
      ,@(when-let ((preset (projection-cmake--preset 'configure)))
          (list (concat "--preset=" preset)))
      ,@(when-let ((build-type (projection-cmake--build-type)))

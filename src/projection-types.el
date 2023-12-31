@@ -240,6 +240,8 @@
 (autoload 'projection-cmake-run-test      "projection-utils-cmake")
 (autoload 'projection-cmake-run-install   "projection-utils-cmake")
 (autoload 'projection-cmake-clear-build-directory "projection-utils-cmake")
+(autoload 'projection-cmake-list-artifacts "projection-utils-cmake")
+(autoload 'projection-ctest-list-artifacts "projection-utils-cmake")
 
 (defvar projection-project-type-cmake
   (projection-type
@@ -249,6 +251,8 @@
    :build     #'projection-cmake-run-build
    :test      #'projection-cmake-run-test
    :install   #'projection-cmake-run-install
+   :artifacts-list (list #'projection-cmake-list-artifacts
+                         #'projection-ctest-list-artifacts)
    :compile-multi-targets
    `(("cmake:clear" . ,#'projection-cmake-clear-build-directory))))
 

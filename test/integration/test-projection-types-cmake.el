@@ -1,6 +1,7 @@
 ;; -*- lexical-binding: t -*-
 
 
+(require 'projection-artifacts)
 (require 'projection-types)
 (require 'projection-utils)
 (require 'projection-utils-cmake)
@@ -23,12 +24,16 @@ int main() {
        ("CMakeLists.txt" . "cmake_minimum_required(VERSION 3.2)
 project(projection_test)
 
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -std=c++11 -O3\")
 
 add_library(main_lib main.cpp)
 add_executable(main main.cpp)
 target_link_libraries(main main_lib)
+
+add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
 "))))
 
   (it "Can be identified"
@@ -242,7 +247,26 @@ target_link_libraries(main main_lib)
       (let* ((projection-multi-cmake-exclude-targets (rx bol "main_lib" eol))
              (cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
         ;; THEN
-        (expect "main_lib" :not :to-be-in cmake-targets))))
+        (expect "main_lib" :not :to-be-in cmake-targets)))
+
+    (describe "Artifacts"
+      (it "Can query CMake and CTest artifacts"
+        ;; GIVEN
+        (call-interactively #'projection-configure-project)
+
+        (spy-on #'completing-read :and-call-fake
+                (lambda (&rest args)
+                  (car (+completion-table-candidates args))))
+
+        ;; WHEN
+        (call-interactively 'projection-artifacts-list)
+
+        ;; THEN
+        (expect (+completion-table-candidates
+                 (spy-calls-args-for 'completing-read 0))
+                :to-equal '("CMake executable: main"
+                            "CMake library: libmain_lib.a"
+                            "CTest: main-test")))))
 
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
