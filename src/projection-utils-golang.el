@@ -124,6 +124,17 @@ test."
 
 
 
+(defun projection-golang-list-artifacts ()
+  (cl-loop
+   for (short-name . package) in (projection-golang--list-packages)
+   collect `((name . ,short-name)
+             (type . go-package)
+             (category . "Go package")
+             (go-package . ,package)
+             (debuggable . t))))
+
+
+
 ;; Golang compilation commands.
 
 (defun projection-golang-run-run ()

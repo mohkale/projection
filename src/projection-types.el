@@ -89,6 +89,7 @@
 (autoload 'projection-golang-run-build "projection-utils-golang")
 (autoload 'projection-golang-run-run   "projection-utils-golang")
 (autoload 'projection-golang-run-test  "projection-utils-golang")
+(autoload 'projection-golang-list-artifacts "projection-utils-golang")
 
 (defvar projection-project-type-golang
   (projection-type
@@ -105,7 +106,8 @@
    :compile-multi-targets
    '(("go:mod:tidy" . "go mod tidy")
      ("go:mod:verify" . "go mod verify")
-     ("go:mod:why" . "go mod why"))))
+     ("go:mod:why" . "go mod why"))
+   :artifacts-list #'projection-golang-list-artifacts))
 
 (add-to-list 'projection-project-types projection-project-type-golang 'append)
 
