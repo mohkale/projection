@@ -839,8 +839,13 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 (defun projection-cmake-list-artifacts ()
   "List CMake target artifacts."
-  (let ((build-directory (projection-cmake--build-directory))
-        (targets (projection-cmake--file-api-target-config)))
+  (let* ((build-directory
+          (projection-cmake--build-directory 'expand))
+         (build-directory-remote (file-remote-p build-directory))
+         (build-directory (substring build-directory
+                                     (when build-directory-remote
+                                       (length build-directory-remote))))
+         (targets (projection-cmake--file-api-target-config)))
     (let ((result nil))
       (dolist (target targets)
         (let-alist target
