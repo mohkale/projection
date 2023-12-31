@@ -618,14 +618,17 @@ query file created before configuring."
 
 (defun projection-cmake-ctest--targets ()
   "Resolve available ctest targets for a project respecting the project cache."
-  (projection--cache-get-with-predicate
-   (projection--current-project 'no-error)
-   'projection-cmake-ctest-targets
-   (cond
-    ((eq projection-cmake-ctest-cache-targets 'auto)
-     (projection--cmake-configure-modtime-p))
-    (t projection-cmake-ctest-cache-targets))
-   #'projection-cmake-ctest--targets2))
+  (let* ((project (projection--current-project 'no-error))
+         (default-directory (or (when project (project-root project))
+                                default-directory)))
+    (projection--cache-get-with-predicate
+     project
+     'projection-cmake-ctest-targets
+     (cond
+      ((eq projection-cmake-ctest-cache-targets 'auto)
+       (projection--cmake-configure-modtime-p))
+      (t projection-cmake-ctest-cache-targets))
+     #'projection-cmake-ctest--targets2)))
 
 (projection--declare-cache-var
   'projection-cmake-ctest-targets
