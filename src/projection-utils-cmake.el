@@ -832,10 +832,10 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 (defconst projection-cmake--artifact-types
   '(("EXECUTABLE"
-     (type . executable)
+     (type . cmake-executable)
      (debuggable . t))
-    ("STATIC_LIBRARY"  (type . library))
-    ("SHARED_LIBRARY" (type . library))))
+    ("STATIC_LIBRARY"  (type . cmake-library))
+    ("SHARED_LIBRARY" (type . cmake-library))))
 
 (defun projection-cmake-list-artifacts ()
   "List CMake target artifacts."
@@ -856,7 +856,9 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
               (push
                `((name . ,artifact)
                  ,@props
-                 (category . ,(concat "CMake " (symbol-name (alist-get 'type props))))
+                 (category . ,(concat "CMake "
+                                      (string-remove-prefix
+                                       "cmake-" (symbol-name (alist-get 'type props)))))
                  (arg0 . ,(f-join build-directory artifact)))
                result)))))
       (nreverse result))))
@@ -882,7 +884,7 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
            (arg0 . ,(car .command))
            ,@(when-let ((argv (cdr .command)))
                `((argv . ,argv)))
-           (type . executable)
+           (type . cmake-test)
            (debuggable . t)
            ,@(when-let ((working-directory
                          (projection-ctest--read-property .properties "WORKING_DIRECTORY")))
@@ -898,6 +900,18 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
                `((environment . ,environment))))
          result)))
     (nreverse result)))
+
+(cl-defmethod projection-artifacts--serialise-artifact (artifact (_type (eql cmake-executable)))
+  "Serialize cmake-executable ARTIFACT as executables."
+  (projection-artifacts--serialise-artifact artifact 'executable))
+
+(cl-defmethod projection-artifacts--serialise-artifact (artifact (_type (eql cmake-test)))
+  "Serialize cmake-test ARTIFACT as executables."
+  (projection-artifacts--serialise-artifact artifact 'executable))
+
+(cl-defmethod projection-artifacts--serialise-artifact (artifact (_type (eql cmake-library)))
+  "Serialize cmake-library ARTIFACT as executables."
+  (projection-artifacts--serialise-artifact artifact 'library))
 
 
 
