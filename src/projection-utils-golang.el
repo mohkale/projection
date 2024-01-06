@@ -125,6 +125,7 @@ test."
 
 
 (defun projection-golang-list-artifacts ()
+  "List go packages as artifacts."
   (cl-loop
    for (short-name . package) in (projection-golang--list-packages)
    collect `((name . ,short-name)
