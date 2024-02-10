@@ -101,5 +101,14 @@
     map)
   "Keymap for projection project-management bindings.")
 
+(defcustom projection-test-jobs nil
+  "Number of jobs to use for running tests when applicable."
+  :type '(optional
+          (choice
+           (const -1 :tag "Use `num-processors'.")
+           (const -2 :tag "Use half of `num-processors'.")
+           (integer :tag "Use this value as the number of jobs.")))
+  :group 'projection)
+
 (provide 'projection)
 ;;; projection.el ends here

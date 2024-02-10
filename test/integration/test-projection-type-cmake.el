@@ -88,7 +88,7 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
 
   (it "Runs ctest with a customized number of jobs in parallel"
     ;; GIVEN
-    (let ((projection-cmake-ctest-jobs 10))
+    (let ((projection-test-jobs 10))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-test-project

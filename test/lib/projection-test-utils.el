@@ -155,7 +155,7 @@ Use this like so:
      (+projection--cache-set projection-project-types projection-project-types)
      (+projection--cache-set projection-primary-project-type nil)
      (+projection--cache-set projection-cmake-ctest-options nil)
-     (+projection--cache-set projection-cmake-ctest-jobs nil)
+     (+projection--cache-set projection-test-jobs nil)
      (+projection--cache-set projection-cmake-ctest-environment-variables nil)))
 
 (provide 'projection-test-utils)

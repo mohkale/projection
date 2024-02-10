@@ -25,6 +25,7 @@
 (require 's)
 (require 'json)
 
+(require 'projection)
 (require 'projection-core)
 (require 'projection-utils)
 
@@ -738,14 +739,7 @@ Set the extra command line options to pass to ctest."
   :type '(list string)
   :group 'projection-type-cmake)
 
-(defcustom projection-cmake-ctest-jobs nil
-  "Value of the --parallel option passed to CTest when set."
-  :type '(optional
-          (choice
-           (const -1 :tag "Use `num-processors'.")
-           (const -2 :tag "Use half of `num-processors'.")
-           (integer :tag "Use this value as the number of jobs.")))
-  :group 'projection-type-cmake)
+(define-obsolete-variable-alias 'projection-cmake-ctest-jobs 'projection-test-jobs "0.1")
 
 (defcustom projection-cmake-ctest-environment-variables
   '(("CLICOLOR_FORCE" . "1")
@@ -769,7 +763,7 @@ ARGV if provided will be appended to the command."
      ,@(when-let ((preset (projection-cmake--preset 'test)))
          (list (concat "--preset=" preset)))
      ,@(when-let ((job-count (projection--guess-parallelism
-                              projection-cmake-ctest-jobs)))
+                              projection-test-jobs)))
          (list (concat "--parallel=" (number-to-string job-count))))
      ,@projection-cmake-ctest-options
      ,@argv)))
