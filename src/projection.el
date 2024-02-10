@@ -101,10 +101,12 @@
     map)
   "Keymap for projection project-management bindings.")
 
-(defcustom projection-build-jobs nil
+(defcustom projection-build-jobs 'ninja
   "Number of jobs to use for building a project (when applicable)."
   :type '(optional
           (choice
+           (const ninja :tag
+                  "Match ninja https://github.com/ninja-build/ninja/blob/fd7067652cae480190bf13b2ee5475efdf09ac7d/src/ninja.cc#L239")
            (const -1 :tag "Use `num-processors'.")
            (const -2 :tag "Use half of `num-processors'.")
            (integer :tag "Use this value as the number of jobs.")))
@@ -114,6 +116,8 @@
   "Number of jobs to use for running tests (when applicable)."
   :type '(optional
           (choice
+           (const ninja :tag
+                  "Match ninja https://github.com/ninja-build/ninja/blob/fd7067652cae480190bf13b2ee5475efdf09ac7d/src/ninja.cc#L239")
            (const -1 :tag "Use `num-processors'.")
            (const -2 :tag "Use half of `num-processors'.")
            (integer :tag "Use this value as the number of jobs.")))

@@ -143,6 +143,11 @@ If ENV-ALIST and CWD is empty then return nil."
 See `projection-build-jobs' for supported values for JOBS."
   (when jobs
     (pcase jobs
+      ('ninja
+       (pcase (num-processors)
+         ((or 0 1) 1)
+         (2 3)
+         (_ (+ (num-processors) 2))))
       (-1 (num-processors))
       (-2 (/ (num-processors) 2))
       (0 nil)
