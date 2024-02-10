@@ -475,7 +475,7 @@ This function respects `projection-cmake-cache-code-model'."
    'projection-cmake-code-model
    (cond
     ((eq projection-cmake-cache-code-model 'auto)
-     (projection--cmake-configure-modtime-p))
+     #'projection--cmake-configure-modtime-p)
     (t projection-cmake-cache-code-model))
    #'projection-cmake--file-api-code-model2))
 
@@ -618,15 +618,16 @@ query file created before configuring."
   "Resolve available ctest targets for a project respecting the project cache."
   (let* ((project (projection--current-project 'no-error))
          (default-directory (or (when project (project-root project))
-                                default-directory)))
+                                default-directory))
+         (test-preset (projection-cmake--preset 'test)))
     (projection--cache-get-with-predicate
      project
      'projection-cmake-ctest-targets
      (cond
       ((eq projection-cmake-ctest-cache-targets 'auto)
-       (projection--cmake-configure-modtime-p))
+       #'projection--cmake-configure-modtime-p)
       (t projection-cmake-ctest-cache-targets))
-     #'projection-cmake-ctest--targets2)))
+     (apply-partially #'projection-cmake-ctest--targets2 test-preset))))
 
 (projection--declare-cache-var
   'projection-cmake-ctest-targets
@@ -635,13 +636,16 @@ query file created before configuring."
   :description "CTest tests tied to this project"
   :hide t)
 
-(defun projection-cmake-ctest--targets2 ()
-  "Resolve available CTest targets for a project."
+(defun projection-cmake-ctest--targets2 (test-preset)
+  "Resolve available CTest targets for a project.
+TODO TEST-PRESET."
   (projection--log :debug "Resolving available CMake CTest targets")
-  (projection--with-shell-command-buffer
-    (projection--cmake-ctest-command "--show-only=json-v1")
-    (let ((json-array-type 'list))
-      (json-read))))
+  (when-let ((ctest-targets
+              (projection--with-shell-command-buffer
+                (projection--cmake-ctest-command "--show-only=json-v1")
+                (let ((json-array-type 'list))
+                  (json-read)))))
+    (append ctest-targets `((projection--preset-type . ,test-preset)))))
 
 
 
@@ -795,7 +799,7 @@ This file should change on every build reconfiguration."
   :type 'string
   :group 'projection-type-cmake)
 
-(defun projection--cmake-configure-modtime-p ()
+(defun projection--cmake-configure-modtime-p (&rest _)
   "Get when CMake was last configured based on `projection-cmake-cache-file'."
   (projection--cache-modtime-predicate
    (if-let ((build-directory (projection-cmake--build-directory 'expand)))

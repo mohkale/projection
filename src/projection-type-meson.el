@@ -66,7 +66,7 @@ When EXPAND return the absolute path to the build directory."
 (defconst projection-meson--cache-file "meson-info/intro-projectinfo.json"
   "Path within build directory for a file regenerated on meson configuration.")
 
-(defun projection--meson-configure-modtime-p ()
+(defun projection--meson-configure-modtime-p (&rest _)
   "Helper function to return the time Meson was last configured."
   (projection--cache-modtime-predicate
    (expand-file-name
@@ -119,7 +119,7 @@ This function respects `projection-meson-cache-code-model'."
    (projection--current-project 'no-error)
    'projection-multi-meson-code-model
    (pcase projection-meson-cache-code-model
-     ('auto (projection--meson-configure-modtime-p))
+     ('auto #'projection--meson-configure-modtime-p)
      (_ projection-meson-cache-code-model))
    (apply-partially #'projection-meson--introspect '("--targets" "--tests"))))
 
