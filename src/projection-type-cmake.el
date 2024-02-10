@@ -699,6 +699,10 @@ including any remote components of the project when
          (list "--build" build))
      ,@(when-let ((preset (projection-cmake--preset build-type)))
          (list (concat "--preset=" preset)))
+     ,@(when (eq build-type 'build)
+         (when-let ((job-count (projection--guess-parallelism
+                                projection-build-jobs)))
+           (list (concat "--parallel=" (number-to-string job-count)))))
      ,@(when target (list "--target" target)))))
 
 (defun projection--cmake-annotation (build-type target)

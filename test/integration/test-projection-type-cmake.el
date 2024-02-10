@@ -53,6 +53,14 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
        #'projection-configure-project
        "cmake -S . -B blarg")))
 
+  (it "Builds with a customized number of jobs in parallel"
+    ;; GIVEN
+    (let ((projection-build-jobs 10))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-build-project
+       "cmake --build build --parallel\\=10")))
+
   (it "Includes the configured CMake build-type"
     ;; GIVEN
     (+interactively-set-cmake-build-type "Release")

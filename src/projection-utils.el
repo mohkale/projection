@@ -140,7 +140,7 @@ If ENV-ALIST and CWD is empty then return nil."
 
 (defun projection--guess-parallelism (jobs)
   "Query the available CPU cores respecting JOBS.
-See `projection-test-jobs' for supported values for JOBS."
+See `projection-build-jobs' for supported values for JOBS."
   (when jobs
     (pcase jobs
       (-1 (num-processors))
