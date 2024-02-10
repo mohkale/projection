@@ -26,7 +26,7 @@
 (require 'f)
 (require 'json)
 
-(require 'projection-core-log)
+(require 'projection-core)
 (require 'projection-utils-meson)
 (require 'projection-multi)
 (require 'projection-types)

@@ -22,7 +22,6 @@
 
 ;;; Code:
 
-(require 'projection-core-completion)
 (require 'projection-core)
 (require 'recentf)
 

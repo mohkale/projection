@@ -26,7 +26,6 @@
 
 (eval-when-compile (require 'subr-x))
 (require 'projection-core)
-(require 'projection-core-log)
 
 (define-error 'projection-command-error "Project error" 'error)
 

@@ -26,8 +26,6 @@
 (require 'json)
 
 (require 'projection-core)
-(require 'projection-core-completion)
-(require 'projection-core-log)
 (require 'projection-utils)
 
 (defgroup projection-type-cmake nil

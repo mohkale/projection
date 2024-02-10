@@ -23,11 +23,13 @@
 
 ;;; Code:
 
-(require 'projection-core-log)
-(require 'projection-core-type)
-(require 'projection-core-match)
 (require 'projection-core-cache)
+(require 'projection-core-completion)
+(require 'projection-core-log)
+(require 'projection-core-match)
 (require 'projection-core-misc)
+(require 'projection-core-type)
+;; (require 'projection-core-commands)
 
 (provide 'projection-core)
 ;;; projection-core.el ends here

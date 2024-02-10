@@ -24,7 +24,7 @@
 ;;; Code:
 
 (require 'projection-utils)
-(require 'projection-core-log)
+(require 'projection-core)
 (require 'projection-utils-cmake)
 (require 'projection-multi)
 (require 'projection-types)

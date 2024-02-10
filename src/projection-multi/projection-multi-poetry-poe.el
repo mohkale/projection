@@ -25,7 +25,6 @@
 
 (require 'cl-lib)
 (require 'projection-core)
-(require 'projection-core-log)
 (require 'projection-utils)
 (require 'projection-multi)
 (require 'projection-types)

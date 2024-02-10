@@ -24,7 +24,6 @@
 ;;; Code:
 
 (require 'projection-core)
-(require 'projection-core-completion)
 
 (defgroup projection-hook nil
   "Setup hooks for all files in a project."

@@ -21,8 +21,7 @@
 
 ;;; Code:
 
-(require 'projection-core-cache)
-(require 'projection-core-completion)
+(require 'projection-core)
 (require 'projection-utils)
 
 (defgroup projection-type-golang nil

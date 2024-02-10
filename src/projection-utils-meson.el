@@ -23,10 +23,7 @@
 
 (require 'json)
 
-(require 'projection-core-cache)
-(require 'projection-core-misc)
-(require 'projection-core-type)
-(require 'projection-core-completion)
+(require 'projection-core)
 (require 'projection-utils)
 
 (defgroup projection-type-meson nil
