@@ -1,4 +1,4 @@
-;;; projection-utils-golang.el --- Helpers for supporting Golang projects. -*- lexical-binding: t; -*-
+;;; projection-type-golang.el --- Helpers for supporting Golang projects. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -161,5 +161,5 @@ test."
      ,@(when-let ((package (projection-golang--package)))
          (list package)))))
 
-(provide 'projection-utils-golang)
-;;; projection-utils-golang.el ends here
+(provide 'projection-type-golang)
+;;; projection-type-golang.el ends here

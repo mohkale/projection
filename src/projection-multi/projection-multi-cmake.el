@@ -29,7 +29,7 @@
 
 (require 'projection-utils)
 (require 'projection-core)
-(require 'projection-utils-cmake)
+(require 'projection-type-cmake)
 (require 'projection-multi)
 (require 'projection-types)
 

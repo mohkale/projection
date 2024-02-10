@@ -2,7 +2,7 @@
 
 (require 'projection-types)
 (require 'projection-utils)
-(require 'projection-utils-meson)
+(require 'projection-type-meson)
 (require 'projection-multi-meson)
 
 (require 'projection-test-utils)

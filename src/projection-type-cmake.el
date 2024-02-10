@@ -1,4 +1,4 @@
-;;; projection-utils-cmake.el --- Helpers for supporting CMake projects. -*- lexical-binding: t; -*-
+;;; projection-type-cmake.el --- Helpers for supporting CMake projects. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -429,7 +429,7 @@ BUILD-TYPE. It should cache presets after the first list call."
 
 
 
-;;;###autoload (autoload 'projection-cmake-set-build-type "projection-utils-cmake" nil 'interactive)
+;;;###autoload (autoload 'projection-cmake-set-build-type "projection-type-cmake" nil 'interactive)
 (projection--declare-project-type-option 'build-type
   :project 'projection-cmake
   :options '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
@@ -951,5 +951,5 @@ See `projection-cmake-build-directory'"))
   "Install command generator for CMake projects."
   (projection--cmake-command 'install "install"))
 
-(provide 'projection-utils-cmake)
-;;; projection-utils-cmake.el ends here
+(provide 'projection-type-cmake)
+;;; projection-type-cmake.el ends here

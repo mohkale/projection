@@ -4,7 +4,7 @@
 (require 'projection-artifacts)
 (require 'projection-types)
 (require 'projection-utils)
-(require 'projection-utils-cmake)
+(require 'projection-type-cmake)
 
 (require 'projection-test-utils)
 

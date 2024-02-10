@@ -27,7 +27,7 @@
 (require 'json)
 
 (require 'projection-core)
-(require 'projection-utils-meson)
+(require 'projection-type-meson)
 (require 'projection-multi)
 (require 'projection-types)
 

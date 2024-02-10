@@ -86,10 +86,10 @@
 ;; Go should take higher precedence than Make because Go projects often have a
 ;; Makefile.
 
-(autoload 'projection-golang-run-build "projection-utils-golang")
-(autoload 'projection-golang-run-run   "projection-utils-golang")
-(autoload 'projection-golang-run-test  "projection-utils-golang")
-(autoload 'projection-golang-list-artifacts "projection-utils-golang")
+(autoload 'projection-golang-run-build "projection-type-golang")
+(autoload 'projection-golang-run-run   "projection-type-golang")
+(autoload 'projection-golang-run-test  "projection-type-golang")
+(autoload 'projection-golang-list-artifacts "projection-type-golang")
 
 (defvar projection-project-type-golang
   (projection-type
@@ -137,10 +137,10 @@
 
 
 
-(autoload 'projection-meson-get-configure-command "projection-utils-meson")
-(autoload 'projection-meson-get-build-command     "projection-utils-meson")
-(autoload 'projection-meson-get-test-command      "projection-utils-meson")
-(autoload 'projection-meson-get-install-command   "projection-utils-meson")
+(autoload 'projection-meson-get-configure-command "projection-type-meson")
+(autoload 'projection-meson-get-build-command     "projection-type-meson")
+(autoload 'projection-meson-get-test-command      "projection-type-meson")
+(autoload 'projection-meson-get-install-command   "projection-type-meson")
 
 (defvar projection-project-type-meson
   (projection-type
@@ -237,13 +237,13 @@
 
 
 
-(autoload 'projection-cmake-run-configure "projection-utils-cmake")
-(autoload 'projection-cmake-run-build     "projection-utils-cmake")
-(autoload 'projection-cmake-run-test      "projection-utils-cmake")
-(autoload 'projection-cmake-run-install   "projection-utils-cmake")
-(autoload 'projection-cmake-clear-build-directory "projection-utils-cmake")
-(autoload 'projection-cmake-list-artifacts "projection-utils-cmake")
-(autoload 'projection-ctest-list-artifacts "projection-utils-cmake")
+(autoload 'projection-cmake-run-configure "projection-type-cmake")
+(autoload 'projection-cmake-run-build     "projection-type-cmake")
+(autoload 'projection-cmake-run-test      "projection-type-cmake")
+(autoload 'projection-cmake-run-install   "projection-type-cmake")
+(autoload 'projection-cmake-clear-build-directory "projection-type-cmake")
+(autoload 'projection-cmake-list-artifacts "projection-type-cmake")
+(autoload 'projection-ctest-list-artifacts "projection-type-cmake")
 
 (defvar projection-project-type-cmake
   (projection-type

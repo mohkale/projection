@@ -2,7 +2,7 @@
 
 (require 'projection-types)
 
-(require 'projection-utils-golang)
+(require 'projection-type-golang)
 (require 'projection-test-utils)
 
 (describe "Project type Golang"

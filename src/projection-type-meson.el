@@ -1,4 +1,4 @@
-;;; projection-utils-meson.el --- Helpers for supporting Meson projects. -*- lexical-binding: t; -*-
+;;; projection-type-meson.el --- Helpers for supporting Meson projects. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mohsin Kaleem
 
@@ -75,7 +75,7 @@ When EXPAND return the absolute path to the build directory."
 
 
 
-;;;###autoload (autoload 'projection-meson-set-build-type "projection-utils-meson" nil 'interactive)
+;;;###autoload (autoload 'projection-meson-set-build-type "projection-type-meson" nil 'interactive)
 (projection--declare-project-type-option 'build-type
   :project 'projection-meson
   :options '("plain" "debug" "debugoptimized" "release")
@@ -286,5 +286,5 @@ When NAME is provided the test command will only run the test with NAME."
      "-C" ,(projection-meson--build-directory)
      "--destdir" ,projection-meson-install-directory)))
 
-(provide 'projection-utils-meson)
-;;; projection-utils-meson.el ends here
+(provide 'projection-type-meson)
+;;; projection-type-meson.el ends here
