@@ -23,6 +23,8 @@
 ;;; Code:
 
 (require 'cl-extra)
+(require 'project)
+
 (require 'projection-core-log)
 
 
@@ -107,6 +109,16 @@ If ENV-ALIST and CWD is empty then return nil."
        (goto-char (point-min))
        (unless (string-empty-p (buffer-substring (point-min) (point-max)))
          ,@body))))
+
+(defun projection--shell-command (project cmd)
+  "Variant of `project-shell-command' to run CMD in PROJECT."
+  ;; (interactive
+  ;;  (let ((project (projection--current-project)))
+  ;;    (list project
+  ;;          (read-shell-command
+  ;;           (projection--prompt "Shell command: " project)))))
+  (let ((default-directory (project-root project)))
+    (funcall-interactively #'shell-command cmd)))
 
 
 

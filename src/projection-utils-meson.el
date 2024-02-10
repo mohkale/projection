@@ -26,7 +26,6 @@
 (require 'projection-core-cache)
 (require 'projection-core-misc)
 (require 'projection-core-type)
-(require 'projection-core-commands)
 (require 'projection-core-completion)
 (require 'projection-utils)
 

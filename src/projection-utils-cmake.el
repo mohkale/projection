@@ -27,7 +27,6 @@
 
 (require 'projection-core)
 (require 'projection-core-completion)
-(require 'projection-core-commands)
 (require 'projection-core-log)
 (require 'projection-utils)
 
