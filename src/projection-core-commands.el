@@ -17,7 +17,7 @@
 
 ;;; Commentary:
 
-;; TODO
+;; Collection of commands for projection that don't have a more specific module.
 
 ;;; Code:
 
