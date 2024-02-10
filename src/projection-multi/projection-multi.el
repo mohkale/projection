@@ -158,8 +158,7 @@ result of each function should be deterministic."
          projection-cmake--build-directory
          projection-cmake--file-api-code-model
          projection-meson--build-directory
-         projection-meson--code-model
-         projection-cmake-ctest--jobs)
+         projection-meson--code-model)
       (call-interactively #'compile-multi))))
 
 ;;;###autoload

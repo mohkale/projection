@@ -126,6 +126,20 @@ If ENV-ALIST and CWD is empty then return nil."
 
 ;; General
 
+(defun projection--guess-parallelism (jobs)
+  "Query the available CPU cores respecting JOBS.
+JOBS is a nullable value that can be nil to mean no jobs, -1 to mean
+`num-processors', -2 to be half of `num-processors', and any other numerical
+value to mean that number of jobs."
+  (when jobs
+    (pcase jobs
+      (-1 (num-processors))
+      (-2 (/ (num-processors) 2))
+      (0 nil)
+      ((cl-type integer) jobs)
+      (_ (projection--log :warning "Unsupported `jobs' argument: %S." jobs)
+         nil))))
+
 (defun projection--all-files-exists (&rest files)
   "Generate a predicate function which is true if all files in FILES exist."
   (apply-partially #'cl-every #'file-exists-p files))
