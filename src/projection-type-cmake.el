@@ -473,7 +473,7 @@ This function respects `projection-cmake-cache-code-model'."
    'projection-cmake-code-model
    (cond
     ((eq projection-cmake-cache-code-model 'auto)
-     #'projection--cmake-configure-modtime-p)
+     #'projection-cmake--configure-modtime-p)
     (t projection-cmake-cache-code-model))
    #'projection-cmake--file-api-code-model2))
 
@@ -641,11 +641,11 @@ query file created before configuring."
      'projection-cmake-ctest-targets
      (cond
       ((eq projection-cmake-ctest-cache-targets 'auto)
-       (apply-partially #'projection--cmake-ctest-modtime-p test-preset))
+       (apply-partially #'projection-cmake--ctest-modtime-p test-preset))
       (t projection-cmake-ctest-cache-targets))
      (apply-partially #'projection-cmake-ctest--targets2 test-preset))))
 
-(defun projection--cmake-ctest-modtime-p (test-preset plist)
+(defun projection-cmake--ctest-modtime-p (test-preset plist)
   "Calculate a modification time for reading CTest targets.
 TEST-PRESET is the active test preset. If this preset doesn't match the preset
 in the cached value then the cache is immediately invalidated. Otherwise a
@@ -655,7 +655,7 @@ to determine the modtime. PLIST is the property list used by `projection-cache'.
     (if (equal (alist-get 'projection--test-preset value)
                test-preset)
         (seq-max
-         `(,(projection--cmake-configure-modtime-p plist)
+         `(,(projection-cmake--configure-modtime-p plist)
            ,@(when-let ((preset-files (projection-cmake--available-preset-files)))
                (list (apply #'projection--cache-modtime-predicate preset-files)))))
       (projection--cache-now))))
@@ -673,7 +673,7 @@ TEST-PRESET is the active test preset and will be merged into the response.."
   (projection--log :debug "Resolving available CMake CTest targets")
   (when-let ((ctest-targets
               (projection--with-shell-command-buffer
-                (projection--cmake-ctest-command "--show-only=json-v1")
+                (projection-cmake--ctest-command "--show-only=json-v1")
                 (let ((json-array-type 'list))
                   (json-read)))))
     (append ctest-targets `((projection--test-preset . ,test-preset)))))
@@ -726,7 +726,7 @@ including any remote components of the project when
          projection-cmake-build-directory-remote)
       projection-cmake-build-directory)))
 
-(defun projection--cmake-command (&optional build-type target)
+(defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
   (projection--join-shell-command
    `("cmake"
@@ -740,7 +740,7 @@ including any remote components of the project when
            (list (concat "--parallel=" (number-to-string job-count)))))
      ,@(when target (list "--target" target)))))
 
-(defun projection--cmake-annotation (build-type target)
+(defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
   (format "cmake %s%s%s"
           (if-let ((preset (projection-cmake--preset build-type)))
@@ -751,14 +751,14 @@ including any remote components of the project when
             "")
           target))
 
-(defun projection--cmake-workflow-command (preset)
+(defun projection-cmake--workflow-command (preset)
   "Generate a CMake command to run the workflow PRESET."
   (projection--join-shell-command
    `("cmake"
      "--workflow"
      ,(concat "--preset=" preset))))
 
-(defun projection--cmake-workflow-annotation (preset)
+(defun projection-cmake--workflow-annotation (preset)
   "Generate an annotation for a cmake command to run a workflow PRESET."
   (format "cmake %s%s%s"
           (concat "preset:" preset " ")
@@ -790,7 +790,7 @@ key value pair set."
                 :value-type (string :tag "Value of variable"))
   :group 'projection-type-cmake)
 
-(defun projection--cmake-ctest-command (&rest argv)
+(defun projection-cmake--ctest-command (&rest argv)
   "Helper function to  generate a CTest command.
 ARGV if provided will be appended to the command."
   (projection--join-shell-command
@@ -807,7 +807,7 @@ ARGV if provided will be appended to the command."
      ,@projection-cmake-ctest-options
      ,@argv)))
 
-(defun projection--cmake-ctest-annotation (target)
+(defun projection-cmake--ctest-annotation (target)
   "Generate an annotation for a ctest command to run TARGET."
   (format "ctest %s%s%s"
           (if-let ((preset (projection-cmake--preset 'test)))
@@ -830,7 +830,7 @@ This file should change on every build reconfiguration."
   :type 'string
   :group 'projection-type-cmake)
 
-(defun projection--cmake-configure-modtime-p (&rest _)
+(defun projection-cmake--configure-modtime-p (&rest _)
   "Get when CMake was last configured based on `projection-cmake-cache-file'."
   (projection--cache-modtime-predicate
    (if-let ((build-directory (projection-cmake--build-directory 'expand)))
@@ -974,15 +974,15 @@ See `projection-cmake-build-directory'"))
 
 (defun projection-cmake-run-build ()
   "Build command generator for CMake projects."
-  (projection--cmake-command 'build))
+  (projection-cmake--command 'build))
 
 (defun projection-cmake-run-test ()
   "Test command generator for CMake projects."
-  (projection--cmake-ctest-command "test"))
+  (projection-cmake--ctest-command "test"))
 
 (defun projection-cmake-run-install ()
   "Install command generator for CMake projects."
-  (projection--cmake-command 'install "install"))
+  (projection-cmake--command 'install "install"))
 
 (provide 'projection-type-cmake)
 ;;; projection-type-cmake.el ends here

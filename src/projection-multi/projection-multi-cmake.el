@@ -106,9 +106,9 @@ Candidates will be prefixed with PROJECT-TYPE."
    unless (string-match-p projection-multi-cmake-exclude-targets target)
      collect `(,(concat project-type ":" target)
                :command
-               ,(projection--cmake-command 'build target)
+               ,(projection-cmake--command 'build target)
                :annotation
-               ,(projection--cmake-annotation 'build target))))
+               ,(projection-cmake--annotation 'build target))))
 
 (defun projection-multi-cmake--workflow-preset-triggers (project-type)
   "`compile-multi' target generator using CMake workflow presets.
@@ -118,9 +118,9 @@ Candidates will be prefixed with PROJECT-TYPE."
    do (setq preset (alist-get 'name preset))
    collect `(,(concat project-type ":workflow:" preset)
              :command
-             ,(projection--cmake-workflow-command preset)
+             ,(projection-cmake--workflow-command preset)
              :annotation
-             ,(projection--cmake-workflow-annotation preset))))
+             ,(projection-cmake--workflow-annotation preset))))
 
 ;;;###autoload
 (defun projection-multi-cmake-targets (&optional project-type)

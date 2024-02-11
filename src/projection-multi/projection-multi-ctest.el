@@ -74,24 +74,24 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
       if (eq type :test)
         collect `(,(concat project-type ":" target)
-                  :command ,(projection--cmake-ctest-command "-R" target-regex)
-                  :annotation ,(projection--cmake-ctest-annotation target))
+                  :command ,(projection-cmake--ctest-command "-R" target-regex)
+                  :annotation ,(projection-cmake--ctest-annotation target))
       else if (eq type :label)
         collect `(,(concat project-type ":label:" target)
-                  :command ,(projection--cmake-ctest-command "-L" target-regex)
-                  :annotation ,(projection--cmake-ctest-annotation
+                  :command ,(projection-cmake--ctest-command "-L" target-regex)
+                  :annotation ,(projection-cmake--ctest-annotation
                                 (concat "label:" target)))
         and if projection-multi-ctest-add-exclude-label-targets
           collect `(,(concat project-type ":label:not:" target)
-                    :command ,(projection--cmake-ctest-command "-LE" target-regex)
-                    :annotation ,(projection--cmake-ctest-annotation
+                    :command ,(projection-cmake--ctest-command "-LE" target-regex)
+                    :annotation ,(projection-cmake--ctest-annotation
                                   (concat "except-label:" target)))
         end
       else
         do (error "Unexpected ctest target type=%s" type))
      `((,(concat project-type ":rerun:failed")
-        :command ,(projection--cmake-ctest-command "--rerun-failed")
-        :annotation ,(projection--cmake-ctest-annotation "rerun-failed"))))))
+        :command ,(projection-cmake--ctest-command "--rerun-failed")
+        :annotation ,(projection-cmake--ctest-annotation "rerun-failed"))))))
 
 ;;;###autoload
 (defun projection-multi-compile-ctest ()
