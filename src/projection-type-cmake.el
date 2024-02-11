@@ -33,15 +33,7 @@
   "Projection CMake project type."
   :group 'projection-types)
 
-(defcustom projection-cmake-target-backend 'help-target
-  "Which data source to query CMake targets from."
-  :type '(choice
-          (const :tag "Call the help target and parse the output." help-target)
-          (const :tag "Use the CMake file api and parse the targets from the codemodel.
-This is a much more reliable source for querying CMake targets because it doesn't include any phony
-targets CMake might add just for build framework integrations or dummy tasks like directory creation."
-                 code-model))
-  :group 'projection-type-cmake)
+(make-obsolete-variable 'projection-cmake-target-backend nil "0.1")
 
 
 
@@ -616,18 +608,16 @@ query file created before configuring."
    (cl-defun projection-cmake--file-api-create-query-hook (&key project &allow-other-keys)
      "Helper to create a CMake query file before configuring for CMake projects."
      (when (and (projection-cmake--cmake-project-p
-                 (projection-project-types (project-root project)))
-                (eq projection-cmake-target-backend 'code-model))
+                 (projection-project-types (project-root project))))
        (projection-cmake--file-api-create-query-file))))
 
   (add-hook
    'projection-commands-post-configure-hook
    (cl-defun projection-cmake--file-api-clear-cache-on-configure (&key project &allow-other-keys)
      "Clear CMake cache on reconfiguring the project."
-     (when (eq projection-cmake-target-backend 'code-model)
-       (dolist (cache-var '(projection-cmake-code-model
-                            projection-cmake-ctest-targets))
-         (projection-cache-clear-single project cache-var projection--project-cache))))))
+     (dolist (cache-var '(projection-cmake-code-model
+                          projection-cmake-ctest-targets))
+       (projection-cache-clear-single project cache-var projection--project-cache)))))
 
 
 

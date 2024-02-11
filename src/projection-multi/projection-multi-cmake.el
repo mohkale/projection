@@ -37,13 +37,6 @@
   "Helpers for `compile-multi' and CMake projects."
   :group 'projection-multi)
 
-(defcustom projection-multi-cmake-cache-targets 'auto
-  "When true cache the CMake targets of each project."
-  :type '(choice
-          (const :tag "Cache targets and invalidate cache automatically" auto)
-          (boolean :tag "Always/Never cache targets"))
-  :group 'projection-multi-cmake)
-
 (defcustom projection-multi-cmake-exclude-targets
   (rx bol
       (or
@@ -86,54 +79,6 @@ targets) with this option."
 
 
 
-;;; Command target backend
-
-(defconst projection-multi-cmake--help-regex
-  (rx
-   bol
-   (or
-    (and
-     (group-n 1 (minimal-match (one-or-more any)))
-     ": " (one-or-more any))
-    (and
-     (one-or-more ".") " "
-     (group-n 1 (minimal-match (one-or-more any)))
-     (optional " (the default if no target is provided)")))
-   eol)
-  "Regexp to match targets from the CMake help output.")
-
-(defun projection-multi-cmake--targets-from-command ()
-  "Determine list of available CMake targets respecting project cache."
-  (projection--cache-get-with-predicate
-   (projection--current-project 'no-error)
-   'projection-multi-cmake-targets
-   (cond
-    ((eq projection-multi-cmake-cache-targets 'auto)
-     (projection--cmake-configure-modtime-p))
-    (t projection-multi-cmake-cache-targets))
-   #'projection-multi-cmake--targets-from-command2))
-
-(projection--declare-cache-var
-  'projection-multi-cmake-targets
-  :title "Multi CMake command targets"
-  :category "CMake"
-  :description "Yarn script targets associated with this project"
-  :hide t)
-
-(defun projection-multi-cmake--targets-from-command2 ()
-  "Determine list of available CMake targets from the help target."
-  (projection--log :debug "Resolving available CMake targets")
-
-  (projection--with-shell-command-buffer (projection--cmake-command nil "help")
-    (let (res)
-      (save-match-data
-        (while (re-search-forward projection-multi-cmake--help-regex nil 'noerror)
-          (let ((target (match-string 1)))
-            (push target res))))
-      (nreverse res))))
-
-
-
 ;;; Code model target backend
 
 (defconst projection-multi-cmake--code-model-meta-targets
@@ -157,11 +102,7 @@ targets) with this option."
 Candidates will be prefixed with PROJECT-TYPE."
   (cl-loop
    for target in
-   (pcase projection-cmake-target-backend
-     ('help-target (projection-multi-cmake--targets-from-command))
-     ('code-model (projection-multi-cmake--targets-from-code-model))
-     (_ (user-error "Invalid CMake target backend: %s"
-                    projection-cmake-target-backend)))
+   (projection-multi-cmake--targets-from-code-model)
    unless (string-match-p projection-multi-cmake-exclude-targets target)
      collect `(,(concat project-type ":" target)
                :command

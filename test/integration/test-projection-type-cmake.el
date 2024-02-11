@@ -162,75 +162,8 @@ add_test(NAME hidden COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
         (expect 'compile :to-have-been-called-times 1)
         (expect (spy-calls-args-for 'compile 0) :to-equal '("rm -rf build")))))
 
-  (describe "With the CMake help-target backend"
-    :var ((existing-target-backend projection-cmake-target-backend))
-    (before-all (setq projection-cmake-target-backend 'help-target))
-    (after-all (setq projection-cmake-target-backend projection-cmake-target-backend))
-
-    (it "Does not construct a CMake query file"
-      ;; GIVEN
-      (expect projection-cmake-target-backend :to-equal 'help-target)
-
-      ;; WHEN
-      (+expect-interactive-command-calls-compile-with
-       #'projection-configure-project
-       "cmake -S . -B build")
-
-      ;; THEN
-      (expect (file-expand-wildcards "build/.cmake/api/v1/query/*/query.json")
-              :to-be nil))
-
-    (describe "Multi compile"
-      :var ((expected-cmake-targets '("cmake:all" "cmake:clean" "cmake:main_lib"))
-            (expected-ctest-targets '("ctest:main-test" "ctest:hidden" "ctest:rerun:failed")))
-
-      (it "Extracts CMake targets from the Ninja backends"
-        ;; GIVEN
-        (let ((projection-cmake-configure-options '("-GNinja")))
-          (call-interactively #'projection-configure-project)
-
-          ;; WHEN
-          (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
-            ;; THEN
-            (dolist (expected-target expected-cmake-targets)
-              (expect expected-target :to-be-in cmake-targets)))))
-
-      (it "Extracts CMake targets from the Make backends"
-        ;; GIVEN
-        (let ((projection-cmake-configure-options '("-GUnix Makefiles")))
-          (call-interactively #'projection-configure-project)
-
-          ;; WHEN
-          (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
-            ;; THEN
-            (dolist (expected-target expected-cmake-targets)
-              (expect expected-target :to-be-in cmake-targets)))))
-
-      (it "Filters out targets matching the configured regexp"
-        ;; GIVEN
-        (call-interactively #'projection-configure-project)
-
-        ;; WHEN
-        (let* ((projection-multi-cmake-exclude-targets (rx bol "main_lib" eol))
-               (cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
-          ;; THEN
-          (expect "main_lib" :not :to-be-in cmake-targets)))
-
-      (it "Extracts CTest targets"
-        ;; GIVEN
-        (call-interactively #'projection-configure-project)
-
-        ;; WHEN
-        (let ((ctest-targets (mapcar #'car (projection-multi-ctest-targets))))
-          ;; THEN
-          (dolist (expected-target expected-ctest-targets)
-            (expect expected-target :to-be-in ctest-targets))))))
-
-  (describe "With the CMake file API backend"
-    :var ((existing-target-backend projection-cmake-target-backend)
-          (expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main")))
-    (before-all (setq projection-cmake-target-backend 'code-model))
-    (after-all (setq projection-cmake-target-backend projection-cmake-target-backend))
+  (describe "CMake file API"
+    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main")))
 
     (it "Constructs a CMake query file while configuring"
       ;; WHEN
