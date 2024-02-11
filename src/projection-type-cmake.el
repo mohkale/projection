@@ -68,10 +68,13 @@ targets CMake might add just for build framework integrations or dummy tasks lik
 Projection will avoid presenting presets for these build types that are
 incompatible with the active configure preset.")
 
+(defun projection-cmake--available-preset-files ()
+  "List existing CMake preset files."
+  (seq-filter #'file-exists-p projection-cmake-preset-files))
+
 (defun projection-cmake--list-presets ()
   "List CMake presets from preset config files respecting cache."
-  (when-let ((preset-files
-              (seq-filter #'file-exists-p projection-cmake-preset-files)))
+  (when-let ((preset-files (projection-cmake--available-preset-files)))
     (projection--cache-get-with-predicate
      (projection--current-project 'no-error)
      'projection-cmake-presets
@@ -625,9 +628,24 @@ query file created before configuring."
      'projection-cmake-ctest-targets
      (cond
       ((eq projection-cmake-ctest-cache-targets 'auto)
-       #'projection--cmake-configure-modtime-p)
+       (apply-partially #'projection--cmake-ctest-modtime-p test-preset))
       (t projection-cmake-ctest-cache-targets))
      (apply-partially #'projection-cmake-ctest--targets2 test-preset))))
+
+(defun projection--cmake-ctest-modtime-p (test-preset plist)
+  "Calculate a modification time for reading CTest targets.
+TEST-PRESET is the active test preset. If this preset doesn't match the preset in the
+cached value then the cache is immediately invalidated. Otherwise a combination of
+the CMake configure time and CMakePresets configure time is used to determine the
+modtime."
+  (cl-destructuring-bind (&key value &allow-other-keys) plist
+    (if (equal (alist-get 'projection--test-preset value)
+               test-preset)
+        (seq-max
+         `(,(projection--cmake-configure-modtime-p plist)
+           ,@(when-let ((preset-files (projection-cmake--available-preset-files)))
+               (list (apply #'projection--cache-modtime-predicate preset-files)))))
+      (projection--cache-now))))
 
 (projection--declare-cache-var
   'projection-cmake-ctest-targets
@@ -638,14 +656,14 @@ query file created before configuring."
 
 (defun projection-cmake-ctest--targets2 (test-preset)
   "Resolve available CTest targets for a project.
-TODO TEST-PRESET."
+TEST-PRESET is the active test preset and will be merged into the response.."
   (projection--log :debug "Resolving available CMake CTest targets")
   (when-let ((ctest-targets
               (projection--with-shell-command-buffer
                 (projection--cmake-ctest-command "--show-only=json-v1")
                 (let ((json-array-type 'list))
                   (json-read)))))
-    (append ctest-targets `((projection--preset-type . ,test-preset)))))
+    (append ctest-targets `((projection--test-preset . ,test-preset)))))
 
 
 

@@ -137,27 +137,29 @@ PROJECT is an optional argument. When set to nil calling this function is
 essentially the same as just calling BODY directly."
   (let ((cached-value (when project
                         (projection--cache-get project key))))
-    (cond
-     ((and project (functionp predicate) cached-value)
-      (projection--cache-get-with-predicate
-       project key (funcall predicate
-                            (list :value (cdr cached-value)
-                                  :stamp (car cached-value)))
-       body))
-     ((and predicate
-           cached-value
-           (if (and (numberp predicate)
-                    (numberp (car cached-value)))
-               (<= predicate (car cached-value))
-             ;; Value is to always be cached.
-             predicate))
-      (cdr cached-value))
-     (t
+    (when (functionp predicate)
+      (setq predicate
+            (if cached-value
+                (funcall predicate
+                         (list :value (cdr cached-value)
+                               :stamp (car cached-value)))
+              (projection--cache-now))))
+
+    (if (and cached-value
+             (if (and (numberp predicate)
+                      (numberp (car cached-value)))
+                 (<= predicate (car cached-value))
+               predicate))
+        (cdr cached-value)
       (let ((resolved-value (funcall body)))
-        (when (and predicate project resolved-value)
+        (when (and project predicate resolved-value)
           (projection--cache-put
            project key (cons predicate resolved-value)))
-        resolved-value)))))
+        resolved-value))))
+
+(defun projection--cache-now ()
+  "Get the current timestamp."
+  (float-time (current-time)))
 
 (defun projection--cache-file-modtime (file)
   "Fetch the last-modtime of FILE as a float."
@@ -177,7 +179,7 @@ and will be set to having a modtime of `current-time'."
            if (file-exists-p file)
                do (setq current-modtime (projection--cache-file-modtime file))
            else
-               do (setq current-modtime (float-time (current-time)))
+               do (setq current-modtime (projection--cache-now))
            maximize current-modtime))
 
 

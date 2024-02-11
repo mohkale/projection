@@ -5,6 +5,8 @@
 (require 'projection-types)
 (require 'projection-utils)
 (require 'projection-type-cmake)
+(require 'projection-multi-cmake)
+(require 'projection-multi-ctest)
 
 (require 'projection-test-utils)
 
@@ -34,6 +36,7 @@ add_executable(main main.cpp)
 target_link_libraries(main main_lib)
 
 add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
+add_test(NAME hidden COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
 "))))
 
   (it "Can be identified"
@@ -161,7 +164,6 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
 
   (describe "With the CMake help-target backend"
     :var ((existing-target-backend projection-cmake-target-backend))
-    (before-all (require 'projection-multi-cmake))
     (before-all (setq projection-cmake-target-backend 'help-target))
     (after-all (setq projection-cmake-target-backend projection-cmake-target-backend))
 
@@ -179,7 +181,8 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
               :to-be nil))
 
     (describe "Multi compile"
-      :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib")))
+      :var ((expected-cmake-targets '("cmake:all" "cmake:clean" "cmake:main_lib"))
+            (expected-ctest-targets '("ctest:main-test" "ctest:hidden" "ctest:rerun:failed")))
 
       (it "Extracts CMake targets from the Ninja backends"
         ;; GIVEN
@@ -189,7 +192,7 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
           ;; WHEN
           (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
             ;; THEN
-            (dolist (expected-target expected-targets)
+            (dolist (expected-target expected-cmake-targets)
               (expect expected-target :to-be-in cmake-targets)))))
 
       (it "Extracts CMake targets from the Make backends"
@@ -200,7 +203,7 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
           ;; WHEN
           (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
             ;; THEN
-            (dolist (expected-target expected-targets)
+            (dolist (expected-target expected-cmake-targets)
               (expect expected-target :to-be-in cmake-targets)))))
 
       (it "Filters out targets matching the configured regexp"
@@ -211,7 +214,17 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
         (let* ((projection-multi-cmake-exclude-targets (rx bol "main_lib" eol))
                (cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
           ;; THEN
-          (expect "main_lib" :not :to-be-in cmake-targets)))))
+          (expect "main_lib" :not :to-be-in cmake-targets)))
+
+      (it "Extracts CTest targets"
+        ;; GIVEN
+        (call-interactively #'projection-configure-project)
+
+        ;; WHEN
+        (let ((ctest-targets (mapcar #'car (projection-multi-ctest-targets))))
+          ;; THEN
+          (dolist (expected-target expected-ctest-targets)
+            (expect expected-target :to-be-in ctest-targets))))))
 
   (describe "With the CMake file API backend"
     :var ((existing-target-backend projection-cmake-target-backend)
@@ -274,7 +287,8 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
                  (spy-calls-args-for 'completing-read 0))
                 :to-equal '("CMake executable: main"
                             "CMake library: libmain_lib.a"
-                            "CTest: main-test")))))
+                            "CTest: main-test"
+                            "CTest: hidden")))))
 
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
@@ -322,15 +336,31 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
   ],
   \"testPresets\": [
     {
+      \"name\": \"excludeHidden\",
+      \"hidden\": true,
+      \"filter\": {
+        \"exclude\": {
+          \"name\": \"hidden\"
+        }
+      }
+    },
+    {
       \"name\": \"testPreset1WithConfigurePreset1\",
-      \"configurePreset\": \"configurePreset1\"
+      \"configurePreset\": \"configurePreset1\",
+      \"inherits\": [\"excludeHidden\"]
     },
     {
       \"name\": \"testPreset1WithConfigurePreset2\",
-      \"configurePreset\": \"configurePreset2\"
+      \"configurePreset\": \"configurePreset2\",
+      \"inherits\": [\"excludeHidden\"]
     },
     {
       \"name\": \"testPreset2WithConfigurePreset2\",
+      \"configurePreset\": \"configurePreset2\",
+      \"inherits\": [\"excludeHidden\"]
+    },
+    {
+      \"name\": \"testPreset1WithConfigurePreset2AndHiddenTests\",
       \"configurePreset\": \"configurePreset2\"
     }
   ],
@@ -529,7 +559,9 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
       (expect #'completing-read :to-have-been-called-times 1)
       (expect (+completion-table-candidates
                (spy-calls-args-for 'completing-read 0))
-              :to-equal '("testPreset1WithConfigurePreset2" "testPreset2WithConfigurePreset2")))
+              :to-equal '("testPreset1WithConfigurePreset2"
+                          "testPreset2WithConfigurePreset2"
+                          "testPreset1WithConfigurePreset2AndHiddenTests")))
 
     (it "Clears cached test preset when re-setting a configure preset"
       (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
@@ -566,6 +598,23 @@ add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
 
     (describe "Multi compile"
       (before-all (require 'projection-multi-cmake))
+
+      (it "Automatically invalides CTest target cache on test preset change"
+        ;; GIVEN
+        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
+        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
+        (call-interactively #'projection-configure-project)
+
+        ;; WHEN
+        (let ((ctest-targets (mapcar #'car (projection-multi-ctest-targets))))
+          ;; THEN
+          (expect "ctest:hidden" :not :to-be-in ctest-targets))
+
+        ;; WHEN
+        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2AndHiddenTests")
+        (let ((ctest-targets (mapcar #'car (projection-multi-ctest-targets))))
+          ;; THEN
+          (expect "ctest:hidden" :to-be-in ctest-targets)))
 
       (it "Includes targets for any workflow presets"
         ;; GIVEN
