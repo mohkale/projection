@@ -96,7 +96,7 @@ incompatible with the active configure preset.")
   (projection--log :debug "Resolving available CMake presets from files=%S" preset-files)
   (condition-case err
       (let ((presets-result (mapcar #'list projection-cmake--preset-build-types)))
-        (dolist (config (mapcar #'projection-cmake--file-api-read-file preset-files))
+        (dolist (config (mapcar #'projection-cmake--read-presets-file preset-files))
           (dolist (preset-type projection-cmake--preset-build-types)
             (when-let ((preset-config
                         (thread-last
@@ -110,6 +110,13 @@ incompatible with the active configure preset.")
         presets-result)
     ((file-missing json-readtable-error projection-cmake-code-model)
      (projection--log :error "error while reading CMake presets %s." (cdr err)))))
+
+(cl-defsubst projection-cmake--read-presets-file (file)
+  "Read JSON file FILE for the CMake file-api."
+  (projection--log :debug "Reading CMake file-api file=%s." file)
+  (with-temp-buffer
+    (let ((json-array-type 'list))
+      (json-read-file file))))
 
 
 
@@ -458,17 +465,13 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set.")
           (boolean :tag "Always/Never cache targets"))
   :group 'projection-type-cmake)
 
-(cl-defsubst projection-cmake--file-api-directory ()
-  "Path to the CMake file-api directory under the build directory."
-  (f-join (projection-cmake--build-directory 'expand) ".cmake" "api" "v1"))
-
 (cl-defsubst projection-cmake--file-api-query-file-suffix ()
   "Subpath to the CMake query file for the projection client."
-  (f-join "query" projection-cmake--file-api-client "query.json"))
+  (f-join ".cmake" "api" "v1" "query" projection-cmake--file-api-client "query.json"))
 
 (cl-defsubst projection-cmake--file-api-reply-directory-suffix ()
   "Subpath to the CMake reply directory for the projection client."
-  (identity "reply"))
+  (f-join ".cmake" "api" "v1" "reply"))
 
 (defun projection-cmake--file-api-code-model ()
   "Get the generated code-model object for the projection client.
@@ -493,39 +496,55 @@ This function respects `projection-cmake-cache-code-model'."
   "Get the generated code-model object for the projection client."
   (projection--log :debug "Reading CMake code-model")
 
-  (if-let* ((api-directory (projection-cmake--file-api-directory))
-            (reply-directory
-             (f-join api-directory (projection-cmake--file-api-reply-directory-suffix)))
-            (index-file
-             (car (cl-sort (file-expand-wildcards (f-join reply-directory "index-*.json"))
-                           #'string>))))
-      (condition-case err
-          (when-let* ((codemodel-base-name (thread-last
-                                             index-file
-                                             (projection-cmake--file-api-read-file)
-                                             (projection-cmake--file-api-query-code-model-file)))
-                      (codemodel (thread-last
-                                   codemodel-base-name
-                                   (f-join reply-directory)
-                                   (projection-cmake--file-api-read-file))))
-            (let ((targets-by-config (thread-last
-                                       codemodel
-                                       (alist-get 'configurations)
-                                       (mapcar (apply-partially
-                                                #'projection-cmake--file-api-query-config-targets
-                                                reply-directory)))))
-              `((codemodel . ,codemodel)
-                (targets-by-config . ,targets-by-config))))
-        ((file-missing json-readtable-error projection-cmake-code-model)
-         (projection--log :error "error while querying CMake code-model %s." (cdr err))))
-    (projection--log :warning "Cannot query cmake codemodel because no indexes exist.")))
+  (condition-case err
+      (let* ((api-replies (projection-cmake--file-api-bulk-read-reply-directory
+                           (projection-cmake--build-directory 'expand)))
+             (indexes (seq-filter (apply-partially #'string-match-p
+                                                   (rx bol "index-" (+ any) ".json" eol))
+                                  (mapcar #'car api-replies)))
+             (index-file (car (cl-sort indexes #'string>))))
+        (unless indexes
+          (signal 'projection-cmake-code-model "Cannot query cmake codemodel because no indexes exist"))
+        (when-let* ((codemodel-file
+                     (projection-cmake--file-api-query-code-model-file
+                      (alist-get index-file api-replies nil nil #'string-equal)))
+                    (codemodel
+                     (alist-get codemodel-file api-replies nil nil #'string-equal)))
+          (let ((targets-by-config
+                 (thread-last
+                   codemodel
+                   (alist-get 'configurations)
+                   (mapcar (apply-partially
+                            #'projection-cmake--file-api-query-config-targets api-replies)))))
+            `((codemodel . ,codemodel)
+              (targets-by-config . ,targets-by-config)))))
+    ((file-missing json-readtable-error projection-cmake-code-model)
+     (projection--log :error "error while querying CMake code-model %s." (cdr err)))))
 
-(cl-defsubst projection-cmake--file-api-read-file (file)
-  "Read JSON file FILE for the CMake file-api."
-  (with-temp-buffer
-    (projection--log :debug "Reading CMake file-api file=%s." file)
-    (insert-file-contents file)
-    (let ((json-array-type 'list)) (json-read))))
+(defun projection-cmake--file-api-bulk-read-reply-directory (build-dir)
+  "Read all files in the CMake file API reply directory under BUILD-DIR at once.
+This a performance optimisation for remote files to be able to parse the entire
+CMake file API reply at once. The alternative is to do multiple separate read
+lookups which can slow down the processing of the code-model immensely."
+  (let ((default-directory build-dir)
+        (reply-path (projection-cmake--file-api-reply-directory-suffix)))
+    (projection--with-shell-command-buffer
+      (concat
+       "set -e; "
+       "first=1; echo '['; "
+       "for file in " (shell-quote-argument reply-path) "/*.json; do "
+       "  if [ \"$first\" -eq 1 ]; then first=0; else echo \",\"; fi; "
+       "  echo '{\"projection--file\": \"'\"$file\"'\", \"projection--file-content\": '; "
+       "  cat \"$file\"; "
+       "  echo '}'; "
+       "done; "
+       "echo ']'")
+
+      (cl-loop
+       for it in (let ((json-array-type 'list))
+                   (json-read))
+       collect (cons (f-filename (alist-get 'projection--file it))
+                     (alist-get 'projection--file-content it))))))
 
 (cl-defsubst projection-cmake--file-api-query-code-model-file (index-obj)
   "Read the base-name of the code-model file through INDEX-OBJ."
@@ -538,23 +557,27 @@ This function respects `projection-cmake-cache-code-model'."
     (car-safe)
     (alist-get 'jsonFile)))
 
-(cl-defsubst projection-cmake--file-api-query-config-targets (reply-directory config-obj)
-  "Read target entries from the code-model CONFIG-OBJ in REPLY-DIRECTORY."
+(cl-defsubst projection-cmake--file-api-query-config-targets (api-replies config-obj)
+  "Read all target configs from the CMake CONFIG-OBJ.
+API-REPLIES is a collection of files parsed from the CMake reply directory."
   (if-let ((name (alist-get 'name config-obj)))
-      (cons name
-            (thread-last
-              config-obj
-              (alist-get 'targets)
-              (mapcar (apply-partially #'alist-get 'jsonFile))
-              (mapcar (apply-partially #'f-join reply-directory))
-              (mapcar #'projection-cmake--file-api-read-file)))
+      (let ((target-configs (cl-loop for target in (alist-get 'targets config-obj)
+                                      with target-config-file = nil
+                                      do (setq target-config-file (alist-get 'jsonFile target))
+                                      with target-config = nil
+                                      do (setq target-config
+                                               (alist-get target-config-file api-replies
+                                                          nil nil #'string-equal))
+                                      when target-config
+                                        collect target-config)))
+        (cons name target-configs))
     (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
 
 ;;;###autoload
 (defun projection-cmake--file-api-create-query-file ()
   "Create a file-api client query file for projection."
   (let ((query-file (f-join
-                     (projection-cmake--file-api-directory)
+                     (projection-cmake--build-directory 'expand)
                      (projection-cmake--file-api-query-file-suffix))))
     (unless (file-exists-p query-file)
       (with-temp-buffer
@@ -634,10 +657,10 @@ query file created before configuring."
 
 (defun projection--cmake-ctest-modtime-p (test-preset plist)
   "Calculate a modification time for reading CTest targets.
-TEST-PRESET is the active test preset. If this preset doesn't match the preset in the
-cached value then the cache is immediately invalidated. Otherwise a combination of
-the CMake configure time and CMakePresets configure time is used to determine the
-modtime."
+TEST-PRESET is the active test preset. If this preset doesn't match the preset
+in the cached value then the cache is immediately invalidated. Otherwise a
+combination of the CMake configure time and CMakePresets configure time is used
+to determine the modtime. PLIST is the property list used by `projection-cache'."
   (cl-destructuring-bind (&key value &allow-other-keys) plist
     (if (equal (alist-get 'projection--test-preset value)
                test-preset)
