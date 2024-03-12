@@ -130,22 +130,27 @@ Is a list of cmd-type records of the form
     `(progn
        (projection--log :debug "Defining project command of type=%s" ',cmd-type)
 
-       (defvar ,cmd-var-symbol nil
+       (defcustom ,cmd-var-symbol nil
          ,(format "The command to use with `%s'.
 It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
-                  cmd-symbol))
+                  cmd-symbol)
+         :type '(optional string)
+         :safe #'stringp)
 
-       (defvar ,pre-hook-symbol nil
+       (defcustom ,pre-hook-symbol nil
          ,(format "Hook variable run immediately before `%s'.
 Currently this hook will be invoked with a plist containing the project.
 It may be updated to take more arguments at a later date."
-                  (symbol-name cmd-symbol)))
-       (defvar ,post-hook-symbol nil
+                  (symbol-name cmd-symbol))
+         :type 'hook)
+
+       (defcustom ,post-hook-symbol nil
          ,(format "Hook variable run immediately after `%s'.
 Accepts the same arguments as `%s'."
                   (symbol-name cmd-symbol)
-                  (symbol-name pre-hook-symbol)))
+                  (symbol-name pre-hook-symbol))
+         :type 'hook)
 
        (projection--declare-cache-var
          ',cmd-type
