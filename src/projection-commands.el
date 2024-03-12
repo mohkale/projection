@@ -136,7 +136,7 @@ It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
                   cmd-symbol)
          :type '(string)
-         :safe t)
+         :safe #'stringp)
 
        (defcustom ,pre-hook-symbol nil
          ,(format "Hook variable run immediately before `%s'.
