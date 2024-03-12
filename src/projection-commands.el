@@ -130,7 +130,7 @@ Is a list of cmd-type records of the form
     `(progn
        (projection--log :debug "Defining project command of type=%s" ',cmd-type)
 
-       (defcustom ,cmd-var-symbol ""
+       (defcustom ,cmd-var-symbol nil
          ,(format "The command to use with `%s'.
 It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
