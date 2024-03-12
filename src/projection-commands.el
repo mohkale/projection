@@ -135,7 +135,7 @@ Is a list of cmd-type records of the form
 It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
                   cmd-symbol)
-         :type '(string)
+         :type '(optional string)
          :safe #'stringp)
 
        (defcustom ,pre-hook-symbol nil
