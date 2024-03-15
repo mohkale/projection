@@ -106,7 +106,8 @@
    :compile-multi-targets
    '(("go:mod:tidy" . "go mod tidy")
      ("go:mod:verify" . "go mod verify")
-     ("go:mod:why" . "go mod why"))
+     ("go:mod:why" . "go mod why")
+     ("go:fmt:all" . "go fmt ./..."))
    :artifacts-list #'projection-golang-list-artifacts))
 
 (add-to-list 'projection-project-types projection-project-type-golang 'append)
