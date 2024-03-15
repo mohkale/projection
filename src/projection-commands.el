@@ -29,6 +29,10 @@
 
 (define-error 'projection-command-error "Project error" 'error)
 
+(defgroup projection-commands nil
+  "Project specific shell commands."
+  :group 'projection)
+
 (defun projection-commands--read-shell-command (project type default)
   "Interactively read a shell command for the command TYPE in PROJECT.
 DEFAULT is the optional initial command that the user will be presented with."
@@ -136,21 +140,24 @@ It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
                   cmd-symbol)
          :type '(optional string)
-         :safe #'stringp)
+         :safe #'stringp
+         :group 'projection-commands)
 
        (defcustom ,pre-hook-symbol nil
          ,(format "Hook variable run immediately before `%s'.
 Currently this hook will be invoked with a plist containing the project.
 It may be updated to take more arguments at a later date."
                   (symbol-name cmd-symbol))
-         :type 'hook)
+         :type 'hook
+         :group 'projection-commands)
 
        (defcustom ,post-hook-symbol nil
          ,(format "Hook variable run immediately after `%s'.
 Accepts the same arguments as `%s'."
                   (symbol-name cmd-symbol)
                   (symbol-name pre-hook-symbol))
-         :type 'hook)
+         :type 'hook
+         :group 'projection-commands)
 
        (projection--declare-cache-var
          ',cmd-type
