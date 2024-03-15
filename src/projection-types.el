@@ -326,10 +326,24 @@
    :name 'yarn
    :predicate (projection--all-files-exists "package.json" "yarn.lock")
    :configure "yarn install"
+   :build "yarn build"
    :test "yarn test"
    :test-suffix ".test"))
 
 (add-to-list 'projection-project-types projection-project-type-yarn 'append)
+
+
+
+(defvar projection-project-type-pnpm
+  (projection-type
+   :name 'pnpm
+   :predicate (projection--all-files-exists "package.json" "pnpm-lock.yaml")
+   :configure "pnpm install"
+   :build "pnpm build"
+   :test "pnpm test"
+   :test-suffix ".test"))
+
+(add-to-list 'projection-project-types projection-project-type-pnpm 'append)
 
 
 
@@ -516,8 +530,8 @@
   (projection-type
    :name 'mill
    :predicate "build.sc"
-   :build "mill all __.compile"
-   :test "mill all __.test"
+   :build "mill __.compile"
+   :test "mill __.test"
    :test-suffix "Test"
    :src-dir "src/"
    :test-dir "test/src/"))
@@ -662,6 +676,18 @@
    :test-suffix "-test"))
 
 (add-to-list 'projection-project-types projection-project-type-emacs-cask 'append)
+
+
+
+(defvar projection-project-type-emacs-eask
+  (projection-type
+   :name 'emacs-eask
+   :predicate "Eask"
+   :build "eask install"
+   :test-prefix "test-"
+   :test-suffix "-test"))
+
+(add-to-list 'projection-project-types projection-project-type-emacs-eask 'append)
 
 
 
