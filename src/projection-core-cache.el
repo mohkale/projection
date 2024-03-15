@@ -226,25 +226,38 @@ The result of this is intended to be used in a `completing-read' interface."
      (if transform cand
        (car (alist-get cand cache-vars nil nil #'string-equal))))))
 
-(defun projection-cache-clear--read-cache-var ()
+(defun projection-cache-clear--read-cache-vars (&optional read-multiple)
   "Read cache vars for the current project.
 Returns a list of the current project the cache-var and the cache table it is
-set in."
+set in. When READ-MULTIPLE allow selecting multiple cache vars and return pairs
+of key and cache-tables instead."
   (let* ((project (projection--current-project))
          (cache-vars (projection--list-cache-vars project))
-         (selected-cache-var (completing-read
-                              (projection--prompt "Clear cache: " project)
-                              (projection--cache-vars-completion-table cache-vars)
-                              nil 'require-match)))
+         (selected-cache-vars
+          (funcall
+           (if read-multiple #'completing-read-multiple #'completing-read)
+           (projection--prompt "Clear cache: " project)
+           (projection--cache-vars-completion-table cache-vars)
+           nil 'require-match)))
     (append (list project)
-            (cddr (alist-get selected-cache-var cache-vars nil nil #'string-equal)))))
+            (if read-multiple
+                (cl-loop for selected-cache-var in selected-cache-vars
+                         collect (cddr (alist-get selected-cache-var cache-vars nil nil #'string-equal)))
+              (cddr (alist-get selected-cache-vars cache-vars nil nil #'string-equal))))))
 
 (defun projection-cache-clear-single (project key cache)
   "Clear the value of KEY in CACHE for PROJECT.
 This command interactively removes a cached project variable."
   (interactive
-   (projection-cache-clear--read-cache-var))
-  (projection--cache-remove project key cache))
+   (projection-cache-clear--read-cache-vars))
+  (projection-cache-clear-multiple project (list key cache)))
+
+(defun projection-cache-clear-multiple (project &rest key-cache-pairs)
+  "Clear the value of each KEY-CACHE-PAIRS for PROJECT."
+  (interactive
+   (projection-cache-clear--read-cache-vars 'read-multiple))
+  (dolist (it key-cache-pairs)
+    (projection--cache-remove project (car it) (cadr it))))
 
 (defun projection-cache-clear-all (project)
   "Clear the value of all keys in all caches for PROJECT."
@@ -266,7 +279,7 @@ the value of CLEAR-ALL."
   (call-interactively
    (if clear-all
        #'projection-cache-clear-all
-     #'projection-cache-clear-single)))
+     #'projection-cache-clear-multiple)))
 
 (provide 'projection-core-cache)
 ;;; projection-core-cache.el ends here

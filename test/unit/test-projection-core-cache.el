@@ -140,32 +140,32 @@
       ;; GIVEN
       (let ((project (project-current)))
         (projection--cache-put project 'foo "Value for Foo")
-        (spy-on #'completing-read :and-return-value "Foo")
+        (spy-on #'completing-read-multiple :and-return-value '("Foo"))
 
         ;; WHEN
         (call-interactively 'projection-cache-clear)
 
         ;; THEN
         (expect (projection--cache-get project 'foo) :to-be nil)
-        (expect 'completing-read :to-have-been-called-times 1)
+        (expect 'completing-read-multiple :to-have-been-called-times 1)
         (expect (+completion-table-candidates
-                 (spy-calls-args-for 'completing-read 0))
+                 (spy-calls-args-for 'completing-read-multiple 0))
                 :to-equal '("Foo" "Bar"))))
 
     (it "Includes hidden variables when it has a value"
       ;; GIVEN
       (let ((project (project-current)))
         (projection--cache-put project 'hidden "Value for Hidden")
-        (spy-on #'completing-read :and-return-value "Hidden")
+        (spy-on #'completing-read-multiple :and-return-value '("Hidden"))
 
         ;; WHEN
         (call-interactively 'projection-cache-clear)
 
         ;; THEN
         (expect (projection--cache-get project 'hidden) :to-be nil)
-        (expect 'completing-read :to-have-been-called-times 1)
+        (expect 'completing-read-multiple :to-have-been-called-times 1)
         (expect (+completion-table-candidates
-                 (spy-calls-args-for 'completing-read 0))
+                 (spy-calls-args-for 'completing-read-multiple 0))
                 :to-equal '("Foo" "Bar" "Hidden"))))
 
     (it "Clears all cache variables when invoked with a prefix-arg"
@@ -173,7 +173,7 @@
       (let ((project (project-current)))
         (projection--cache-put project 'foo "Value for Foo")
         (projection--cache-put project 'hidden "Value for Hidden")
-        (spy-on #'completing-read)
+        (spy-on #'completing-read-multiple)
 
         ;; WHEN
         (+with-completing-read-not-called
@@ -183,4 +183,3 @@
         ;; THEN
         (expect (projection--cache-get project 'foo) :to-be nil)
         (expect (projection--cache-get project 'hidden) :to-be nil)))))
-
