@@ -23,6 +23,7 @@
 ;;; Code:
 
 (require 'project)
+(eval-when-compile (require 'subr-x))
 
 (require 'projection-core-completion)
 (require 'projection-core-misc)
@@ -116,6 +117,10 @@ When CACHE is given retrieve the entry from CACHE instead of
        (plist-get (cdr cache-config) :cache-var))
      projection--cache-var-alist))))
 
+(cl-defsubst projection--cache-get-with-predicate-create (stamp value)    "Ignore STAMP VALUE."  (list 'projection--cache-get-with-predicate stamp value))
+(cl-defsubst projection--cache-get-with-predicate-cached-p (cached-value) "Ignore CACHED-VALUE." (eq (car-safe cached-value) 'projection--cache-get-with-predicate))
+(cl-defsubst projection--cache-get-with-predicate-stamp (cached-value)    "Ignore CACHED-VALUE." (cadr cached-value))
+(cl-defsubst projection--cache-get-with-predicate-value (cached-value)    "Ignore CACHED-VALUE." (caddr cached-value))
 (defun projection--cache-get-with-predicate (project key predicate body)
   "Get a value from the `projection' cache and reset it if stale.
 This is a helper function to both retrieve and set a cache entry for KEY in
@@ -135,26 +140,30 @@ field and should return one of the aforementioned PREDICATE values.
 
 PROJECT is an optional argument. When set to nil calling this function is
 essentially the same as just calling BODY directly."
-  (let ((cached-value (when project
+  (let ((cached-entry (when project
                         (projection--cache-get project key))))
+    (when cached-entry
+      (cl-assert (projection--cache-get-with-predicate-cached-p cached-entry)
+                 'show-args "cache-get-with-predicate called on cache entry with \
+value not set by cache-get-with-predicate"))
     (when (functionp predicate)
       (setq predicate
-            (if cached-value
+            (if cached-entry
                 (funcall predicate
-                         (list :value (cdr cached-value)
-                               :stamp (car cached-value)))
+                         (list :value (projection--cache-get-with-predicate-value cached-entry)
+                               :stamp (projection--cache-get-with-predicate-stamp cached-entry)))
               (projection--cache-now))))
 
-    (if (and cached-value
+    (if (and cached-entry
              (if (and (numberp predicate)
-                      (numberp (car cached-value)))
-                 (<= predicate (car cached-value))
+                      (numberp (projection--cache-get-with-predicate-stamp cached-entry)))
+                 (<= predicate (projection--cache-get-with-predicate-stamp cached-entry))
                predicate))
-        (cdr cached-value)
+        (projection--cache-get-with-predicate-value cached-entry)
       (let ((resolved-value (funcall body)))
         (when (and project predicate resolved-value)
           (projection--cache-put
-           project key (cons predicate resolved-value)))
+           project key (projection--cache-get-with-predicate-create predicate resolved-value)))
         resolved-value))))
 
 (defun projection--cache-now ()
@@ -208,10 +217,10 @@ The result of this is intended to be used in a `completing-read' interface."
    :annotation-function
    (projection-completion--annotation-function
     :key-function (lambda (cand)
-                    (thread-last
-                      (assoc cand cache-vars)
-                      (caddr)
-                      (format "%S"))))
+                    (setq cand (caddr (assoc cand cache-vars)))
+                    (when (projection--cache-get-with-predicate-cached-p cand)
+                      (setq cand (projection--cache-get-with-predicate-value cand)))
+                    (format "%S" cand)))
    :group-function
    (lambda (cand transform)
      (if transform cand
