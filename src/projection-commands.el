@@ -140,7 +140,7 @@ It takes precedence over the default command for the project type when set.
 Should be set via .dir-locals.el."
                   cmd-symbol)
          :type '(optional string)
-         :safe #'stringp
+         :safe (lambda (a) (and (stringp a) (if (boundp 'compilation-read-command) compilation-read-command t)))
          :group 'projection-commands)
 
        (defcustom ,pre-hook-symbol nil

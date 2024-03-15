@@ -71,6 +71,15 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
       (with-eval-after-load 'project
         (require 'projection))
 
+      :config
+      ;; Uncomment if you want to disable prompts for compile commands customized in .dir-locals.el
+      ;; (put 'projection-commands-configure-project 'safe-local-variable #'stringp)
+      ;; (put 'projection-commands-build-project 'safe-local-variable #'stringp)
+      ;; (put 'projection-commands-test-project 'safe-local-variable #'stringp)
+      ;; (put 'projection-commands-run-project 'safe-local-variable #'stringp)
+      ;; (put 'projection-commands-package-project 'safe-local-variable #'stringp)
+      ;; (put 'projection-commands-install-project 'safe-local-variable #'stringp)
+
       ;; Access pre-configured projection commands from a keybinding of your choice.
       ;; Run `M-x describe-keymap projection-map` for a list of available commands.
       :bind-keymap
