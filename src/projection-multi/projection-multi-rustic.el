@@ -75,11 +75,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-rust-cargo compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-rust-cargo compile-multi-targets)
-          (list #'projection-multi-rustic-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-rust-cargo
+    #'projection-multi-rustic-targets))
 
 (provide 'projection-multi-rustic)
 ;;; projection-multi-rustic.el ends here

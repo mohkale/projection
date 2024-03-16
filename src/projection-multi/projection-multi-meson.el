@@ -74,11 +74,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-meson compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-meson compile-multi-targets)
-          (list #'projection-multi-meson-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-meson
+    #'projection-multi-meson-targets))
 
 (provide 'projection-multi-meson)
 ;;; projection-multi-meson.el ends here

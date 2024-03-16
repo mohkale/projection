@@ -143,11 +143,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-cmake compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-cmake compile-multi-targets)
-          (list #'projection-multi-cmake-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-cmake
+    #'projection-multi-cmake-targets))
 
 (provide 'projection-multi-cmake)
 ;;; projection-multi-cmake.el ends here

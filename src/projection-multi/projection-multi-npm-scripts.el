@@ -95,11 +95,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-npm compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-npm compile-multi-targets)
-          (list #'projection-multi-npm-script-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-npm
+    #'projection-multi-npm-script-targets))
 
 (provide 'projection-multi-npm-scripts)
 ;;; projection-multi-npm-scripts.el ends here

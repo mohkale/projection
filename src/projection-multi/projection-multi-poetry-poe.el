@@ -110,11 +110,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-python-poetry compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-python-poetry compile-multi-targets)
-          (list #'projection-multi-poetry-poe-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-python-poetry
+    #'projection-multi-poetry-poe-targets))
 
 (provide 'projection-multi-poetry-poe)
 ;;; projection-multi-poetry-poe.el ends here

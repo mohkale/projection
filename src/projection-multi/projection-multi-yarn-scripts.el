@@ -109,11 +109,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-yarn compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-yarn compile-multi-targets)
-          (list #'projection-multi-yarn-script-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-yarn
+    #'projection-multi-yarn-script-targets))
 
 (provide 'projection-multi-yarn-scripts)
 ;;; projection-multi-yarn-scripts.el ends here

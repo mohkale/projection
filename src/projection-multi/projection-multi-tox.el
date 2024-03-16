@@ -96,11 +96,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
 
 ;;;###autoload
 (with-eval-after-load 'projection-types
-  (oset projection-project-type-python-tox compile-multi-targets
-        (seq-uniq
-         (append
-          (oref projection-project-type-python-tox compile-multi-targets)
-          (list #'projection-multi-tox-targets)))))
+  (projection-type-append-compile-multi-targets projection-project-type-python-tox
+    #'projection-multi-tox-targets))
 
 (provide 'projection-multi-tox)
 ;;; projection-multi-tox.el ends here
