@@ -76,6 +76,15 @@ Use this like so:
         (funcall completion-table "" nil t)
       completion-table)))
 
+(defmacro +with-completing-read-default-return (&rest body)
+  "Run BODY with `completing-read' returning first candidate."
+  (declare (indent defun))
+  `(progn
+     (spy-on #'completing-read :and-call-fake
+             (lambda (&rest args)
+               (car (+completion-table-candidates args))))
+     ,@body))
+
 (defmacro +with-completing-read-not-called (&rest body)
   "Run BODY with the assertion that `completing-read' was not called."
   (declare (indent defun))

@@ -896,27 +896,31 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   (let (result)
     (dolist (test-target (alist-get 'tests (projection-cmake-ctest--targets)))
       (let-alist test-target
-        (push
-         `((name . ,.name)
-           (category . "CTest")
-           (arg0 . ,(car .command))
-           ,@(when-let ((argv (cdr .command)))
-               `((argv . ,argv)))
-           (type . cmake-test)
-           (debuggable . t)
-           ,@(when-let ((working-directory
-                         (projection-ctest--read-property .properties "WORKING_DIRECTORY")))
-               `((working-directory . ,working-directory)))
-           ,@(when-let ((environment
-                         (projection-ctest--read-property .properties "ENVIRONMENT")))
-               (setq environment
-                     (cl-loop
-                      for env-variable in environment
-                      do (setq env-variable (s-split-up-to "=" env-variable 1))
-                      collect (cons (car env-variable)
-                                    (or (cadr env-variable) ""))))
-               `((environment . ,environment))))
-         result)))
+        (if .command
+            (push
+             `((name . ,.name)
+               (category . "CTest")
+               (arg0 . ,(car .command))
+               ,@(when-let ((argv (cdr .command)))
+                   `((argv . ,argv)))
+               (type . cmake-test)
+               (debuggable . t)
+               ,@(when-let ((working-directory
+                             (projection-ctest--read-property .properties "WORKING_DIRECTORY")))
+                   `((working-directory . ,working-directory)))
+               ,@(when-let ((environment
+                             (projection-ctest--read-property .properties "ENVIRONMENT")))
+                   (setq environment
+                         (cl-loop
+                          for env-variable in environment
+                          do (setq env-variable (s-split-up-to "=" env-variable 1))
+                          collect (cons (car env-variable)
+                                        (or (cadr env-variable) ""))))
+                   `((environment . ,environment))))
+             result)
+          (projection--log :warning "CTest target=%S has no defined command.\
+ This is known to happen when the test executable hasn't been compiled yet." test-target)
+          )))
     (nreverse result)))
 
 (cl-defmethod projection-artifacts--serialise-artifact (artifact (_type (eql cmake-executable)))

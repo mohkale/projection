@@ -35,8 +35,9 @@ add_library(main_lib main.cpp)
 add_executable(main main.cpp)
 target_link_libraries(main main_lib)
 
-add_test(NAME main-test COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
-add_test(NAME hidden COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
+add_test(NAME main-test COMMAND true main-test-arg)
+set_property(TEST main-test PROPERTY ENVIRONMENT \"FOO=1\")
+add_test(NAME hidden COMMAND true)
 "))))
 
   (it "Can be identified"
@@ -208,20 +209,76 @@ add_test(NAME hidden COMMAND ${CMAKE_CURRENT_BINARY_DIR}/main-test)
         ;; GIVEN
         (call-interactively #'projection-configure-project)
 
+        (+with-completing-read-default-return
+          ;; WHEN
+          (call-interactively 'projection-artifacts-list)
+
+          ;; THEN
+          (expect (+completion-table-candidates
+                   (spy-calls-args-for 'completing-read 0))
+                  :to-equal '("CMake executable: main"
+                              "CMake library: libmain_lib.a"
+                              "CTest: main-test"
+                              "CTest: hidden")))))
+
+    (describe "Dape"
+      (before-all (require 'projection-dape))
+      (before-each
+        (spy-on #'dape)
+        ;; Assume all debuggers are available.
+        (spy-on #'dape--config-ensure :and-return-value t))
+      (before-each
+        (call-interactively #'projection-configure-project))
+
+      (it "Prompts with only debuggable CMake and CTest artifacts"
+        ;; GIVEN
         (spy-on #'completing-read :and-call-fake
-                (lambda (&rest args)
-                  (car (+completion-table-candidates args))))
+                (+fake-completing-read "CTest: main-test" "gdb"))
 
         ;; WHEN
-        (call-interactively 'projection-artifacts-list)
+        (call-interactively #'projection-dape)
 
         ;; THEN
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
                 :to-equal '("CMake executable: main"
-                            "CMake library: libmain_lib.a"
                             "CTest: main-test"
-                            "CTest: hidden")))))
+                            "CTest: hidden")))
+
+      (it "Can debug a CTest test"
+        ;; GIVEN
+        (spy-on #'completing-read :and-call-fake
+                (+fake-completing-read "CTest: main-test" "gdb"))
+
+        ;; WHEN
+        (call-interactively #'projection-dape)
+
+        ;; THEN
+        (expect 'dape :to-have-been-called-times 1)
+        (let ((dape-config (car (spy-calls-args-for 'dape 0))))
+          (expect (plist-get dape-config 'command) :to-equal "gdb")
+          (expect (plist-get dape-config :program) :to-match "true")
+          (expect (plist-get dape-config :args) :to-equal ["main-test-arg"])
+          (expect (plist-get dape-config :environment) :to-equal '(:FOO "1"))
+          (expect (plist-get dape-config :cwd) :to-equal
+                  (f-join default-directory projection-cmake-build-directory))))
+
+      (it "Can debug a CMake executable"
+        ;; GIVEN
+        (spy-on #'completing-read :and-call-fake
+                (+fake-completing-read "CMake executable: main" "gdb"))
+
+        ;; WHEN
+        (call-interactively #'projection-dape)
+
+        ;; THEN
+        (expect 'dape :to-have-been-called-times 1)
+        (let ((dape-config (car (spy-calls-args-for 'dape 0))))
+          (expect (plist-get dape-config 'command) :to-equal "gdb")
+          (expect (plist-get dape-config :program) :to-match "main")
+          (expect (plist-get dape-config :cwd) :to-be nil)))
+      )
+    )
 
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))

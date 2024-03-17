@@ -210,6 +210,14 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
   compile-multi session as the projects build, configure, etc. command type. Use this
   to interactively and incrementally update build targets.
 
+** Projection dape
+#+html: <p align="right">
+#+html: <a href="https://melpa.org/#/projection-dape"><img alt="MELPA" src="https://melpa.org/packages/projection-dape.svg"/></a>
+#+html: </p>
+
+  Adds support for interactively selecting debuggable artifacts of a project and
+  starting a debugger instance with [[https://github.com/svaante/dape][dape]].
+
 ** Specialised Project Support
    Currently projection has very extensive support for certain project types. This
    tries to bind Emacs a little stronger into the framework and bring more IDE like

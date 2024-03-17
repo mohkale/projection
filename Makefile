@@ -1,7 +1,7 @@
 SRC_DIR = src
 BIN_DIR = bin
 
-SRC      := $(wildcard $(SRC_DIR)/*.el $(SRC_DIR)/projection-multi/*.el)
+SRC      := $(wildcard $(SRC_DIR)/*.el $(SRC_DIR)/projection-multi/*.el $(SRC_DIR)/projection-multi-embark/*.el $(SRC_DIR)/projection-dape/*.el)
 ELC      := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.elc,$(SRC))
 ELCHKDOC := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.checkdoc,$(SRC))
 
@@ -38,7 +38,7 @@ $(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
 	mkdir -p "$$(dirname "$@")"
 	@echo "[compile] $^"
 	$(EMACS) -Q --batch -L . -f batch-byte-compile "$^" 2>&1 \
-		| grep -v "^Wrote" \
+		| grep -v -e "^Wrote" -e "^Loading" \
 		| grep . && exit 1 || true ;\
 	mv -f "$^c" "$@"
 

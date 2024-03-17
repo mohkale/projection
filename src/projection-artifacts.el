@@ -122,14 +122,7 @@ message it."
 
 
 
-;;;###autoload
-(defun projection-artifacts-read-debug-targets (&optional prompt)
-  "Helper function to read artifacts that are debuggable.
-Optional PROMPT is passed to `projection-artifacts--read'."
-  (projection-artifacts--read
-   prompt
-   (lambda (artifact)
-     (alist-get 'debuggable artifact))))
+(make-obsolete 'projection-artifacts-read-debug-targets nil "0.1")
 
 ;;;###autoload
 (defun projection-artifacts-list (artifact)
