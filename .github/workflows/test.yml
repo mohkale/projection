@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        emacs_version: [28, master]
+        emacs_version: [29, master]
     steps:
       - uses: actions/checkout@v2
       - name: Build test container
