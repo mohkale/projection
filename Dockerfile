@@ -16,7 +16,9 @@ RUN git config --global user.email "$UNAME@nowhere.com" \
 #  && rm -rvf /tmp/projection-build
 
 RUN chmod 755 -R /root/ \
- && chmod 777 -R /root/.cask
+ && chmod 777 -R /root/.cask \
+ && mkdir -p /nonexistent \
+ && chown -R nobody /nonexistent
 
 # Install all build/test dependencies.
 RUN apt-get update \
@@ -33,5 +35,4 @@ RUN apt-get update \
 
 ENV PATH=$PATH:/nix/store/emacs/bin/:/root/.cask/bin:$HOME/.cask/bin/
 
-WORKDIR /workarea
 CMD bash

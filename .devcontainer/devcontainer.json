@@ -1,0 +1,14 @@
+{
+	"name": "Projection",
+	"build": {
+		"dockerfile": "../Dockerfile"
+	},
+	"postCreateCommand": "cask install",
+    "remoteUser": "nobody",
+    "updateRemoteUserUID": true,
+    "customizations": {
+        "emacs": {
+            "inline-dir-locals": "((nil . ((eval . (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))))"
+        }
+    }
+}
