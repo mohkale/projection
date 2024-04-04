@@ -73,17 +73,17 @@
 ;;;###autoload
 (defvar projection-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "SPC" '("Extensions" . (projection-per-project-type-map)))
+    (define-key map (kbd "SPC") '("Extensions" . (projection-per-project-type-map)))
     ;; `projection-core'
     (define-key map "1" 'projection-set-primary-project-type)
     (define-key map "2" 'projection-update-extra-project-types)
     (define-key map "I" 'projection-show-project-info)
-    (define-key map "DEL" 'projection-cache-clear)
+    (define-key map (kbd "DEL") 'projection-cache-clear)
     ;; `projection-artifacts'
     (define-key map "l" 'projection-artifacts-list)
     ;; `projection-find'
-    (define-key map "TAB" 'projection-find-other-file)
-    (define-key map "o"   'projection-find-other-file)
+    (define-key map (kbd "TAB") 'projection-find-other-file)
+    (define-key map "o"         'projection-find-other-file)
     ;; `projection-hook'
     (define-key map "h" 'projection-hook)
     (define-key map "H" 'projection-hook-clear)
