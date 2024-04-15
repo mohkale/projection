@@ -350,7 +350,7 @@
 (defvar projection-project-type-npm
   (projection-type
    :name 'npm
-   :predicate "package.json"
+   :predicate (projection--all-files-exists "package.json" "package-lock.json")
    :configure "npm install"
    :test "npm test"
    :test-suffix ".test"))
