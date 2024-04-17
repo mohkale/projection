@@ -392,7 +392,11 @@
    :build "python setup.py build"
    :test "python -m unittest discover"
    :test-prefix "test_"
-   :test-suffix "_test"))
+   :test-suffix "_test"
+   :compile-multi-targets
+   '(("python:venv:init" . "python3 -m venv init .venv")
+     ("python:venv:clear" . "rm -rf .venv")
+     ("python:venv:install" . ".venv/bin/pip install -r requirements.txt"))))
 
 (add-to-list 'projection-project-types projection-project-type-python-pip 'append)
 
