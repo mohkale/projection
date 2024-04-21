@@ -256,6 +256,7 @@
    :install   #'projection-cmake-run-install
    :artifacts-list (list #'projection-cmake-list-artifacts
                          #'projection-ctest-list-artifacts)
+   :test-suffix ".t"
    :compile-multi-targets
    `(("cmake:clear" . ,#'projection-cmake-clear-build-directory))))
 

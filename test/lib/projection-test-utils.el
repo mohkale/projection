@@ -5,6 +5,7 @@
 ;;; Code:
 
 (require 'projection-core-cache)
+(require 'projection-type-cmake)
 
 
 
@@ -134,9 +135,8 @@ Use this like so:
 (defmacro +projection--cache-set (variable value)
   (let ((original-value-var (intern (concat "--project-test-" (symbol-name variable)))))
     `(progn
-       (before-each
-         (setq ,original-value-var ,variable
-               ,variable ,value))
+       (setq ,original-value-var ,variable
+             ,variable ,value)
        (after-each
          (setq ,variable ,original-value-var)))))
 

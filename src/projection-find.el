@@ -142,13 +142,15 @@ file."
   (unless (file-name-absolute-p file-name)
     (expand-file-name file-name (project-root project)))
 
-  (let* ((project-config (projection-project-type (project-root project)))
+  (let* ((project-configs (projection-project-types (project-root project)))
          ;; Determine related file-names for the target file-name.
          (other-file-basenames
           (projection-find--related-file-basenames
            file-name
-           (oref project-config test-prefix)
-           (oref project-config test-suffix)))
+           (seq-uniq
+            (cl-loop for config in project-configs append (oref config test-prefix)))
+           (seq-uniq
+            (cl-loop for config in project-configs append (oref config test-suffix)))))
          other-files)
     (dolist (file (project-files project))
       (when (gethash (file-name-nondirectory file) other-file-basenames)

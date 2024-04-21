@@ -10,7 +10,23 @@
 
 (setq python-indent-guess-indent-offset-verbose nil)
 
+(defun +projection-find-related-files-alist (file-name)
+  (save-excursion
+    (expect (file-exists-p file-name) :to-be-truthy)
+    (find-file file-name)
+    (expect buffer-file-name :to-match file-name)
+
+    (let* ((root (project-root (projection--current-project)))
+           (start-file (buffer-file-name))
+           (files (list (f-relative (buffer-file-name) root))))
+      (projection-find-other-file)
+      (while (not (string-equal (buffer-file-name) start-file))
+        (push (f-relative (buffer-file-name) root) files)
+        (projection-find-other-file))
+      files)))
+
 (describe "Projection find other file"
+  :var (related-files)
   (+projection-test-setup)
 
   (before-each
@@ -29,18 +45,11 @@
           "bar.h"
           "bar.cpp")))
 
-      (find-file "src/foo.h")
-      (expect buffer-file-name :to-match "src/foo.h")
-
       ;; WHEN
-      (projection-find-other-file)
-      ;; THEN
-      (expect buffer-file-name :to-match "src/foo.cpp")
+      (setq related-files (+projection-find-related-files-alist "src/foo.h"))
 
-      ;; WHEN
-      (projection-find-other-file)
       ;; THEN
-      (expect buffer-file-name :to-match "src/foo.h"))
+      (expect related-files :to-equal '("src/foo.cpp" "src/foo.h")))
 
     (it "Can jump between related files across directories"
       ;; GIVEN
@@ -53,18 +62,11 @@
           "foo.h"
           "bar.h")))
 
-      (find-file "src/foo.cpp")
-      (expect buffer-file-name :to-match "src/foo.cpp")
-
       ;; WHEN
-      (projection-find-other-file)
-      ;; THEN
-      (expect buffer-file-name :to-match "include/foo.h")
+      (setq related-files (+projection-find-related-files-alist "src/foo.cpp"))
 
-      ;; WHEN
-      (projection-find-other-file)
       ;; THEN
-      (expect buffer-file-name :to-match "src/foo.cpp"))
+      (expect related-files :to-equal '("include/foo.h" "src/foo.cpp")))
 
     (it "Can jump between files with identical names across directories"
       ;; GIVEN
@@ -77,17 +79,11 @@
           "foo.cpp"
           "bar.cpp")))
 
-      (find-file "src/foo.cpp")
-      (expect buffer-file-name :to-match "src/foo.cpp")
-
       ;; WHEN
-      (projection-find-other-file)
+      (setq related-files (+projection-find-related-files-alist "src/foo.cpp"))
+
       ;; THEN
-      (expect buffer-file-name :to-match "src2/foo.cpp")
-
-      ;; WHEN
-      (projection-find-other-file)
-      (expect buffer-file-name :to-match "src/foo.cpp")))
+      (expect related-files :to-equal '("src2/foo.cpp" "src/foo.cpp"))))
 
   (describe "Test prefix suffix"
     (it "Can jump between test and implementation files"
@@ -99,26 +95,41 @@
          ("test"
           "test_foo.py"
           "foo_test.py")))
-      (expect (projection-type--name (projection-project-type default-directory))
-              :to-equal 'python-pip)
-
-      (find-file "src/foo.py")
-      (expect buffer-file-name :to-match "src/foo.py")
+      (+projection-project-matches-p 'python-pip)
 
       ;; WHEN
-      (projection-find-other-file)
+      (setq related-files (+projection-find-related-files-alist "src/foo.py"))
+
       ;; THEN
-      (expect buffer-file-name :to-match "test/test_foo.py")
+      (expect related-files :to-equal '("test/foo_test.py" "test/test_foo.py" "src/foo.py")))
+
+    (it "Can jump between test and implementation files for all matching project types"
+      (+projection-setup-project
+       '("requirements.txt"
+         "CMakeLists.txt"
+         ("src"
+          "foo.cpp"
+          "foo.t.cpp"
+          "foo.py"
+          "bar.py")
+         ("test"
+          "foo.t.py"
+          "test_foo.py"
+          "test_foo.cpp")))
+      (+projection-project-matches-p 'python-pip)
+      (+projection-project-matches-p 'cmake)
 
       ;; WHEN
-      (projection-find-other-file)
+      (setq related-files (+projection-find-related-files-alist "src/foo.cpp"))
       ;; THEN
-      (expect buffer-file-name :to-match "test/foo_test.py")
+      (expect related-files :to-equal '("src/foo.t.cpp" "test/test_foo.cpp" "src/foo.cpp"))
 
       ;; WHEN
-      (projection-find-other-file)
+      (setq related-files (+projection-find-related-files-alist "src/foo.py"))
       ;; THEN
-      (expect buffer-file-name :to-match "src/foo.py"))
+      (expect related-files :to-equal '("test/foo.t.py"
+                                        "test/test_foo.py"
+                                        "src/foo.py")))
     )
 
   (it "Cannot jump between files not in a project"
