@@ -1,12 +1,12 @@
 ;; -*- lexical-binding: t -*-
 
-
 (require 'projection-artifacts)
 (require 'projection-types)
 (require 'projection-utils)
 (require 'projection-type-cmake)
 (require 'projection-multi-cmake)
 (require 'projection-multi-ctest)
+(require 'projection-dape)
 
 (require 'projection-test-utils)
 
@@ -222,7 +222,6 @@ add_test(NAME hidden COMMAND true)
                               "CTest: hidden")))))
 
     (describe "Dape"
-      (before-all (require 'projection-dape))
       (before-each
         (spy-on #'dape)
         ;; Assume all debuggers are available.
@@ -283,9 +282,10 @@ add_test(NAME hidden COMMAND true)
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
           (configure-presets-display-names '("Preset number 1 for configuring"
-                                             "Preset number 2 for configuring"
-                                             "Preset number 3 for configuring"))
-          (build-presets '("buildPreset1")))
+                                             "Preset number 2 for configuring"))
+          (build-presets-for-configure-preset-1 '("buildForConfigurePreset1-Debug"
+                                                  "buildForConfigurePreset1-Release"))
+          (build-presets-for-configure-preset-2 '("buildForConfigurePreset2-Debug")))
     (before-each
       (+projection-setup-project-tree
        '(("CMakePresets.json" . "{
@@ -298,15 +298,16 @@ add_test(NAME hidden COMMAND true)
   \"configurePresets\": [
     {
       \"name\": \"configurePreset1\",
-      \"displayName\": \"Preset number 1 for configuring\"
+      \"displayName\": \"Preset number 1 for configuring\",
+      \"description\": \"Default build using Ninja Multi-Config generator\",
+      \"generator\": \"Ninja Multi-Config\",
+      \"cacheVariables\": {
+        \"CMAKE_CONFIGURATION_TYPES\": \"Debug;Release;MinSizeRel;RelWithDebInfo\"
+      }
     },
     {
       \"name\": \"configurePreset2\",
       \"displayName\": \"Preset number 2 for configuring\"
-    },
-    {
-      \"name\": \"configurePreset3\",
-      \"displayName\": \"Preset number 3 for configuring\"
     },
     {
       \"name\": \"windowsOnlyPreset\",
@@ -320,8 +321,19 @@ add_test(NAME hidden COMMAND true)
   ],
   \"buildPresets\": [
     {
-      \"name\": \"buildPreset1\",
-      \"configurePreset\": \"configurePreset1\"
+      \"name\": \"buildForConfigurePreset1-Debug\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Debug\"
+    },
+    {
+      \"name\": \"buildForConfigurePreset1-Release\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Release\"
+    },
+    {
+      \"name\": \"buildForConfigurePreset2-Debug\",
+      \"configurePreset\": \"configurePreset2\",
+      \"configuration\": \"Debug\"
     }
   ],
   \"testPresets\": [
@@ -335,23 +347,35 @@ add_test(NAME hidden COMMAND true)
       }
     },
     {
-      \"name\": \"testPreset1WithConfigurePreset1\",
+      \"name\": \"testForConfigurePreset1-Debug\",
+      \"displayName\": \"Default\",
+      \"configuration\": \"Debug\",
       \"configurePreset\": \"configurePreset1\",
       \"inherits\": [\"excludeHidden\"]
     },
     {
-      \"name\": \"testPreset1WithConfigurePreset2\",
-      \"configurePreset\": \"configurePreset2\",
+      \"name\": \"testForConfigurePreset1WithHiddenTests-Debug\",
+      \"displayName\": \"WithHidden\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Debug\"
+    },
+    {
+      \"name\": \"testForConfigurePreset1-Release\",
+      \"displayName\": \"Default\",
+      \"configuration\": \"Release\",
+      \"configurePreset\": \"configurePreset1\",
       \"inherits\": [\"excludeHidden\"]
     },
     {
-      \"name\": \"testPreset2WithConfigurePreset2\",
-      \"configurePreset\": \"configurePreset2\",
-      \"inherits\": [\"excludeHidden\"]
+      \"name\": \"testForConfigurePreset1WithHiddenTests-Release\",
+      \"displayName\": \"WithHidden\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Release\"
     },
     {
-      \"name\": \"testPreset1WithConfigurePreset2AndHiddenTests\",
-      \"configurePreset\": \"configurePreset2\"
+      \"name\": \"testForConfigurePreset2\",
+      \"configurePreset\": \"configurePreset2\",
+      \"inherits\": [\"excludeHidden\"]
     }
   ],
   \"workflowPresets\": [
@@ -360,11 +384,11 @@ add_test(NAME hidden COMMAND true)
       \"steps\": [
         {
           \"type\": \"configure\",
-          \"name\": \"configurePreset1\"
+          \"name\": \"configurePreset2\"
         },
         {
           \"type\": \"build\",
-          \"name\": \"buildPreset1\"
+          \"name\": \"buildForConfigurePreset2-Debug\"
         }
       ]
     }
@@ -433,18 +457,18 @@ add_test(NAME hidden COMMAND true)
         (expect 'completing-read :to-have-been-called-times 0)
 
         ;; GIVEN
-        (spy-on #'completing-read :and-return-value "buildPreset1")
+        (spy-on #'completing-read :and-return-value "buildForConfigurePreset1-Debug")
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-build-project
-         "cmake --build build --preset\\=buildPreset1")
+         "cmake --build build --preset\\=buildForConfigurePreset1-Debug")
 
         ;; THEN
         (expect 'completing-read :to-have-been-called-times 1)
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
-                :to-equal build-presets)))
+                :to-equal build-presets-for-configure-preset-1)))
 
     (it "Doesn't prompt for a preset when one was set interactively"
       ;; GIVEN
@@ -510,59 +534,59 @@ add_test(NAME hidden COMMAND true)
     (it "Prompts and saves chosen preset for build-type after first invocation only when multiple presets are available"
       ;; GIVEN
       (let ((projection-cmake-preset 'prompt-once-when-multiple))
-        ;; WHEN/THEN
-        (+with-completing-read-not-called
-         (+expect-interactive-command-calls-compile-with
-          #'projection-build-project
-          "cmake --build build --preset\\=buildPreset1"))
-
         ;; GIVEN
-        (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
+        (spy-on #'completing-read :and-return-value "Preset number 2 for configuring")
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-configure-project
-         "cmake -S . -B build --preset\\=configurePreset1")
+         "cmake -S . -B build --preset\\=configurePreset2")
 
         ;; THEN
         (expect 'completing-read :to-have-been-called-times 1)
 
         ;; WHEN/THEN
-        (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
-         "cmake -S . -B build --preset\\=configurePreset1")
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-build-project
+          "cmake --build build --preset\\=buildForConfigurePreset2-Debug"))
 
-        ;; THEN
-        (expect 'completing-read :to-have-been-called-times 1)))
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-configure-project
+          "cmake -S . -B build --preset\\=configurePreset2"))))
 
     (it "Prompts with only related targets matching the active configuration target for building and testing"
       ;; GIVEN
-      (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
-      (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset2")
+      (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+      (spy-on #'completing-read :and-return-value "Default")
 
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-test-project
-       "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset2 test")
+       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test")
 
       ;; THEN
       (expect #'completing-read :to-have-been-called-times 1)
       (expect (+completion-table-candidates
                (spy-calls-args-for 'completing-read 0))
-              :to-equal '("testPreset1WithConfigurePreset2"
-                          "testPreset2WithConfigurePreset2"
-                          "testPreset1WithConfigurePreset2AndHiddenTests")))
+              :to-equal '("Default"
+                          "WithHidden"
+                          "Default"
+                          "WithHidden")))
 
     (it "Clears cached test preset when re-setting a configure preset"
       (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
-      (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
+      (+interactively-set-cmake-preset 'test "testForConfigurePreset2")
+      (+interactively-set-cmake-preset 'test "testForConfigurePreset2")
       (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
 
       ;; WHEN/THEN
-      (spy-on #'completing-read :and-return-value "testPreset1WithConfigurePreset1")
+      (spy-on #'completing-read :and-return-value "Default")
       (+expect-interactive-command-calls-compile-with
        #'projection-test-project
-       "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test"))
+       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test"))
 
     (it "Ignores build or test preset when active configure preset conflicts with it"
       (let ((projection-cmake-preset '((configure . prompt-always)
@@ -574,25 +598,26 @@ add_test(NAME hidden COMMAND true)
          #'projection-test-project
          "ctest --test-dir build test")))
 
-    (it "Can configure alternate preset setting for preset invalidation"
+    (it "Can configure alternate preset setting on preset invalidation"
       (let ((projection-cmake-preset '((configure . "configurePreset1")
                                        (on-invalid . prompt-once-when-multiple))))
-        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
-        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
         (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+        (+interactively-set-cmake-preset 'test "Default")
+        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-test-project
-         "ctest --test-dir build --preset\\=testPreset1WithConfigurePreset1 test")))
+         "ctest --test-dir build --preset\\=testForConfigurePreset2 test")
+        ))
 
     (describe "Multi compile"
       (before-all (require 'projection-multi-cmake))
 
       (it "Automatically invalides CTest target cache on test preset change"
         ;; GIVEN
-        (+interactively-set-cmake-preset 'configure "Preset number 2 for configuring")
-        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2")
+        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+        (+interactively-set-cmake-preset 'test "Default")
         (call-interactively #'projection-configure-project)
 
         ;; WHEN
@@ -601,7 +626,7 @@ add_test(NAME hidden COMMAND true)
           (expect "ctest:hidden" :not :to-be-in ctest-targets))
 
         ;; WHEN
-        (+interactively-set-cmake-preset 'test "testPreset1WithConfigurePreset2AndHiddenTests")
+        (+interactively-set-cmake-preset 'test "WithHidden")
         (let ((ctest-targets (mapcar #'car (projection-multi-ctest-targets))))
           ;; THEN
           (expect "ctest:hidden" :to-be-in ctest-targets)))

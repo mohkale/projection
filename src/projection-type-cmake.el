@@ -218,12 +218,52 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
   (or build-type (setq build-type 'default))
   (intern (concat "projection-cmake-" (symbol-name build-type) "-preset")))
 
+(defun projection-cmake--list-presets-for-build-type-match-configure-preset
+    (presets build-type)
+  "Remove PRESETS with a configure-preset not matching the active configure preset.
+This only filters out presets when BUILD-TYPE is not configure because configure
+presets should always be visible."
+  (if-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
+            (projection-cmake-preset 'silent)
+            (active-configure-preset (projection-cmake--preset 'configure)))
+      (cl-remove-if
+       (lambda (preset-config)
+         (if-let ((build-type-has-required-configure-preset
+                   (member (alist-get 'projection--preset-type preset-config)
+                           projection-cmake--preset-build-types-tied-to-configure))
+                  (required-configure-preset
+                   (alist-get 'configurePreset preset-config)))
+             (not (equal required-configure-preset active-configure-preset))
+           nil))
+       presets)
+    presets))
+
+(defun projection-cmake--list-presets-for-build-type-match-active-build-type
+    (presets build-type)
+  "Remove PRESETS with a build type not matching the active build-type.
+This only filters out presets when BUILD-TYPE is not configure and not build
+because build presets should already be filtered and unique based on the active
+configure preset."
+  (if-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
+            (build-type-is-not-build (not (eq build-type 'build)))
+            (projection-cmake-preset 'silent)
+            (build-type (projection-cmake--active-build-type)))
+      (cl-remove-if
+       (lambda (preset-config)
+         (if-let ((preset-is-not-build-type
+                   (not (eq 'build (alist-get 'projection--preset-type preset-config))))
+                  (preset-build-type (alist-get 'configuration preset-config)))
+             (not (equal build-type preset-build-type))
+           nil))
+       presets)
+    presets))
+
 (defun projection-cmake--list-presets-for-build-type (build-type)
   "Fetch the available CMake presets for BUILD-TYPE.
 When BUILD-TYPE is nil return all presets ignoring those incompatible
 with the active configure preset."
   (when-let* ((presets (projection-cmake--list-presets))
-              ;; Flatten presets to avoid `build-type' nesting.
+              ;; Flatten presets to avoid `build-type' based nesting.
               (presets (if build-type
                            (alist-get build-type presets)
                          (apply #'append (mapcar #'cdr presets))))
@@ -231,6 +271,12 @@ with the active configure preset."
               (presets (cl-remove-if (lambda (preset-config)
                                        (alist-get 'hidden (cdr preset-config)))
                                      presets))
+              ;; Prune out not-applicable non-configure presets.
+              (presets
+               (thread-first
+                 presets
+                 (projection-cmake--list-presets-for-build-type-match-configure-preset build-type)
+                 (projection-cmake--list-presets-for-build-type-match-active-build-type build-type)))
               ;; Filter out presets that are not available in the current environment.
               (presets (if-let ((available-presets (projection-cmake--available-presets)))
                            (cl-remove-if-not (lambda (preset-config)
@@ -240,20 +286,6 @@ with the active configure preset."
                                                        available-presets)))
                                              presets)
                          presets)))
-    ;; Remove preset options that don't match the active configure preset (when there is one).
-    (when-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
-                (projection-cmake-preset 'silent)
-                (active-configure-preset (projection-cmake--preset 'configure)))
-      (setq presets (cl-remove-if
-                     (lambda (preset-config)
-                       (if-let ((build-type-has-required-configure-preset
-                                 (member (alist-get 'projection--preset-type preset-config)
-                                         projection-cmake--preset-build-types-tied-to-configure))
-                                (required-configure-preset
-                                 (alist-get 'configurePreset preset-config)))
-                           (not (equal required-configure-preset active-configure-preset))
-                         nil))
-                     presets)))
     presets))
 
 (defun projection-cmake--read-preset (prompt presets)
@@ -290,7 +322,16 @@ Prompt for the `completing-read' session will be PROMPT."
            :annotation-function
            (projection-completion--annotation-function
             :key-function (lambda (cand)
-                            (alist-get 'description (funcall preset-display-name-to-preset cand))))))
+                            (when-let ((cand-alist (funcall preset-display-name-to-preset cand)))
+                              (or (alist-get 'description cand-alist)
+                                  ;; Show configured name when no set display-name or
+                                  ;; the set display-name is different to the preset
+                                  ;; name.
+                                  (let ((name (alist-get 'name cand-alist))
+                                        (display-name (alist-get 'displayName cand-alist)))
+                                    (when (and display-name (not (equal name display-name)))
+                                      name))
+                                  ))))))
          (result (completing-read prompt completion-table nil 'require-match)))
     (unless (string-empty-p result)
       (or (funcall preset-display-name-to-preset result)
@@ -444,6 +485,14 @@ BUILD-TYPE. It should cache presets after the first list call."
   :custom-docstring "Build type for a CMake project.
 Supplied as the default CMAKE_BUILD_TYPE definition when set.")
 
+(defun projection-cmake--active-build-type ()
+  "Fetch current CMake build type from config options or preset."
+  (or (projection-cmake--build-type)
+      (let* ((projection-cmake-preset 'silent)
+             (build-preset-config
+              (projection-cmake--preset-config 'build)))
+        (alist-get 'configuration build-preset-config))))
+
 
 
 ;; CMake file API [[man:cmake-file-api(7)]].
@@ -585,12 +634,7 @@ API-REPLIES is a collection of files parsed from the CMake reply directory."
 If none is active or we could not deduce the active config we default to the
 first configured."
   (when-let* ((code-model (projection-cmake--file-api-code-model))
-              (build-type (or (projection-cmake--build-type)
-                              (let* ((projection-cmake-preset 'silent)
-                                     (configure-preset-config
-                                      (projection-cmake--preset-config 'build)))
-                                (alist-get 'configuration configure-preset-config))
-                              ""))
+              (build-type (or (projection-cmake--active-build-type) ""))
               (target-configurations (alist-get 'targets-by-config code-model)))
     (or (cdr (assoc build-type target-configurations))
         (cdar target-configurations))))
