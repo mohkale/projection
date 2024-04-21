@@ -4,8 +4,7 @@ FROM silex/emacs:$EMACS_VERSION-ci-cask
 ARG UNAME=projection-docker
 
 # Setup basic git credentials so tests that use git work.
-RUN git config --global user.email "$UNAME@nowhere.com" \
- && git config --global user.name "$UNAME"
+COPY docker/gitconfig /root/.gitconfig
 
 # # Install all Emacs package dependencies.
 # RUN mkdir -p /tmp/projection-build
@@ -19,6 +18,7 @@ RUN chmod 755 -R /root/ \
  && chmod 777 -R /root/.cask \
  && mkdir -p /nonexistent \
  && chown -R nobody /nonexistent
+COPY docker/gitconfig /nonexistent/.gitconfig
 
 # Install all build/test dependencies.
 RUN apt-get update \
