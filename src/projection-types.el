@@ -676,7 +676,7 @@
   (projection-type
    :name 'emacs-cask
    :predicate "Cask"
-   :build "cask install"
+   :configure "cask install"
    :test-prefix "test-"
    :test-suffix "-test"))
 
