@@ -109,10 +109,10 @@ test('simple test', exe)")
 
       ;; THEN
       (expect 'completing-read :to-have-been-called-times 1)
-      (let ((actual-build-options (+completion-table-candidates
-                                   (spy-calls-args-for 'completing-read 0))))
-        (dolist (build-option expected-build-options)
-          (expect actual-build-options :to-contain build-option))))
+      (expect (+completion-table-candidates
+               (spy-calls-args-for 'completing-read 0))
+              :to-have-same-items-as
+              expected-build-options))
 
     (it "Allows you to set a boolean build-option to true"
       ;; GIVEN

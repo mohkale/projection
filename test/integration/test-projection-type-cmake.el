@@ -191,8 +191,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN
       (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
         ;; THEN
-        (dolist (expected-target expected-targets)
-          (expect expected-target :to-be-in cmake-targets))))
+        (expect cmake-targets :to-have-same-items-as expected-targets)))
 
     (it "Filters out targets matching the configured regexp"
       ;; GIVEN
