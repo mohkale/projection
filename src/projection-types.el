@@ -481,27 +481,20 @@
 
 
 
+(autoload 'projection-gradle-run-build "projection-type-gradle")
+(autoload 'projection-gradle-run-test  "projection-type-gradle")
+
 (defvar projection-project-type-gradle
   (projection-type
    :name 'gradle
-   :predicate "build.gradle"
-   :build "gradle build"
-   :test "gradle test"
+   :predicate '("build.gradle"
+                "build.gradle.kts"
+                "gradlew")
+   :build #'projection-gradle-run-build
+   :test #'projection-gradle-run-test
    :test-suffix "Spec"))
 
 (add-to-list 'projection-project-types projection-project-type-gradle 'append)
-
-
-
-(defvar projection-project-type-gradlew
-  (projection-type
-   :name 'gradlew
-   :predicate "gradlew"
-   :build "./gradlew build"
-   :test "./gradlew test"
-   :test-suffix "Spec"))
-
-(add-to-list 'projection-project-types projection-project-type-gradlew 'append)
 
 
 
