@@ -560,7 +560,7 @@ This function respects `projection-cmake-cache-code-model'."
                             #'projection-cmake--file-api-query-config-targets api-replies)))))
             `((codemodel . ,codemodel)
               (targets-by-config . ,targets-by-config)))))
-    ((file-missing json-readtable-error projection-cmake-code-model)
+    ((file-missing json-error projection-cmake-code-model)
      (projection--log :error "error while querying CMake code-model %s." (cdr err)))))
 
 (defun projection-cmake--file-api-bulk-read-reply-directory (build-dir)

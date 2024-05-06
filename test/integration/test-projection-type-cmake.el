@@ -184,6 +184,19 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (expect (projection-multi-cmake-targets) :not :to-throw))
 
+    (it "Gracefully handles incomplete JSON file response"
+      ;; GIVEN
+      (let ((projection-cmake--file-api-client "alternate-client"))
+        (call-interactively #'projection-configure-project))
+
+      (f-write "{" 'utf-8
+               (f-join (projection-cmake--build-directory 'expand)
+                       (projection-cmake--file-api-reply-directory-suffix)
+                       "broken-reply.json"))
+
+      ;; WHEN/THEN
+      (expect (projection-multi-cmake-targets) :not :to-throw))
+
     (it "Extracts CMake targets from the code-model"
       ;; GIVEN
       (call-interactively #'projection-configure-project)
