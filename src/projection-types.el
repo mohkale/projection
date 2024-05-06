@@ -429,6 +429,10 @@
 
 
 
+;;;###autoload (autoload 'projection-tox-clear-work-directory "projection-types" nil 'interactive)
+(defalias 'projection-tox-clear-work-directory
+  (projection--create-clear-directory-command ".tox"))
+
 (defvar projection-project-type-python-tox
   (projection-type
    :name 'python-tox
@@ -436,7 +440,9 @@
    :build "tox -r --notest"
    :test "tox"
    :test-prefix "test_"
-   :test-suffix "_test"))
+   :test-suffix "_test"
+   :compile-multi-targets
+   `(("tox:clear" . ,#'projection-tox-clear-work-directory))))
 
 (add-to-list 'projection-project-types projection-project-type-python-tox 'append)
 
