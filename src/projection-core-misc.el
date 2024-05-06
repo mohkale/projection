@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'project)
+(eval-when-compile (require 'subr-x))
 
 (defun projection--current-project (&optional no-error)
   "Retrieve the current project or raise an error.
@@ -64,6 +65,44 @@ FORMAT-ARGS will be used to format PROMPT if provided."
                "/" (project-root project)))
              format-args)
     (apply #'format prompt format-args)))
+
+
+
+(defun projection--create-clear-directory-command (directory-gen)
+  "Create a interactive callback to clear the directory at DIRECTORY-GEN.
+DIRECTORY-GEN should be a:
+- String or Symbol pointing to a string. This will be expanded relative to the
+  project root.
+- A function which returns the directory as a string. It should take a single
+  argument which when true should make the function return a path that Emacs
+  itself can query (such as with tramp-prefixes). The default return value
+  should be a path that a compilation command could reference.
+
+The returned command will check if the directory exists and prompt the user
+before running a compilation command to delete it."
+  (lambda ()
+    (interactive)
+    (cl-destructuring-bind (directory . directory-expanded)
+        (pcase directory-gen
+          ((pred functionp)
+           (cons (funcall directory-gen nil)
+                 (funcall directory-gen 'expand)))
+          ((pred stringp)
+           (cons directory-gen (projection--expand-file-name-in-project directory-gen t)))
+          ((pred symbolp)
+           (let ((directory (eval directory-gen)))
+             (cons directory (projection--expand-file-name-in-project directory t))))
+          (_ (error "Clear directory command passed unsupported directory-gen type: %S"
+                    directory-gen)))
+      (cond
+       ((or (not directory) (not directory-expanded))
+        (user-error "Unable to determine directory to remove using %S" directory-gen))
+       ((not (file-exists-p directory-expanded))
+        (user-error "Directory %s already does not exist" directory-expanded))
+       ((yes-or-no-p (format "Really remove directory at `%s'?" directory-expanded))
+        (let ((default-directory (project-root (projection--current-project))))
+          (compile (concat "rm -rf " (shell-quote-argument directory)))))
+       (t (message "Aborted removal of directory at %s" directory-expanded))))))
 
 (provide 'projection-core-misc)
 ;;; projection-core-misc.el ends here

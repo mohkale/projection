@@ -123,14 +123,14 @@ add_test(NAME hidden COMMAND true)
              (err (should-error (projection-cmake-clear-build-directory))))
         ;; THEN
         (expect (cadr err) :to-match
-                "Cannot remove build directory at unconfigured location")))
+                "Unable to determine directory to remove")))
 
     (it "Fails build directory does not exist"
       ;; GIVEN/WHEN
       (let* ((err (should-error (projection-cmake-clear-build-directory))))
         ;; THEN
         (expect (cadr err) :to-match
-                "Build directory .* already does not exist")))
+                "Directory .* already does not exist")))
 
     (describe "With existing build-directory"
       (before-each
@@ -164,7 +164,7 @@ add_test(NAME hidden COMMAND true)
         (expect (spy-calls-args-for 'compile 0) :to-equal '("rm -rf build")))))
 
   (describe "CMake file API"
-    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main")))
+    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install")))
 
     (it "Constructs a CMake query file while configuring"
       ;; WHEN
