@@ -3,10 +3,7 @@
 (require 'projection-artifacts)
 (require 'projection-types)
 (require 'projection-utils)
-(require 'projection-type-cmake)
-(require 'projection-multi-cmake)
-(require 'projection-multi-ctest)
-(require 'projection-dape)
+(require 'projection-multi-gradle)
 
 (require 'projection-test-utils)
 

@@ -154,14 +154,15 @@ supported by `compile-multi-config'."))
   (when (slot-boundp obj 'test-suffix)
     (oset obj test-suffix (ensure-list (oref obj test-suffix)))))
 
-(defun projection-type-append-compile-multi-targets (project-type &rest new-targets)
-  "Add NEW-TARGETS as compile-multi-targets to PROJECT-TYPE."
+(defun projection-type-append-compile-multi-targets (project-types &rest new-targets)
+  "Add NEW-TARGETS as compile-multi-targets to PROJECT-TYPES."
   (declare (indent defun))
-  (oset project-type compile-multi-targets
-        (seq-uniq
-         (append
-          (oref project-type compile-multi-targets)
-          new-targets))))
+  (dolist (project-type (ensure-list project-types))
+    (oset project-type compile-multi-targets
+          (seq-uniq
+           (append
+            (oref project-type compile-multi-targets)
+            new-targets)))))
 
 
 
