@@ -76,10 +76,24 @@
                                       (group-n 3 (+ any))))
                                     eol)
                                 nil 'no-error)
+       ;; Collect parameterised test without params first.
+       with param-test-cache = (make-hash-table :test 'equal)
+       with param-index = nil
+       do (setq param-index (seq-position (match-string 3) 91))
+       when param-index
+         with param-free-test = nil
+         do (setq param-free-test (substring (match-string 3) 0 param-index))
+         and unless (gethash param-free-test param-test-cache)
+           do (puthash param-free-test t param-test-cache)
+           and collect `(,(match-string 1)
+                         ,(match-string 2)
+                         ,param-free-test)
+
        collect `(;; Each entry is (FILE (? CLASS) TEST)
                  ,(match-string 1)
                  ,(match-string 2)
-                 ,(match-string 3))))))
+                 ,(match-string 3))
+       ))))
 
 ;;;###autoload
 (defun projection-multi-pytest-targets ()

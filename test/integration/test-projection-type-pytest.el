@@ -31,16 +31,17 @@ class ClassTest(unittest.TestCase):
     (it "Can determine pytest tasks"
       (let ((targets (mapcar #'car (projection-multi-pytest-targets))))
         (expect targets :to-have-same-items-as
-                '("pytest-file:class_test.py"
-                  "pytest-class:ClassTest"
-
-                  "pytest-file:foo_test.py"
-
-                  "pytest-file:param_test.py"
-                  "pytest-test:ClassTest#test_bar"
-                  "pytest-test:ClassTest#test_foo"
+                '("pytest-file:foo_test.py"
                   "pytest-test:test_foo"
                   "pytest-test:test_bar"
+
+                  "pytest-file:class_test.py"
+                  "pytest-class:ClassTest"
+                  "pytest-test:ClassTest#test_bar"
+                  "pytest-test:ClassTest#test_foo"
+
+                  "pytest-file:param_test.py"
+                  "pytest-test:test_parmeterised"
                   "pytest-test:test_parmeterised[1]"
                   "pytest-test:test_parmeterised[2]"
                   "pytest-test:test_parmeterised[3]"))))))
