@@ -193,7 +193,21 @@ use."
 
 (defcustom projection-cmake-preset 'prompt-once-when-multiple
   "Set which CMake preset to use for the current project.
-See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
+See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html .
+
+It is recommended to set this locally in a project with .dir-locals.el if you
+want to set the default preset configuration you always want selected. One
+possible directory-locals entry can be:
+
+  ((nil . ((projection-cmake-preset . ((configure . \"ninja-multi\")
+                                       (build . \"debug\")
+                                       (test . \"debug\")
+                                       (t . prompt-once-when-multiple))))))
+
+It is recommended to always define a failover preset value to the behaviour you
+want when a configure or build preset change invalidates the default test or
+build preset. Ommitting this will make projection assume a value of (t . nil)
+meaning no preset choice will be set and commands will likely fail."
   :type
   '(choice
     (string :tag "Sole preset value")
@@ -223,6 +237,7 @@ See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html."
 This only filters out presets when BUILD-TYPE is not configure because configure
 presets should always be visible."
   (if-let* ((build-type-is-not-configure (not (eq build-type 'configure)))
+            ;; TODO(me): Fix this doesn't handle a value type preset in dir-locals.
             (projection-cmake-preset 'silent)
             (active-configure-preset (projection-cmake--preset 'configure)))
       (cl-remove-if
@@ -459,7 +474,7 @@ BUILD-TYPE. It should cache presets after the first list call."
                 (build-type (alist-get 'projection--preset-type preset-config))
                 (preset (alist-get 'name preset-config)))
            (list project build-type preset))
-       (user-error "No CMake presets found for th ecurrent project"))))
+       (user-error "No CMake presets found for the current project"))))
   (projection--cache-put project (projection-cmake--preset-cache-var build-type) preset))
 
 (dolist (build-type projection-cmake--preset-build-types)
@@ -893,7 +908,7 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   '(("EXECUTABLE"
      (type . cmake-executable)
      (debuggable . t))
-    ("STATIC_LIBRARY"  (type . cmake-library))
+    ("STATIC_LIBRARY" (type . cmake-library))
     ("SHARED_LIBRARY" (type . cmake-library))))
 
 (defun projection-cmake-list-artifacts ()
