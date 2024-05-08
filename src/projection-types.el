@@ -201,12 +201,22 @@
 
 
 
+(defvar projection-build-jobs)
+(defun projection-make-run-build (&optional target)
+  "Build command generator for Make projects.
+Set TARGET as the TARGET to build when set."
+  (projection--join-shell-command
+   `("make"
+     ,@(when-let ((jobs (projection--guess-parallelism projection-build-jobs)))
+         (list "-j" (number-to-string jobs)))
+     ,@(when target (list target)))))
+
 (defvar projection-project-type-make
   (projection-type
    :name 'make
    :predicate '("Makefile" "GNUMakefile")
-   :build   "make"
-   :test    "make test"
+   :build   #'projection-make-run-build
+   :test    (apply-partially #'projection-make-run-build "test")
    :install "make install"))
 
 (add-to-list 'projection-project-types projection-project-type-make 'append)

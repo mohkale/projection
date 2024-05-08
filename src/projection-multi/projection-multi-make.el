@@ -98,7 +98,7 @@ the first Makefile it finds in the current directory."
     (cl-loop
      for target in (projection-multi-make--targets-from-file file-name)
      collect (cons (concat project-type ":" target)
-                   (concat "make " (shell-quote-argument target))))))
+                   (projection-make-run-build target)))))
 
 ;;;###autoload
 (defun projection-multi-compile-make ()
