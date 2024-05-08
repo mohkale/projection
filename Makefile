@@ -29,6 +29,7 @@ $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	    --eval "(or (fboundp 'checkdoc-file) (kill-emacs 1))" \
 	    --eval "(setq sentence-end-double-space nil)" \
 	    --eval "(checkdoc-file \"$^\")" 2>&1 \
+		| sed "s_^$$(basename "$^"):_$^:_" \
 		| tee "$@" \
 	    | grep . && exit 1 || true
 
@@ -38,7 +39,10 @@ compile: $(ELC) ## Check for byte-compiler errors
 $(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
 	mkdir -p "$$(dirname "$@")"
 	@echo "[compile] $^"
-	$(EMACS) -Q --batch -L . -f batch-byte-compile "$^" 2>&1 \
+	$(EMACS) -Q --batch \
+	    -L . \
+	    --eval '(setq create-lockfiles nil)' \
+	    -f batch-byte-compile "$^" 2>&1 \
 		| grep -v -e "^Wrote" -e "^Loading" \
 		| grep . && exit 1 || true ;\
 	mv -f "$^c" "$@"
