@@ -34,8 +34,6 @@
   "Projection CMake project type."
   :group 'projection-types)
 
-(make-obsolete-variable 'projection-cmake-target-backend nil "0.1")
-
 
 
 ;; List CMake presets.
@@ -822,8 +820,6 @@ including any remote components of the project when
 Set the extra command line options to pass to ctest."
   :type '(list string)
   :group 'projection-type-cmake)
-
-(define-obsolete-variable-alias 'projection-cmake-ctest-jobs 'projection-test-jobs "0.1")
 
 (defcustom projection-cmake-ctest-environment-variables
   '(("CLICOLOR_FORCE" . "1")

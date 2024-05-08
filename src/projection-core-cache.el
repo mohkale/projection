@@ -268,8 +268,6 @@ This command interactively removes a cached project variable."
                              (symbol-value cache-table))))
         (remhash key table)))))
 
-(define-obsolete-function-alias 'projection-reset-project-cache 'projection-cache-clear "0.1")
-
 ;;;###autoload
 (defun projection-cache-clear (clear-all)
   "Interactively clear cached variables for the current project.

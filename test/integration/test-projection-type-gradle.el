@@ -22,7 +22,7 @@
     (it "Runs with gradle when gradlew is unused"
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-build-project
+       #'projection-commands-build-project
        "gradle --daemon build -x test"))
 
     (it "Runs with gradlew when set"
@@ -31,7 +31,7 @@
 
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-build-project
+       #'projection-commands-build-project
        "./gradlew --daemon build -x test"))
 
     (it "Runs without daemon when configured"
@@ -39,7 +39,7 @@
       (let ((projection-gradle-use-daemon))
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-build-project
+         #'projection-commands-build-project
          "gradle build -x test"))))
 
   (describe "Multi compile"

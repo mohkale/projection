@@ -241,33 +241,5 @@ PROMPT is the prompt shown in the minibuffer while reading the command type."
           (format "Save command as type: "))))
   (projection--cache-put project cmd-type command))
 
-
-
-(make-obsolete 'projection-project-command nil "0.1")
-(make-obsolete-variable 'projection-cache-dynamic-commands nil "0.1")
-
-(define-obsolete-function-alias 'projection-set-command-for-type 'projection-commands-set-command-for-type "0.1")
-
-(define-obsolete-function-alias 'projection-configure-project 'projection-commands-configure-project "0.1")
-(define-obsolete-function-alias 'projection-build-project     'projection-commands-build-project     "0.1")
-(define-obsolete-function-alias 'projection-test-project      'projection-commands-test-project      "0.1")
-(define-obsolete-function-alias 'projection-run-project       'projection-commands-run-project       "0.1")
-(define-obsolete-function-alias 'projection-package-project   'projection-commands-package-project   "0.1")
-(define-obsolete-function-alias 'projection-install-project   'projection-commands-install-project   "0.1")
-
-(define-obsolete-function-alias 'projection-set-configure-command 'projection-commands-set-configure-command "0.1")
-(define-obsolete-function-alias 'projection-set-build-command     'projection-commands-set-build-command     "0.1")
-(define-obsolete-function-alias 'projection-set-test-command      'projection-commands-set-test-command      "0.1")
-(define-obsolete-function-alias 'projection-set-run-command       'projection-commands-set-run-command       "0.1")
-(define-obsolete-function-alias 'projection-set-package-command   'projection-commands-set-package-command   "0.1")
-(define-obsolete-function-alias 'projection-set-install-command   'projection-commands-set-install-command   "0.1")
-
-(make-obsolete-variable 'projection-project-configure-cmd 'projection-commands-configure-project-command "0.1")
-(make-obsolete-variable 'projection-project-build-cmd     'projection-commands-build-project-command     "0.1")
-(make-obsolete-variable 'projection-project-test-cmd      'projection-commands-test-project-command      "0.1")
-(make-obsolete-variable 'projection-project-run-cmd       'projection-commands-run-project-command       "0.1")
-(make-obsolete-variable 'projection-project-package-cmd   'projection-commands-package-project-command   "0.1")
-(make-obsolete-variable 'projection-project-install-cmd   'projection-commands-install-project-command   "0.1")
-
 (provide 'projection-commands)
 ;;; projection-commands.el ends here

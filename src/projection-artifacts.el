@@ -122,8 +122,6 @@ message it."
 
 
 
-(make-obsolete 'projection-artifacts-read-debug-targets nil "0.1")
-
 ;;;###autoload
 (defun projection-artifacts-list (artifact)
   "Interactive function to select artifacts.

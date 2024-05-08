@@ -25,7 +25,7 @@
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-build-project
+         #'projection-commands-build-project
          "go build ./...")
 
         ;; THEN
@@ -73,7 +73,7 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
 
           ;; WHEN/THEN
           (+expect-interactive-command-calls-compile-with
-           #'projection-build-project
+           #'projection-commands-build-project
            "go build golang.org/x/tools/foo")
 
           ;; THEN
@@ -92,7 +92,7 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
         (let ((projection-golang-package 'all))
           ;; WHEN/THEN
           (+expect-interactive-command-calls-compile-with
-           #'projection-build-project
+           #'projection-commands-build-project
            "go build ./...")))
 
       (it "Supports omitting a target-package"
@@ -100,7 +100,7 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
         (let ((projection-golang-package nil))
           ;; WHEN/THEN
           (+expect-interactive-command-calls-compile-with
-           #'projection-build-project
+           #'projection-commands-build-project
            "go build")))
 
       (it "Supports setting a target-package explicitly"
@@ -108,7 +108,7 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
         (let ((projection-golang-package "foobar"))
           ;; WHEN/THEN
           (+expect-interactive-command-calls-compile-with
-           #'projection-build-project
+           #'projection-commands-build-project
            "go build foobar")))
 
       (it "Allows prompting for a target-package"
@@ -118,7 +118,7 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
 
           ;; WHEN/THEN
           (+expect-interactive-command-calls-compile-with
-           #'projection-build-project
+           #'projection-commands-build-project
            "go build golang.org/x/tools/foo")
 
           ;; THEN
@@ -134,7 +134,7 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
 
           ;; WHEN/THEN
           (+expect-interactive-command-calls-compile-with
-           #'projection-build-project
+           #'projection-commands-build-project
            "go build golang.org/x/tools/foo")
 
           ;; THEN

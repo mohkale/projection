@@ -46,7 +46,7 @@ add_test(NAME hidden COMMAND true)
   (it "Can configure a CMake project"
     ;; GIVEN/WHEN/THEN
     (+expect-interactive-command-calls-compile-with
-     #'projection-configure-project
+     #'projection-commands-configure-project
      "cmake -S . -B build"))
 
   (it "Adapts configuring to the configured CMake build directory"
@@ -54,7 +54,7 @@ add_test(NAME hidden COMMAND true)
     (let ((projection-cmake-build-directory "blarg"))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-configure-project
+       #'projection-commands-configure-project
        "cmake -S . -B blarg")))
 
   (it "Builds with a customized number of jobs in parallel"
@@ -62,7 +62,7 @@ add_test(NAME hidden COMMAND true)
     (let ((projection-build-jobs 10))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-build-project
+       #'projection-commands-build-project
        "cmake --build build --parallel\\=10")))
 
   (it "Includes the configured CMake build-type"
@@ -70,7 +70,7 @@ add_test(NAME hidden COMMAND true)
     (+interactively-set-cmake-build-type "Release")
     ;; WHEN/THEN
     (+expect-interactive-command-calls-compile-with
-     #'projection-configure-project
+     #'projection-commands-configure-project
      "cmake -S . -B build -DCMAKE_BUILD_TYPE\\=Release"))
 
   (it "Can set any customized configure options"
@@ -78,7 +78,7 @@ add_test(NAME hidden COMMAND true)
     (let ((projection-cmake-configure-options '("Foo" "Bar")))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-configure-project
+       #'projection-commands-configure-project
        "cmake -S . -B build Foo Bar")))
 
   (it "Runs tests through a separate ctest binary"
@@ -86,7 +86,7 @@ add_test(NAME hidden COMMAND true)
     (let ((projection-cmake-ctest-environment-variables))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-test-project
+       #'projection-commands-test-project
        "ctest --test-dir build test")))
 
   (it "Assigns any configured environment variables when running tests"
@@ -95,7 +95,7 @@ add_test(NAME hidden COMMAND true)
            '(("foo" . "bar"))))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-test-project
+       #'projection-commands-test-project
        "env foo\\=bar ctest --test-dir build test")))
 
   (it "Runs ctest with a customized number of jobs in parallel"
@@ -103,7 +103,7 @@ add_test(NAME hidden COMMAND true)
     (let ((projection-test-jobs 10))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-test-project
+       #'projection-commands-test-project
        "ctest --test-dir build --parallel\\=10 test")))
 
   (it "Forwards any configured options when running tests"
@@ -112,7 +112,7 @@ add_test(NAME hidden COMMAND true)
           (projection-cmake-ctest-environment-variables))
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-test-project
+       #'projection-commands-test-project
        "ctest --test-dir build -foo -bar test")))
 
   (describe "Clear build directory"
@@ -169,7 +169,7 @@ add_test(NAME hidden COMMAND true)
     (it "Constructs a CMake query file while configuring"
       ;; WHEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-configure-project
+       #'projection-commands-configure-project
        "cmake -S . -B build")
 
       ;; THEN
@@ -179,7 +179,7 @@ add_test(NAME hidden COMMAND true)
     (it "Does not throw an error on build directory missing reply for projection"
       ;; GIVEN
       (let ((projection-cmake--file-api-client "alternate-client"))
-        (call-interactively #'projection-configure-project))
+        (call-interactively #'projection-commands-configure-project))
 
       ;; WHEN/THEN
       (expect (projection-multi-cmake-targets) :not :to-throw))
@@ -187,7 +187,7 @@ add_test(NAME hidden COMMAND true)
     (it "Gracefully handles incomplete JSON file response"
       ;; GIVEN
       (let ((projection-cmake--file-api-client "alternate-client"))
-        (call-interactively #'projection-configure-project))
+        (call-interactively #'projection-commands-configure-project))
 
       (f-write "{" 'utf-8
                (f-join (projection-cmake--build-directory 'expand)
@@ -199,7 +199,7 @@ add_test(NAME hidden COMMAND true)
 
     (it "Extracts CMake targets from the code-model"
       ;; GIVEN
-      (call-interactively #'projection-configure-project)
+      (call-interactively #'projection-commands-configure-project)
 
       ;; WHEN
       (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
@@ -208,7 +208,7 @@ add_test(NAME hidden COMMAND true)
 
     (it "Filters out targets matching the configured regexp"
       ;; GIVEN
-      (call-interactively #'projection-configure-project)
+      (call-interactively #'projection-commands-configure-project)
 
       ;; WHEN
       (let* ((projection-multi-cmake-exclude-targets (rx bol "main_lib" eol))
@@ -219,7 +219,7 @@ add_test(NAME hidden COMMAND true)
     (describe "Artifacts"
       (it "Can query CMake and CTest artifacts"
         ;; GIVEN
-        (call-interactively #'projection-configure-project)
+        (call-interactively #'projection-commands-configure-project)
 
         (+with-completing-read-default-return
           ;; WHEN
@@ -239,7 +239,7 @@ add_test(NAME hidden COMMAND true)
         ;; Assume all debuggers are available.
         (spy-on #'dape--config-ensure :and-return-value t))
       (before-each
-        (call-interactively #'projection-configure-project))
+        (call-interactively #'projection-commands-configure-project))
 
       (it "Prompts with only debuggable CMake and CTest artifacts"
         ;; GIVEN
@@ -418,7 +418,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
+         #'projection-commands-configure-project
          "cmake -S . -B build --preset\\=configurePreset1")
 
         ;; THEN
@@ -434,7 +434,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
+         #'projection-commands-configure-project
          "cmake -S . -B build --preset\\=configurePreset1")
 
         ;; THEN
@@ -450,7 +450,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
+         #'projection-commands-configure-project
          "cmake -S . -B build --preset\\=configurePreset1")
 
         ;; THEN
@@ -462,7 +462,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+with-completing-read-not-called
          (+expect-interactive-command-calls-compile-with
-          #'projection-configure-project
+          #'projection-commands-configure-project
           "cmake -S . -B build --preset\\=configurePreset1"))
 
         ;; THEN
@@ -473,7 +473,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-build-project
+         #'projection-commands-build-project
          "cmake --build build --preset\\=buildForConfigurePreset1-Debug")
 
         ;; THEN
@@ -489,7 +489,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+with-completing-read-not-called
        (+expect-interactive-command-calls-compile-with
-        #'projection-configure-project
+        #'projection-commands-configure-project
         "cmake -S . -B build --preset\\=configurePreset1")))
 
     (it "Never uses a preset when configured"
@@ -498,7 +498,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+with-completing-read-not-called
          (+expect-interactive-command-calls-compile-with
-          #'projection-configure-project
+          #'projection-commands-configure-project
           "cmake -S . -B build"))))
 
     (it "Always prompts for a preset when configured"
@@ -508,7 +508,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
+         #'projection-commands-configure-project
          "cmake -S . -B build --preset\\=configurePreset1")
 
         ;; THEN
@@ -519,7 +519,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
+         #'projection-commands-configure-project
          "cmake -S . -B build --preset\\=configurePreset2")
 
         ;; THEN
@@ -531,7 +531,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+with-completing-read-not-called
          (+expect-interactive-command-calls-compile-with
-          #'projection-configure-project
+          #'projection-commands-configure-project
           "cmake -S . -B build"))
 
         ;; GIVEN
@@ -540,7 +540,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+with-completing-read-not-called
          (+expect-interactive-command-calls-compile-with
-          #'projection-configure-project
+          #'projection-commands-configure-project
           "cmake -S . -B build --preset\\=configurePreset1"))))
 
     (it "Prompts and saves chosen preset for build-type after first invocation only when multiple presets are available"
@@ -551,7 +551,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-configure-project
+         #'projection-commands-configure-project
          "cmake -S . -B build --preset\\=configurePreset2")
 
         ;; THEN
@@ -560,13 +560,13 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+with-completing-read-not-called
          (+expect-interactive-command-calls-compile-with
-          #'projection-build-project
+          #'projection-commands-build-project
           "cmake --build build --preset\\=buildForConfigurePreset2-Debug"))
 
         ;; WHEN/THEN
         (+with-completing-read-not-called
          (+expect-interactive-command-calls-compile-with
-          #'projection-configure-project
+          #'projection-commands-configure-project
           "cmake -S . -B build --preset\\=configurePreset2"))))
 
     (it "Prompts with only related targets matching the active configuration target for building and testing"
@@ -576,7 +576,7 @@ add_test(NAME hidden COMMAND true)
 
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
-       #'projection-test-project
+       #'projection-commands-test-project
        "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test")
 
       ;; THEN
@@ -597,7 +597,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (spy-on #'completing-read :and-return-value "Default")
       (+expect-interactive-command-calls-compile-with
-       #'projection-test-project
+       #'projection-commands-test-project
        "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test"))
 
     (it "Ignores build or test preset when active configure preset conflicts with it"
@@ -607,7 +607,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-test-project
+         #'projection-commands-test-project
          "ctest --test-dir build test")))
 
     (it "Can configure alternate preset setting on preset invalidation"
@@ -619,7 +619,7 @@ add_test(NAME hidden COMMAND true)
 
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
-         #'projection-test-project
+         #'projection-commands-test-project
          "ctest --test-dir build --preset\\=testForConfigurePreset2 test")
         ))
 
@@ -630,7 +630,7 @@ add_test(NAME hidden COMMAND true)
         ;; GIVEN
         (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
         (+interactively-set-cmake-preset 'test "Default")
-        (call-interactively #'projection-configure-project)
+        (call-interactively #'projection-commands-configure-project)
 
         ;; WHEN
         (let ((ctest-targets (mapcar #'car (projection-multi-ctest-targets))))
@@ -646,7 +646,7 @@ add_test(NAME hidden COMMAND true)
       (it "Includes targets for any workflow presets"
         ;; GIVEN
         (spy-on #'completing-read :and-return-value "Preset number 1 for configuring")
-        (call-interactively #'projection-configure-project)
+        (call-interactively #'projection-commands-configure-project)
 
         ;; WHEN
         (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))

@@ -29,8 +29,6 @@
 (require 'projection-multi)
 (require 'projection-types)
 
-(define-obsolete-variable-alias 'projection-multi-ctest-cache-targets 'projection-cmake-ctest-cache-targets "0.1")
-
 (defcustom projection-multi-ctest-add-exclude-label-targets t
   "When true add targets to run all tests except a given label."
   :type 'boolean

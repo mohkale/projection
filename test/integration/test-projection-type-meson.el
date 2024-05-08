@@ -27,19 +27,19 @@ test('simple test', exe)")
 
   (it "Can configure/build/test/install a Meson project"
     (+expect-interactive-command-calls-compile-with
-     #'projection-configure-project
+     #'projection-commands-configure-project
      "meson setup builddir")
 
     (+expect-interactive-command-calls-compile-with
-     #'projection-build-project
+     #'projection-commands-build-project
      "meson compile -C builddir")
 
     (+expect-interactive-command-calls-compile-with
-     #'projection-test-project
+     #'projection-commands-test-project
      "meson test -C builddir")
 
     (+expect-interactive-command-calls-compile-with
-     #'projection-install-project
+     #'projection-commands-install-project
      "meson install -C builddir --destdir install"))
 
   (it "Can reconfigure when build directory already exists"
@@ -48,13 +48,13 @@ test('simple test', exe)")
 
     ;; WHEN/THEN
     (+expect-interactive-command-calls-compile-with
-     #'projection-configure-project
+     #'projection-commands-configure-project
      "meson setup builddir --reconfigure"))
 
   (it "Adapts configuring to the configured Meson build directory"
     (let ((projection-meson-build-directory "blarg"))
       (+expect-interactive-command-calls-compile-with
-       #'projection-configure-project
+       #'projection-commands-configure-project
        "meson setup blarg")))
 
   (it "Includes the configured Meson build-type"
@@ -62,13 +62,13 @@ test('simple test', exe)")
     (+interactively-set-meson-build-type "plain")
     ;; WHEN/THEN
     (+expect-interactive-command-calls-compile-with
-     #'projection-configure-project
+     #'projection-commands-configure-project
      "meson setup builddir --buildtype\\=plain"))
 
   (describe "Multi compile"
     (it "Can extract available build targets"
       ;; GIVEN
-      (call-interactively #'projection-configure-project)
+      (call-interactively #'projection-commands-configure-project)
       ;; WHEN
       (let ((targets (projection-multi-meson-targets)))
         ;; THEN
@@ -97,7 +97,7 @@ test('simple test', exe)")
                                     "stdsplit")))
     (before-each
       (spy-on #'projection--shell-command)
-      (call-interactively #'projection-configure-project))
+      (call-interactively #'projection-commands-configure-project))
 
     (it "Can query available build options for the current project"
       ;; GIVEN
