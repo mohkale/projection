@@ -73,6 +73,22 @@ add_test(NAME hidden COMMAND true)
      #'projection-commands-configure-project
      "cmake -S . -B build -DCMAKE_BUILD_TYPE\\=Release"))
 
+  (it "Includes the configured CMake log-level"
+    ;; GIVEN
+    (+interactively-set-cmake-configure-log-level "DEBUG")
+    ;; WHEN/THEN
+    (+expect-interactive-command-calls-compile-with
+     #'projection-commands-configure-project
+     "cmake -S . -B build --log-level\\=DEBUG"))
+
+  (it "Builds verbosely when configured"
+    ;; GIVEN
+    (+interactively-set-cmake-build-verbosely t)
+    ;; WHEN/THEN
+    (+expect-interactive-command-calls-compile-with
+     #'projection-commands-build-project
+     "cmake --build build --verbose"))
+
   (it "Can set any customized configure options"
     ;; GIVEN
     (let ((projection-cmake-configure-options '("Foo" "Bar")))

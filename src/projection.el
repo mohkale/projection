@@ -59,6 +59,8 @@
     (define-key map "cp" 'projection-cmake-set-preset)
     (define-key map "cb" 'projection-cmake-set-build-type)
     (define-key map "cd" 'projection-cmake-clear-build-directory)
+    (define-key map "cl" 'projection-cmake-set-configure-log-level)
+    (define-key map "cv" 'projection-cmake-set-build-verbosely)
 
     (define-key map "g" '("Golang" . nil))
     (define-key map "gp" 'projection-golang-set-package)

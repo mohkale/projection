@@ -123,6 +123,20 @@ Use this like so:
 
   (expect 'completing-read :to-have-been-called-times 1))
 
+(defun +interactively-set-cmake-build-verbosely (build-verbosely)
+  (spy-on #'y-or-n-p :and-return-value build-verbosely)
+
+  (call-interactively #'projection-cmake-set-build-verbosely)
+
+  (expect 'y-or-n-p :to-have-been-called-times 1))
+
+(defun +interactively-set-cmake-configure-log-level (log-level)
+  (spy-on #'completing-read :and-return-value log-level)
+
+  (call-interactively #'projection-cmake-set-configure-log-level)
+
+  (expect 'completing-read :to-have-been-called-times 1))
+
 (defun +interactively-set-meson-build-type (build-type)
   (spy-on #'completing-read :and-return-value build-type)
 

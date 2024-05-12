@@ -507,6 +507,27 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set.")
               (projection-cmake--preset-config 'build)))
         (alist-get 'configuration build-preset-config))))
 
+;;;###autoload (autoload 'projection-cmake-set-configure-log-level "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'configure-log-level
+  :project 'projection-cmake
+  :options '("ERROR" "WARNING" "NOTICE" "STATUS" "VERBOSE" "DEBUG" "TRACE")
+  :category "CMake"
+  :title "CMake configure log-level"
+  :custom-type '(choice (const :tag "Default CMake log-level" nil)
+                        (string :tag "Log level value"))
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Set log-level of CMake configure.")
+
+;;;###autoload (autoload 'projection-cmake-set-build-verbosely "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'build-verbosely
+  :project 'projection-cmake
+  :category "CMake"
+  :title "CMake build verbosely"
+  :custom-type 'boolean
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Run CMake build commands with the --verbose flag.
+This will cause CMake to print out the compilation commands before running them.")
+
 
 
 ;; CMake file API [[man:cmake-file-api(7)]].
@@ -796,6 +817,8 @@ including any remote components of the project when
          (when-let ((job-count (projection--guess-parallelism
                                 projection-build-jobs)))
            (list (concat "--parallel=" (number-to-string job-count)))))
+     ,@(when-let ((verbose (projection-cmake--build-verbosely)))
+         (list "--verbose"))
      ,@(when target (list "--target" target)))))
 
 (defun projection-cmake--annotation (build-type target)
@@ -1012,6 +1035,8 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
      "-S" "."
      ,@(when-let ((build (projection-cmake--build-directory)))
          (list "-B" build))
+     ,@(when-let ((log-level (projection-cmake--configure-log-level)))
+         (list (concat "--log-level=" log-level)))
      ,@(when-let ((preset (projection-cmake--preset 'configure)))
          (list (concat "--preset=" preset)))
      ,@(when-let ((build-type (projection-cmake--build-type)))
