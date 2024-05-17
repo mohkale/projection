@@ -105,9 +105,8 @@ incompatible with the active configure preset.")
 (cl-defsubst projection-cmake--read-presets-file (file)
   "Read JSON file FILE for the CMake file-api."
   (projection--log :debug "Reading CMake file-api file=%s." file)
-  (with-temp-buffer
-    (let ((json-array-type 'list))
-      (json-read-file file))))
+  (let ((json-array-type 'list))
+    (json-read-file file)))
 
 
 
