@@ -813,5 +813,15 @@ Set TARGET as the TARGET to build when set."
 
 
 
+(defvar projection-project-type-vscode-tasks
+  (projection-type
+   :name 'vscode-tasks
+   :predicate ".vscode/tasks.json")
+  "Registered only for multi-target registration.")
+
+(add-to-list 'projection-project-types projection-project-type-vscode-tasks 'append)
+
+
+
 (provide 'projection-types)
 ;;; projection-types.el ends here
