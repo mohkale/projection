@@ -1019,6 +1019,31 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 
 
+;;; Set build and test targets interactively
+
+(projection--declare-cache-var
+  'projection-cmake-build-target
+  :title "CMake build target"
+  :category "CMake"
+  :description "CMake build target for compile"
+  :hide t)
+
+(defun projection-cmake-set-build-target ()
+  (targets (projection-cmake--file-api-target-config))
+  )
+
+(projection--declare-cache-var
+  'projection-cmake-ctest-target
+  :title "CMake ctest target"
+  :category "CMake"
+  :description "CMake build target for testing"
+  :hide t)
+
+(defun projection-cmake-set-ctest-target ()
+  )
+
+
+
 ;;;###autoload (autoload 'projection-cmake-clear-build-directory "projection-type-cmake" nil 'interactive)
 (defalias 'projection-cmake-clear-build-directory
   (projection--create-clear-directory-command

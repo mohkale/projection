@@ -39,17 +39,45 @@
 
 
 
+(defmacro projection-multi-embark--set-command-wrapper (type)
+  (let ((func-name (intern (concat "projection-multi-embark-set-" (symbol-name type) "-command")))
+        (default-func-name (intern (concat "projection-commands-set-" (symbol-name type) "-command"))))
+    `(defun ,func-name (command project)
+       (interactive
+        (list (read-shell-command "Compile command: ")
+              (projection--current-project)))
+       (funcall (or (when (stringp command)
+                      (get-text-property
+                       0 'projection-multi-embark--set-command-callback command))
+                    #',default-func-name)
+                command project))))
+
+;;;###autoload (autoload 'projection-multi-embark-set-build-command "projection-commands" nil t)
+(projection-multi-embark--set-command-wrapper build)
+;;;###autoload (autoload 'projection-multi-embark-set-configure-command "projection-commands" nil t)
+(projection-multi-embark--set-command-wrapper configure)
+;;;###autoload (autoload 'projection-multi-embark-set-test-command "projection-commands" nil t)
+(projection-multi-embark--set-command-wrapper test)
+;;;###autoload (autoload 'projection-multi-embark-set-run-command "projection-commands" nil t)
+(projection-multi-embark--set-command-wrapper run)
+;;;###autoload (autoload 'projection-multi-embark-set-package-command "projection-commands" nil t)
+(projection-multi-embark--set-command-wrapper package)
+;;;###autoload (autoload 'projection-multi-embark-set-install-command "projection-commands" nil t)
+(projection-multi-embark--set-command-wrapper install)
+
+
+
 (defvar projection-multi-embark-command-map
   (let ((map (make-sparse-keymap)))
     (define-key map "s" (cons "projection-set-command" #'projection-commands-set-command-for-type))
     ;; NOTE: Keep in sync with `projection-map'.
-    (define-key map "c" #'projection-commands-set-build-command)
-    (define-key map "g" #'projection-commands-set-configure-command)
-    (define-key map "t" #'projection-commands-set-test-command)
-    (define-key map "r" #'projection-commands-set-run-command)
-    (define-key map "p" #'projection-commands-set-run-command)
-    (define-key map "k" #'projection-commands-set-package-command)
-    (define-key map "i" #'projection-commands-set-install-command)
+    (define-key map "c" #'projection-multi-embark-set-build-command)
+    (define-key map "g" #'projection-multi-embark-set-configure-command)
+    (define-key map "t" #'projection-multi-embark-set-test-command)
+    (define-key map "r" #'projection-multi-embark-set-run-command)
+    (define-key map "p" #'projection-multi-embark-set-run-command)
+    (define-key map "k" #'projection-multi-embark-set-package-command)
+    (define-key map "i" #'projection-multi-embark-set-install-command)
     map)
   "Command map for `projection-multi-embark'.")
 
