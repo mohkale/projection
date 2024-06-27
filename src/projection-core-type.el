@@ -53,7 +53,7 @@ of them then PROJECT will be matched.")
              (const nil :tag "Project does not support configure.")
              (string :tag "Shell command to invoke.")
              (function :tag "Either a command or a function returning a valid command type."))
-    :documentation "Compilation ommand used to configure this project.
+    :documentation "Compilation command used to configure this project.
 When nil the project is interpreted as not supporting this command type. When a
 string that string will be passed to `compile' as a shell command. When a function
 then the behaviour depends on the type of function. If the function is interactive
