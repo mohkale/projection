@@ -685,9 +685,12 @@ query file created before configuring."
    'projection-commands-pre-configure-hook
    (cl-defun projection-cmake--file-api-create-query-hook (&key project &allow-other-keys)
      "Helper to create a CMake query file before configuring for CMake projects."
-     (when (and (projection-cmake--cmake-project-p
-                 (projection-project-types (project-root project))))
-       (projection-cmake--file-api-create-query-file))))
+     (if projection-cmake-build-directory
+         (when (and (projection-cmake--cmake-project-p
+                     (projection-project-types (project-root project))))
+           (projection-cmake--file-api-create-query-file))
+       (projection--log :warning "Skipping CMake file API setup because build directory \
+is unset. This will disable some features like target selection."))))
 
   (add-hook
    'projection-commands-post-configure-hook

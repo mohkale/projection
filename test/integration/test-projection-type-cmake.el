@@ -182,6 +182,10 @@ add_test(NAME hidden COMMAND true)
   (describe "CMake file API"
     :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install")))
 
+    (it "Skips setup when build directory is unset"
+      (let ((projection-cmake-build-directory nil))
+        (call-interactively #'projection-commands-configure-project)))
+
     (it "Constructs a CMake query file while configuring"
       ;; WHEN
       (+expect-interactive-command-calls-compile-with
