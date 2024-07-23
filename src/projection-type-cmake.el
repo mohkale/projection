@@ -853,24 +853,25 @@ including any remote components of the project when
 
 (defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
-  (propertize
-   (projection--join-shell-command
-    `("cmake"
-      ,@(when-let ((build projection-cmake-build-directory))
-          (list "--build" build))
-      ,@(when-let ((preset (projection-cmake--preset build-type)))
-          (list (concat "--preset=" preset)))
-      ,@(when (eq build-type 'build)
-          (when-let ((job-count (projection--guess-parallelism
-                                 projection-build-jobs)))
-            (list (concat "--parallel=" (number-to-string job-count)))))
-      ,@(when-let ((verbose (projection-cmake--build-verbosely)))
-          (list "--verbose"))
-      ,@(when target (list "--target" target))))
-   'projection-set-command-callback
-   (when (and (eq build-type 'build) target)
-     #'projection-cmake--set-build-target)
-   'projection-cmake-target target))
+  (thread-first
+    (projection--join-shell-command
+     `("cmake"
+       ,@(when-let ((build projection-cmake-build-directory))
+           (list "--build" build))
+       ,@(when-let ((preset (projection-cmake--preset build-type)))
+           (list (concat "--preset=" preset)))
+       ,@(when (eq build-type 'build)
+           (when-let ((job-count (projection--guess-parallelism
+                                  projection-build-jobs)))
+             (list (concat "--parallel=" (number-to-string job-count)))))
+       ,@(when-let ((verbose (projection-cmake--build-verbosely)))
+           (list "--verbose"))
+       ,@(when target (list "--target" target))))
+
+    (projection--attach-set-build-target-properties
+     (when (and (eq build-type 'build) target)
+       #'projection-cmake--set-build-target)
+     'projection-cmake-target target)))
 
 (defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
@@ -937,23 +938,26 @@ ARGV if provided will be appended to the command."
      ,@projection-cmake-ctest-options
      ,@argv)))
 
-(defun projection-cmake--ctest-command (&optional type target)
-  "Generate CTest command of type TYPE with TARGET."
-  (propertize
-   (pcase type
-     ('target    (projection-cmake--ctest-command2 "-R" (concat "^" target "$")))
-     ('label     (projection-cmake--ctest-command2 "-L" (concat "^" target "$")))
-     ('not-label (projection-cmake--ctest-command2 "-LE" (concat "^" target "$")))
-     ('argv      (apply #'projection-cmake--ctest-command2 target))
-     ((guard (not type)) (projection-cmake--ctest-command2))
-     (_ (error "Unsupported CTest target type %s" type)))
-   'projection-set-command-callback
-   (when (and type target)
-     #'projection-cmake--set-ctest-target)
-   'projection-ctest-target (list type target)))
+(defun projection-cmake--ctest-command (&optional type args)
+  "Generate CTest command of type TYPE with ARGS.
+TYPE should be one of \\='target, \\='label, \\'not-label, \\'argv. If
+TYPE is unset a CTest command to run all tests wil be returned."
+  (thread-first
+    (pcase type
+      ('target    (projection-cmake--ctest-command2 "-R" (concat "^" args "$")))
+      ('label     (projection-cmake--ctest-command2 "-L" (concat "^" args "$")))
+      ('not-label (projection-cmake--ctest-command2 "-LE" (concat "^" args "$")))
+      ('argv      (apply #'projection-cmake--ctest-command2 args))
+      ((guard (not type)) (projection-cmake--ctest-command2))
+      (_ (error "Unsupported CTest target type %s" type)))
 
-(defun projection-cmake--ctest-annotation (type &optional target)
-  "Generate an annotation for a ctest command to run TARGET of TYPE."
+    (projection--attach-set-build-target-properties
+     (when (and type args)
+       #'projection-cmake--set-ctest-target)
+     'projection-ctest-target (list type args))))
+
+(defun projection-cmake--ctest-annotation (&optional type args)
+  "Generate an annotation for a ctest command to run TYPE with ARGS."
   (format "ctest %s%s%s"
           (if-let ((preset (projection-cmake--preset 'test)))
               (concat "preset:" preset " ")
@@ -962,10 +966,11 @@ ARGV if provided will be appended to the command."
               (concat "build:" build " ")
             "")
           (pcase type
-            ('target    target)
-            ('label     (concat "label:" target))
-            ('not-label (concat "except-label:" target))
-            (_ (error "Unsupported CTest target type for annotation %s" type)))))
+            ('target    args)
+            ('label     (concat "label:" args))
+            ('not-label (concat "except-label:" args))
+            ((guard (not type)) "")
+            ((or 'argv _) (format "%S" (list type args))))))
 
 
 
@@ -1120,15 +1125,13 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   "Build command generator for CMake projects."
   (projection-cmake--command
    'build
-   (when-let ((project (projection--current-project)))
-     (projection--cache-get project 'projection-cmake-build-target))))
+   (projection--cache-get 'query 'projection-cmake-build-target)))
 
 (defun projection-cmake-run-test ()
   "Test command generator for CMake projects."
   (apply
    #'projection-cmake--ctest-command
-   (when-let ((project (projection--current-project)))
-     (projection--cache-get project 'projection-cmake-ctest-target))))
+   (projection--cache-get 'query 'projection-cmake-ctest-target)))
 
 (defun projection-cmake-run-install ()
   "Install command generator for CMake projects."

@@ -136,6 +136,19 @@ If ENV-ALIST and CWD is empty then return nil."
 
 
 
+;; Projection-multi-embark
+
+(defun projection--attach-set-build-target-properties (command set-command &rest props)
+  "Helper to set-build-target properties in COMMAND.
+This is used for dwim support in `projection-multi-embark'. SET-COMMAND when set
+will attach it and PROPS to COMMAND and return it. If SET-COMMAND is unset
+COMMAND will be returned as is."
+  (if set-command
+      (apply #'propertize command 'projection-set-command-callback set-command props)
+    command))
+
+
+
 ;; General
 
 (defun projection--guess-parallelism (jobs)
