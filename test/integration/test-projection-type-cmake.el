@@ -103,7 +103,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build test")))
+       "ctest --test-dir build")))
 
   (it "Assigns any configured environment variables when running tests"
     ;; GIVEN
@@ -112,7 +112,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "env foo\\=bar ctest --test-dir build test")))
+       "env foo\\=bar ctest --test-dir build")))
 
   (it "Runs ctest with a customized number of jobs in parallel"
     ;; GIVEN
@@ -120,7 +120,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --parallel\\=10 test")))
+       "ctest --test-dir build --parallel\\=10")))
 
   (it "Forwards any configured options when running tests"
     ;; GIVEN
@@ -129,7 +129,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build -foo -bar test")))
+       "ctest --test-dir build -foo -bar")))
 
   (describe "Clear build directory"
     (it "Fails when no build directory configured"
@@ -597,7 +597,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test")
+       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug")
 
       ;; THEN
       (expect #'completing-read :to-have-been-called-times 1)
@@ -618,7 +618,7 @@ add_test(NAME hidden COMMAND true)
       (spy-on #'completing-read :and-return-value "Default")
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test"))
+       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug"))
 
     (it "Ignores build or test preset when active configure preset conflicts with it"
       (let ((projection-cmake-preset '((configure . prompt-always)
@@ -628,7 +628,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-commands-test-project
-         "ctest --test-dir build test")))
+         "ctest --test-dir build")))
 
     (it "Can configure alternate preset setting on preset invalidation"
       (let ((projection-cmake-preset '((configure . "configurePreset1")
@@ -640,7 +640,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-commands-test-project
-         "ctest --test-dir build --preset\\=testForConfigurePreset2 test")
+         "ctest --test-dir build --preset\\=testForConfigurePreset2")
         ))
 
     (describe "Multi compile"
