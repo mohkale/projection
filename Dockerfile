@@ -18,7 +18,7 @@ RUN chmod 755 -R /root/ \
  && chmod 777 -R /root/.cask \
  && mkdir -p /nonexistent \
  && chown -R nobody /nonexistent
-COPY docker/gitconfig /nonexistent/.gitconfig
+COPY docker/gitconfig /etc/gitconfig
 
 # Install all build/test dependencies.
 RUN apt-get update \

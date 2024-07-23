@@ -8,7 +8,7 @@
     "updateRemoteUserUID": true,
     "customizations": {
         "emacs": {
-            "inline-dir-locals": "((nil . ((eval . (add-to-list 'tramp-remote-path 'tramp-own-remote-path)))))"
+            "inline-dir-locals": "((nil . ((eval . (setq tramp-remote-path (append '(tramp-own-remote-path \"/nix/store/emacs/bin/\"  \"/root/.cask/bin\") tramp-remote-path))))))"
         }
     }
 }
