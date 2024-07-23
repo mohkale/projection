@@ -39,20 +39,23 @@
 
 
 
-(defconst projection-multi-embark--custom-property
-  'projection-set-command-callback)
+(eval-when-compile
+  (defconst projection-multi-embark--custom-property
+    'projection-set-command-callback))
 
 (defmacro projection-multi-embark--set-command-wrapper (type)
+  "Define embark commands for setting project commands for TYPE."
   (let ((func-name (intern (concat "projection-multi-embark-set-" (symbol-name type) "-command-dwim")))
         (raw-func-name (intern (concat "projection-multi-embark-set-" (symbol-name type) "-command")))
         (default-func-name (intern (concat "projection-commands-set-" (symbol-name type) "-command"))))
     `(progn
        (defun ,func-name (command &optional set-raw)
-         ,(format "Set %s command for the current project to COMMAND.
+         ,(format "Set %s command for the current project to COMMAND intelligently.
 Command should be a shell command string. As a special case COMMAND if
-having a property `%s' will have that property called with key-args of
-:type, :command and :project. For convenience all other text-properties
-of COMMAND will be passed as keyword arguments to the special property.
+having a property `%s'
+will have that property called with key-args of :type, :command and :project.
+For convenience all other text-properties of COMMAND will be passed as keyword
+arguments to the special property.
 
 Pass SET-RAW to always set `%s' command to COMMAND directly."
                   type projection-multi-embark--custom-property type)
@@ -75,8 +78,8 @@ Pass SET-RAW to always set `%s' command to COMMAND directly."
              (funcall #',default-func-name command project))))
 
        (defun ,raw-func-name (command)
-         ,(format "Proxy for %s with SET-RAW being always true."
-                  func-name)
+         ,(format "Set %s command for the current project to COMMAND."
+                  type)
          (,func-name command 'set-raw)))))
 
 ;;;###autoload (progn (autoload 'projection-multi-embark-set-build-command "projection-commands" nil t) (autoload 'projection-multi-embark-set-build-command-dwim "projection-commands" nil t))

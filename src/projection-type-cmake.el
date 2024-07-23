@@ -781,6 +781,8 @@ TEST-PRESET is the active test preset and will be merged into the response.."
 (cl-defun projection-cmake--set-build-target (&key type command project
                                                    projection-cmake-target
                                                    &allow-other-keys)
+  "Set PROJECTION-CMAKE-TARGET as the primary build target.
+See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   (unless (eq type 'build)
     (user-error "Cannot set CMake target for build-type=%s" type))
   (unless projection-cmake-target
@@ -798,6 +800,8 @@ TEST-PRESET is the active test preset and will be merged into the response.."
 (cl-defun projection-cmake--set-ctest-target  (&key type command project
                                                     projection-ctest-target
                                                     &allow-other-keys)
+  "Set PROJECTION-CTEST-TARGET as the primary CTest target.
+See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   (unless (eq type 'test)
     (user-error "Cannot set CTest target for build-type=%s" type))
   (unless projection-ctest-target
@@ -934,6 +938,7 @@ ARGV if provided will be appended to the command."
      ,@argv)))
 
 (defun projection-cmake--ctest-command (&optional type target)
+  "Generate CTest command of type TYPE with TARGET."
   (propertize
    (pcase type
      ('target    (projection-cmake--ctest-command2 "-R" (concat "^" target "$")))
@@ -948,7 +953,7 @@ ARGV if provided will be appended to the command."
    'projection-ctest-target (list type target)))
 
 (defun projection-cmake--ctest-annotation (type &optional target)
-  "Generate an annotation for a ctest command to run TARGET."
+  "Generate an annotation for a ctest command to run TARGET of TYPE."
   (format "ctest %s%s%s"
           (if-let ((preset (projection-cmake--preset 'test)))
               (concat "preset:" preset " ")
