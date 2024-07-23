@@ -875,12 +875,9 @@ including any remote components of the project when
 
 (defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
-  (format "cmake %s%s%s"
+  (format "cmake %s%s"
           (if-let ((preset (projection-cmake--preset build-type)))
               (concat "preset:" preset " ")
-            "")
-          (if-let ((build (projection-cmake--build-directory)))
-              (concat "build:" build " ")
             "")
           target))
 
@@ -958,12 +955,9 @@ TYPE is unset a CTest command to run all tests wil be returned."
 
 (defun projection-cmake--ctest-annotation (&optional type args)
   "Generate an annotation for a ctest command to run TYPE with ARGS."
-  (format "ctest %s%s%s"
+  (format "ctest %s%s"
           (if-let ((preset (projection-cmake--preset 'test)))
               (concat "preset:" preset " ")
-            "")
-          (if-let ((build (projection-cmake--build-directory)))
-              (concat "build:" build " ")
             "")
           (pcase type
             ('target    args)
