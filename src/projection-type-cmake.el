@@ -34,6 +34,13 @@
   "Projection CMake project type."
   :group 'projection-types)
 
+(defcustom projection-cmake-build-directory "build"
+  "Build directory for cmake project builds.
+When unset no -B flag will be passed to CMake. You may want this if the build
+directory is configured directly in the CMakePresets or elsewhere."
+  :type '(optional string)
+  :group 'projection-type-cmake)
+
 
 
 ;; List CMake presets.
@@ -673,32 +680,33 @@ first configured."
     (or (cdr (assoc build-type target-configurations))
         (cdar target-configurations))))
 
-;;;###autoload
-(progn
-  (defun projection-cmake--cmake-project-p (project-types)
-    "Helper to check whether one of the types in PROJECT-TYPES is CMake.
+(defun projection-cmake--cmake-project-p (project-types)
+  "Helper to check whether one of the types in PROJECT-TYPES is CMake.
 Advise this if you need more than just the CMake project type to have a
 query file created before configuring."
-    (member 'cmake (mapcar #'projection-type--name project-types)))
+  (member 'cmake (mapcar #'projection-type--name project-types)))
 
-  (add-hook
-   'projection-commands-pre-configure-hook
-   (cl-defun projection-cmake--file-api-create-query-hook (&key project &allow-other-keys)
-     "Helper to create a CMake query file before configuring for CMake projects."
-     (if projection-cmake-build-directory
-         (when (and (projection-cmake--cmake-project-p
-                     (projection-project-types (project-root project))))
-           (projection-cmake--file-api-create-query-file))
-       (projection--log :warning "Skipping CMake file API setup because build directory \
-is unset. This will disable some features like target selection."))))
+;;;###autoload
+(cl-defun projection-cmake--file-api-create-query-hook (&key project &allow-other-keys)
+  "Helper to create a CMake query file before configuring the CMake PROJECT."
+  (if projection-cmake-build-directory
+      (when (and (projection-cmake--cmake-project-p
+                  (projection-project-types (project-root project))))
+        (projection-cmake--file-api-create-query-file))
+    (projection--log :warning "Skipping CMake file API setup because build directory \
+is unset. This will disable some features like target selection.")))
 
-  (add-hook
-   'projection-commands-post-configure-hook
-   (cl-defun projection-cmake--file-api-clear-cache-on-configure (&key project &allow-other-keys)
-     "Clear CMake cache on reconfiguring the project."
-     (dolist (cache-var '(projection-cmake-code-model
-                          projection-cmake-ctest-targets))
-       (projection-cache-clear-single project cache-var projection--project-cache)))))
+;;;###autoload
+(cl-defun projection-cmake--file-api-clear-cache-on-configure (&key project &allow-other-keys)
+  "Clear CMake cache on reconfiguring PROJECT."
+  (dolist (cache-var '(projection-cmake-code-model
+                       projection-cmake-ctest-targets))
+    (projection-cache-clear-single project cache-var projection--project-cache)))
+
+;;;###autoload
+(progn
+  (add-hook 'projection-commands-pre-configure-hook #'projection-cmake--file-api-create-query-hook)
+  (add-hook 'projection-commands-post-configure-hook #'projection-cmake--file-api-clear-cache-on-configure))
 
 
 
@@ -762,13 +770,6 @@ TEST-PRESET is the active test preset and will be merged into the response.."
 
 
 ;; CMake command utils.
-
-(defcustom projection-cmake-build-directory "build"
-  "Build directory for cmake project builds.
-When unset no -B flag will be passed to CMake. You may want this if the build
-directory is configured directly in the CMakePresets or elsewhere."
-  :type '(optional string)
-  :group 'projection-type-cmake)
 
 (defcustom projection-cmake-build-directory-remote t
   "Assert whether build directory is on the same host as the project.
