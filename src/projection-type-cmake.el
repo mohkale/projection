@@ -786,7 +786,7 @@ See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   (unless (eq type 'build)
     (user-error "Cannot set CMake target for build-type=%s" type))
   (unless projection-cmake-target
-    (user-error "Do not know how to set CMake target from COMMAND" command))
+    (user-error "Do not know how to set CMake target from command=%S" command))
   (projection--cache-put
    project 'projection-cmake-build-target projection-cmake-target))
 
@@ -805,7 +805,7 @@ See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   (unless (eq type 'test)
     (user-error "Cannot set CTest target for build-type=%s" type))
   (unless projection-ctest-target
-    (user-error "Do not know how to set CTest target from COMMAND" command))
+    (user-error "Do not know how to set CTest target from command=%S" command))
   (projection--cache-put
    project 'projection-cmake-ctest-target projection-ctest-target))
 
