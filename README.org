@@ -89,8 +89,8 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
       :ensure t
       ;; Allow interactively selecting available compilation targets from the current
       ;; project type.
-      :init
-      (define-key global-map "RET" #'projection-multi-compile))
+      :bind ( :map project-prefix-map
+              ("RET" . projection-multi-compile)))
 
     (use-package projection-multi-embark
       :ensure t
