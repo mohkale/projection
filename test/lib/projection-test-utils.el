@@ -6,6 +6,7 @@
 
 (require 'projection-core-cache)
 (require 'projection-type-cmake)
+(require 'compile-multi-embark)
 
 
 
@@ -108,6 +109,19 @@ Use this like so:
          (project-types (projection-project-types (project-root project)))
          (project-type-names (mapcar #'projection-type--name project-types)))
     (expect project-type-names :to-contain type)))
+
+(defun +compile-multi-embark-target (name)
+  "Extract arg for `projection-multi-embark' from target with NAME."
+  (spy-on #'completing-read :and-return-value name)
+  (call-interactively #'projection-multi-compile)
+  (expect #'completing-read :to-have-been-called-times 1)
+  (let* (targets target
+                 (targets (spy-calls-args-for 'completing-read 0))
+         (targets (+completion-table-candidates targets))
+         (target (progn
+                   (expect targets :to-contain name)
+                   (seq-find (apply-partially #'string-equal name) targets))))
+    (cdr (compile-multi-embark-transformer 'compile-multi target))))
 
 ;; Projection state modifiers
 

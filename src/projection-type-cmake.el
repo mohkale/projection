@@ -762,12 +762,53 @@ TEST-PRESET is the active test preset and will be merged into the response.."
   (projection--log :debug "Resolving available CMake CTest targets")
   (when-let ((ctest-targets
               (projection--with-shell-command-buffer
-                (projection-cmake--ctest-command "--show-only=json-v1")
+                (projection-cmake--ctest-command 'argv '("--show-only=json-v1"))
                 (let ((json-array-type 'list))
                   (json-read)))))
     (append ctest-targets `((projection--test-preset . ,test-preset)))))
 
 
+
+;;; Set build and test targets through projection-multi-embark.
+
+(projection--declare-cache-var
+  'projection-cmake-build-target
+  :title "CMake build target"
+  :category "CMake"
+  :description "Default CMake target for compiling"
+  :hide t)
+
+(cl-defun projection-cmake--set-build-target (&key type command project
+                                                   cmake-target &allow-other-keys)
+  "Set CMAKE-TARGET as the primary build target.
+See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
+  (unless (eq type 'build)
+    (user-error "Cannot set CMake target for build-type=%s" type))
+  (unless cmake-target
+    (user-error "Do not know how to set CMake target from command=%S" command))
+  (projection--cache-put
+   project 'projection-cmake-build-target cmake-target))
+
+(projection--declare-cache-var
+  'projection-cmake-ctest-target
+  :title "CMake ctest target"
+  :category "CMake"
+  :description "Default CMake target for testing"
+  :hide t)
+
+(cl-defun projection-cmake--set-ctest-target  (&key type command project
+                                                    ctest-target &allow-other-keys)
+  "Set CTEST-TARGET as the primary CTest target.
+See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
+  (unless (eq type 'test)
+    (user-error "Cannot set CTest target for build-type=%s" type))
+  (unless ctest-target
+    (user-error "Do not know how to set CTest target from command=%S" command))
+  (projection--cache-put
+   project 'projection-cmake-ctest-target ctest-target))
+
+
+
 
 ;; CMake command utils.
 
@@ -810,28 +851,31 @@ including any remote components of the project when
 
 (defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
-  (projection--join-shell-command
-   `("cmake"
-     ,@(when-let ((build projection-cmake-build-directory))
-         (list "--build" build))
-     ,@(when-let ((preset (projection-cmake--preset build-type)))
-         (list (concat "--preset=" preset)))
-     ,@(when (eq build-type 'build)
-         (when-let ((job-count (projection--guess-parallelism
-                                projection-build-jobs)))
-           (list (concat "--parallel=" (number-to-string job-count)))))
-     ,@(when-let ((verbose (projection-cmake--build-verbosely)))
-         (list "--verbose"))
-     ,@(when target (list "--target" target)))))
+  (thread-first
+    (projection--join-shell-command
+     `("cmake"
+       ,@(when-let ((build projection-cmake-build-directory))
+           (list "--build" build))
+       ,@(when-let ((preset (projection-cmake--preset build-type)))
+           (list (concat "--preset=" preset)))
+       ,@(when (eq build-type 'build)
+           (when-let ((job-count (projection--guess-parallelism
+                                  projection-build-jobs)))
+             (list (concat "--parallel=" (number-to-string job-count)))))
+       ,@(when-let ((verbose (projection-cmake--build-verbosely)))
+           (list "--verbose"))
+       ,@(when target (list "--target" target))))
+
+    (projection--attach-set-build-target-properties
+     (when (and (eq build-type 'build) target)
+       #'projection-cmake--set-build-target)
+     'cmake-target target)))
 
 (defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
-  (format "cmake %s%s%s"
+  (format "cmake %s%s"
           (if-let ((preset (projection-cmake--preset build-type)))
               (concat "preset:" preset " ")
-            "")
-          (if-let ((build (projection-cmake--build-directory)))
-              (concat "build:" build " ")
             "")
           target))
 
@@ -872,7 +916,7 @@ key value pair set."
                 :value-type (string :tag "Value of variable"))
   :group 'projection-type-cmake)
 
-(defun projection-cmake--ctest-command (&rest argv)
+(defun projection-cmake--ctest-command2 (&rest argv)
   "Helper function to  generate a CTest command.
 ARGV if provided will be appended to the command."
   (projection--join-shell-command
@@ -889,16 +933,36 @@ ARGV if provided will be appended to the command."
      ,@projection-cmake-ctest-options
      ,@argv)))
 
-(defun projection-cmake--ctest-annotation (target)
-  "Generate an annotation for a ctest command to run TARGET."
-  (format "ctest %s%s%s"
+(defun projection-cmake--ctest-command (&optional type args)
+  "Generate CTest command of type TYPE with ARGS.
+TYPE should be one of \\='target, \\='label, \\'not-label, \\'argv. If
+TYPE is unset a CTest command to run all tests wil be returned."
+  (thread-first
+    (pcase type
+      ('target    (projection-cmake--ctest-command2 "-R" (concat "^" args "$")))
+      ('label     (projection-cmake--ctest-command2 "-L" (concat "^" args "$")))
+      ('not-label (projection-cmake--ctest-command2 "-LE" (concat "^" args "$")))
+      ('argv      (apply #'projection-cmake--ctest-command2 args))
+      ((guard (not type)) (projection-cmake--ctest-command2))
+      (_ (error "Unsupported CTest target type %s" type)))
+
+    (projection--attach-set-build-target-properties
+     (when (and type args)
+       #'projection-cmake--set-ctest-target)
+     'ctest-target (list type args))))
+
+(defun projection-cmake--ctest-annotation (&optional type args)
+  "Generate an annotation for a ctest command to run TYPE with ARGS."
+  (format "ctest %s%s"
           (if-let ((preset (projection-cmake--preset 'test)))
               (concat "preset:" preset " ")
             "")
-          (if-let ((build (projection-cmake--build-directory)))
-              (concat "build:" build " ")
-            "")
-          target))
+          (pcase type
+            ('target    args)
+            ('label     (concat "label:" args))
+            ('not-label (concat "except-label:" args))
+            ((guard (not type)) "")
+            ((or 'argv _) (format "%S" (list type args))))))
 
 
 
@@ -1051,11 +1115,15 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 (defun projection-cmake-run-build ()
   "Build command generator for CMake projects."
-  (projection-cmake--command 'build))
+  (projection-cmake--command
+   'build
+   (projection--cache-get 'query 'projection-cmake-build-target)))
 
 (defun projection-cmake-run-test ()
   "Test command generator for CMake projects."
-  (projection-cmake--ctest-command "test"))
+  (apply
+   #'projection-cmake--ctest-command
+   (projection--cache-get 'query 'projection-cmake-ctest-target)))
 
 (defun projection-cmake-run-install ()
   "Install command generator for CMake projects."

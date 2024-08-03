@@ -5,6 +5,7 @@
 (require 'projection-utils)
 (require 'projection-type-cmake)
 (require 'projection-multi-cmake)
+(require 'projection-multi-embark)
 (require 'projection-multi-ctest)
 (require 'projection-dape)
 
@@ -103,7 +104,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build test")))
+       "ctest --test-dir build")))
 
   (it "Assigns any configured environment variables when running tests"
     ;; GIVEN
@@ -112,7 +113,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "env foo\\=bar ctest --test-dir build test")))
+       "env foo\\=bar ctest --test-dir build")))
 
   (it "Runs ctest with a customized number of jobs in parallel"
     ;; GIVEN
@@ -120,7 +121,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --parallel\\=10 test")))
+       "ctest --test-dir build --parallel\\=10")))
 
   (it "Forwards any configured options when running tests"
     ;; GIVEN
@@ -129,7 +130,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build -foo -bar test")))
+       "ctest --test-dir build -foo -bar")))
 
   (describe "Clear build directory"
     (it "Fails when no build directory configured"
@@ -597,7 +598,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test")
+       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug")
 
       ;; THEN
       (expect #'completing-read :to-have-been-called-times 1)
@@ -618,7 +619,7 @@ add_test(NAME hidden COMMAND true)
       (spy-on #'completing-read :and-return-value "Default")
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug test"))
+       "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug"))
 
     (it "Ignores build or test preset when active configure preset conflicts with it"
       (let ((projection-cmake-preset '((configure . prompt-always)
@@ -628,7 +629,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-commands-test-project
-         "ctest --test-dir build test")))
+         "ctest --test-dir build")))
 
     (it "Can configure alternate preset setting on preset invalidation"
       (let ((projection-cmake-preset '((configure . "configurePreset1")
@@ -640,7 +641,7 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-commands-test-project
-         "ctest --test-dir build --preset\\=testForConfigurePreset2 test")
+         "ctest --test-dir build --preset\\=testForConfigurePreset2")
         ))
 
     (describe "Multi compile"
@@ -671,5 +672,72 @@ add_test(NAME hidden COMMAND true)
         ;; WHEN
         (let ((cmake-targets (mapcar #'car (projection-multi-cmake-targets))))
           ;; THEN
-          (expect "cmake:workflow:default" :to-be-in cmake-targets)))))
+          (expect "cmake:workflow:default" :to-be-in cmake-targets)))
+
+      (describe "Embark"
+        (before-each
+          (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+          (+interactively-set-cmake-preset 'build "buildForConfigurePreset1-Debug")
+          (+interactively-set-cmake-preset 'test "Default")
+          (call-interactively #'projection-commands-configure-project))
+
+        (it "Can set CMake build target interactively independent of full build command"
+          ;; GIVEN
+          (let ((target (+compile-multi-embark-target "cmake:main")))
+            (funcall-interactively #'projection-multi-embark-set-build-command-dwim target))
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-build-project
+           "cmake --build build --preset\\=buildForConfigurePreset1-Debug --target main")
+
+          ;; GIVEN
+          (+interactively-set-cmake-preset 'build "buildForConfigurePreset1-Release")
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-build-project
+           "cmake --build build --preset\\=buildForConfigurePreset1-Release --target main"))
+
+        (it "Errors when attempting to set CMake build target interactively for anything but build"
+          ;; GIVEN
+          (let ((target (+compile-multi-embark-target "cmake:main")))
+            (dolist (set-command '(projection-multi-embark-set-configure-command-dwim
+                                   projection-multi-embark-set-test-command-dwim
+                                   projection-multi-embark-set-run-command-dwim
+                                   projection-multi-embark-set-package-command-dwim
+                                   projection-multi-embark-set-install-command-dwim))
+              ;; WHEN/THEN
+              (expect (funcall-interactively set-command target) :to-throw 'user-error))))
+
+        (it "Can set CTest target interactively"
+          ;; GIVEN
+          (let ((target (+compile-multi-embark-target "ctest:main-test")))
+            (funcall-interactively #'projection-multi-embark-set-test-command-dwim target))
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-test-project
+           "ctest --test-dir build --preset\\=testForConfigurePreset1-Debug -R \\^main-test\\$")
+
+          ;; GIVEN
+          (+interactively-set-cmake-preset 'test "WithHidden")
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-test-project
+           "ctest --test-dir build --preset\\=testForConfigurePreset1WithHiddenTests-Debug -R \\^main-test\\$"))
+
+        (it "Errors when attempting to set CTest test target interactively for anything but testing"
+          ;; GIVEN
+          (let ((target (+compile-multi-embark-target "ctest:main-test")))
+            (dolist (set-command '(projection-multi-embark-set-build-command-dwim
+                                   projection-multi-embark-set-configure-command-dwim
+                                   projection-multi-embark-set-run-command-dwim
+                                   projection-multi-embark-set-package-command-dwim
+                                   projection-multi-embark-set-install-command-dwim))
+              ;; WHEN/THEN
+              (expect (funcall-interactively set-command target) :to-throw 'user-error))))
+        )
+      ))
   )

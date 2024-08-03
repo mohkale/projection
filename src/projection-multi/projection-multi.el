@@ -98,7 +98,12 @@ prefix:project-type:project-command."
      (cl-loop
       for config in project-types
       with targets = nil
-      do (setq targets (ensure-list (oref config compile-multi-targets)))
+      do (setq targets (oref config compile-multi-targets))
+      if (functionp targets)
+         ;; Avoid issue with closures being considered a list already.
+        do (setq targets (list targets))
+      else
+        do (setq targets (ensure-list targets))
       when targets
         append targets))))
 
@@ -152,11 +157,14 @@ result of each function should be deterministic."
     ;; KLUDGE: We can't cache any functions until they've been loaded.
     (require 'projection-type-cmake)
     (require 'projection-type-meson)
+    (require 'projection-type-golang)
     (projection-multi--cache-command-helpers
         (project-current
          projection-cmake--preset
          projection-cmake--build-directory
          projection-cmake--file-api-code-model
+         projection-golang--package
+         projection-golang--list-packages
          projection-meson--build-directory
          projection-meson--code-model)
       (call-interactively #'compile-multi))))

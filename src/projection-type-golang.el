@@ -85,6 +85,17 @@ test."
   :description "The package to build and test for in this project"
   :hide t)
 
+(cl-defun projection-golang--set-package (&key type command project
+                                               golang-package
+                                               &allow-other-keys)
+  "Set GOLANG-PACKAGE as the active golang package.
+See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
+  (unless (member type '(run build test))
+    (user-error "Golang packages do not support build-type=%s" type))
+  (unless projection-golang-package
+    (user-error "Do not know how to set Golang package target from command=%S" command))
+  (projection-golang-set-package project golang-package))
+
 (defun projection-golang--read-package (project packages)
   "Interactively read a golang package from PACKAGES for PROJECT."
   (setq packages (append '(("*All*" . "./...")) packages))
@@ -135,31 +146,36 @@ test."
 
 
 
+(defun projection-golang--command (type package)
+  "Generate golang command to do TYPE with PACKAGE."
+  (thread-first
+    (projection--join-shell-command
+     `("go"
+       ,(pcase type
+          ((or 'run 'build 'test) (symbol-name type))
+          (_ (user-error "Unsupported golang command-type=%s" type)))
+       ,@(when package (list package))))
+
+    (projection--attach-set-build-target-properties
+     (when package
+       #'projection-golang--set-package)
+     'golang-package package)))
+
+
+
 ;; Golang compilation commands.
 
 (defun projection-golang-run-run ()
   "Run command generator for Golang projects."
-  (projection--join-shell-command
-   `("go"
-     "run"
-     ,@(when-let ((package (projection-golang--package)))
-         (list package)))))
+  (projection-golang--command 'run (projection-golang--package)))
 
 (defun projection-golang-run-build ()
   "Build command generator for Golang projects."
-  (projection--join-shell-command
-   `("go"
-     "build"
-     ,@(when-let ((package (projection-golang--package)))
-         (list package)))))
+  (projection-golang--command 'build (projection-golang--package)))
 
 (defun projection-golang-run-test ()
   "Test command generator for Golang projects."
-  (projection--join-shell-command
-   `("go"
-     "test"
-     ,@(when-let ((package (projection-golang--package)))
-         (list package)))))
+  (projection-golang--command 'test (projection-golang--package)))
 
 (provide 'projection-type-golang)
 ;;; projection-type-golang.el ends here

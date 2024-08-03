@@ -3,6 +3,7 @@
 (require 'projection-types)
 
 (require 'projection-type-golang)
+(require 'projection-multi-golang)
 (require 'projection-test-utils)
 
 (describe "Project type Golang"
@@ -154,4 +155,26 @@ golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg="
         (expect 'completing-read :to-have-been-called-times 1)
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
-                :to-equal golang-packages)))))
+                :to-equal golang-packages))
+
+      (describe "Multi compile"
+        (it "Can prompt with all packages"
+          ;; WHEN
+          (let ((targets (mapcar #'car (projection-multi-golang-targets))))
+            ;; THEN
+            (expect targets :to-equal '("golang:bar/baz" "golang:foo"))))
+
+        (it "Can interactively set active golang package"
+          ;; GIVEN
+          (spy-on #'completing-read :and-return-value "foo")
+          (call-interactively #'projection-golang-set-package)
+
+          (let ((target (+compile-multi-embark-target "golang:bar/baz")))
+            (funcall-interactively #'projection-multi-embark-set-build-command-dwim target))
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-build-project
+           "go build golang.org/x/tools/bar/baz"))
+        ))
+    ))

@@ -77,15 +77,21 @@ unset CACHE-VAR and CATEGORY will receive default values."
 (defun projection--cache-get (project key &optional cache)
   "Retrieve a value with KEY from the `projection' cache for PROJECT.
 When CACHE is given retrieve the entry from CACHE instead of
-`projection--project-cache'."
+`projection--project-cache'. Set PROJECT to \\='query to auto find
+the current project."
   (or cache (setq cache projection--project-cache))
+  (when (eq project 'query)
+    (setq project (projection--current-project)))
   (alist-get key (gethash (projection--cache-key project) cache)))
 
 (defun projection--cache-put (project key value &optional cache)
   "Update the entry for KEY to VALUE in the `projection' cache for PROJECT.
 When CACHE is given retrieve the entry from CACHE instead of
-`projection--project-cache'."
+`projection--project-cache'. Set PROJECT to \\='query to auto find
+the current project."
   (or cache (setq cache projection--project-cache))
+  (when (eq project 'query)
+    (setq project (projection--current-project)))
 
   (let ((project-key (projection--cache-key project)))
     (if-let ((existing (gethash project-key cache)))
@@ -100,8 +106,11 @@ When CACHE is given retrieve the entry from CACHE instead of
 (defun projection--cache-remove (project key &optional cache)
   "Remove the entry for KEY in PROJECT.
 When CACHE is given retrieve the entry from CACHE instead of
-`projection--project-cache'."
+`projection--project-cache'. Set PROJECT to \\='query to auto find
+the current project."
   (or cache (setq cache projection--project-cache))
+  (when (eq project 'query)
+    (setq project (projection--current-project)))
 
   (let ((project-key (projection--cache-key project)))
     (when-let ((existing (gethash project-key cache)))
