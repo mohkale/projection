@@ -779,16 +779,15 @@ TEST-PRESET is the active test preset and will be merged into the response.."
   :hide t)
 
 (cl-defun projection-cmake--set-build-target (&key type command project
-                                                   projection-cmake-target
-                                                   &allow-other-keys)
-  "Set PROJECTION-CMAKE-TARGET as the primary build target.
+                                                   cmake-target &allow-other-keys)
+  "Set CMAKE-TARGET as the primary build target.
 See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   (unless (eq type 'build)
     (user-error "Cannot set CMake target for build-type=%s" type))
-  (unless projection-cmake-target
+  (unless cmake-target
     (user-error "Do not know how to set CMake target from command=%S" command))
   (projection--cache-put
-   project 'projection-cmake-build-target projection-cmake-target))
+   project 'projection-cmake-build-target cmake-target))
 
 (projection--declare-cache-var
   'projection-cmake-ctest-target
@@ -798,16 +797,15 @@ See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   :hide t)
 
 (cl-defun projection-cmake--set-ctest-target  (&key type command project
-                                                    projection-ctest-target
-                                                    &allow-other-keys)
-  "Set PROJECTION-CTEST-TARGET as the primary CTest target.
+                                                    ctest-target &allow-other-keys)
+  "Set CTEST-TARGET as the primary CTest target.
 See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
   (unless (eq type 'test)
     (user-error "Cannot set CTest target for build-type=%s" type))
-  (unless projection-ctest-target
+  (unless ctest-target
     (user-error "Do not know how to set CTest target from command=%S" command))
   (projection--cache-put
-   project 'projection-cmake-ctest-target projection-ctest-target))
+   project 'projection-cmake-ctest-target ctest-target))
 
 
 
@@ -871,7 +869,7 @@ including any remote components of the project when
     (projection--attach-set-build-target-properties
      (when (and (eq build-type 'build) target)
        #'projection-cmake--set-build-target)
-     'projection-cmake-target target)))
+     'cmake-target target)))
 
 (defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
@@ -951,7 +949,7 @@ TYPE is unset a CTest command to run all tests wil be returned."
     (projection--attach-set-build-target-properties
      (when (and type args)
        #'projection-cmake--set-ctest-target)
-     'projection-ctest-target (list type args))))
+     'ctest-target (list type args))))
 
 (defun projection-cmake--ctest-annotation (&optional type args)
   "Generate an annotation for a ctest command to run TYPE with ARGS."
