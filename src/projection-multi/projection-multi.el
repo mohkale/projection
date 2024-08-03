@@ -152,11 +152,13 @@ result of each function should be deterministic."
     ;; KLUDGE: We can't cache any functions until they've been loaded.
     (require 'projection-type-cmake)
     (require 'projection-type-meson)
+    (require 'projection-type-golang)
     (projection-multi--cache-command-helpers
         (project-current
          projection-cmake--preset
          projection-cmake--build-directory
          projection-cmake--file-api-code-model
+         projection-golang--package
          projection-meson--build-directory
          projection-meson--code-model)
       (call-interactively #'compile-multi))))
