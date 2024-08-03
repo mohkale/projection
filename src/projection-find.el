@@ -240,5 +240,23 @@ SELECT-INTERACTIVELY is not set."
               (projection-find--other-file select-interactively)))
     (funcall #'find-file file)))
 
+(defun projection-find-list-test-files (project)
+  "List all files in PROJECT matching the description of a test."
+  (when-let* ((project-configs (projection-project-types (project-root project)))
+              (test-prefixes
+               (seq-uniq
+                (cl-loop for config in project-configs append (oref config test-prefix))))
+              (test-suffixes
+               (seq-uniq
+                (cl-loop for config in project-configs append (oref config test-suffix)))))
+    (cl-loop for file in (project-files project)
+             with basename = nil        do (setq basename (file-name-nondirectory file))
+             with basename-no-ext = nil do (setq basename-no-ext (file-name-sans-extension basename))
+             when (or (seq-find (lambda (prefix) (string-prefix-p prefix basename-no-ext))
+                                test-prefixes)
+                      (seq-find (lambda (prefix) (string-suffix-p prefix basename-no-ext))
+                                test-suffixes))
+               collect file)))
+
 (provide 'projection-find)
 ;;; projection-find.el ends here
