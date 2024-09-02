@@ -929,7 +929,7 @@ ARGV if provided will be appended to the command."
          (list (concat "--preset=" preset)))
      ,@(when-let ((job-count (projection--guess-parallelism
                               projection-test-jobs)))
-         (list (concat "--parallel=" (number-to-string job-count))))
+         (list "--parallel" (number-to-string job-count)))
      ,@projection-cmake-ctest-options
      ,@argv)))
 

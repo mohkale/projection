@@ -121,7 +121,7 @@ add_test(NAME hidden COMMAND true)
       ;; WHEN/THEN
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-test-project
-       "ctest --test-dir build --parallel\\=10")))
+       "ctest --test-dir build --parallel 10")))
 
   (it "Forwards any configured options when running tests"
     ;; GIVEN
