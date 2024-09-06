@@ -809,8 +809,16 @@ See `projection-multi-embark' TYPE, COMMAND, and PROJECT."
 
 
 
-
 ;; CMake command utils.
+
+(defcustom projection-cmake-environment-variables
+  '(("CLICOLOR_FORCE" . "1"))
+  "Default CMake environment variables.
+When set any cmake command will be invoked through the env command with each
+key value pair set."
+  :type '(alist :key-type (string :tag "Environment variable")
+                :value-type (string :tag "Value of variable"))
+  :group 'projection-type-cmake)
 
 (defcustom projection-cmake-build-directory-remote t
   "Assert whether build directory is on the same host as the project.
@@ -853,7 +861,9 @@ including any remote components of the project when
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
   (thread-first
     (projection--join-shell-command
-     `("cmake"
+     `(,@(projection--env-shell-command-prefix
+          projection-cmake-environment-variables)
+       "cmake"
        ,@(when-let ((build projection-cmake-build-directory))
            (list "--build" build))
        ,@(when-let ((preset (projection-cmake--preset build-type)))
