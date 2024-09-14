@@ -117,7 +117,7 @@ incompatible with the active configure preset.")
 
 
 
-;; List CMake presets with passing conditions.
+;; Check CMake presets against preset conditions.
 
 (defcustom projection-cmake-respect-preset-conditions t
   "When true filter available presets with CMake list-presets.
@@ -493,49 +493,6 @@ BUILD-TYPE. It should cache presets after the first list call."
 
 
 
-;;;###autoload (autoload 'projection-cmake-set-build-type "projection-type-cmake" nil 'interactive)
-(projection--declare-project-type-option 'build-type
-  :project 'projection-cmake
-  :options '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
-  :category "CMake"
-  :title "CMake build type"
-  :custom-type '(choice (const :tag "Do not supply" nil)
-                        (string :tag "Build type value"))
-  :custom-group 'projection-type-cmake
-  :custom-docstring "Build type for a CMake project.
-Supplied as the default CMAKE_BUILD_TYPE definition when set.")
-
-(defun projection-cmake--active-build-type ()
-  "Fetch current CMake build type from config options or preset."
-  (or (projection-cmake--build-type)
-      (let* ((projection-cmake-preset 'silent)
-             (build-preset-config
-              (projection-cmake--preset-config 'build)))
-        (alist-get 'configuration build-preset-config))))
-
-;;;###autoload (autoload 'projection-cmake-set-configure-log-level "projection-type-cmake" nil 'interactive)
-(projection--declare-project-type-option 'configure-log-level
-  :project 'projection-cmake
-  :options '("ERROR" "WARNING" "NOTICE" "STATUS" "VERBOSE" "DEBUG" "TRACE")
-  :category "CMake"
-  :title "CMake configure log-level"
-  :custom-type '(choice (const :tag "Default CMake log-level" nil)
-                        (string :tag "Log level value"))
-  :custom-group 'projection-type-cmake
-  :custom-docstring "Set log-level of CMake configure.")
-
-;;;###autoload (autoload 'projection-cmake-set-build-verbosely "projection-type-cmake" nil 'interactive)
-(projection--declare-project-type-option 'build-verbosely
-  :project 'projection-cmake
-  :category "CMake"
-  :title "CMake build verbosely"
-  :custom-type 'boolean
-  :custom-group 'projection-type-cmake
-  :custom-docstring "Run CMake build commands with the --verbose flag.
-This will cause CMake to print out the compilation commands before running them.")
-
-
-
 ;; CMake file API [[man:cmake-file-api(7)]].
 
 (defconst projection-cmake--file-api-client "client-emacs-projection")
@@ -710,6 +667,49 @@ is unset. This will disable some features like target selection.")))
 
 
 
+;;;###autoload (autoload 'projection-cmake-set-build-type "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'build-type
+  :project 'projection-cmake
+  :options '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+  :category "CMake"
+  :title "CMake build type"
+  :custom-type '(choice (const :tag "Do not supply" nil)
+                        (string :tag "Build type value"))
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Build type for a CMake project.
+Supplied as the default CMAKE_BUILD_TYPE definition when set.")
+
+(defun projection-cmake--active-build-type ()
+  "Fetch current CMake build type from config options or preset."
+  (or (projection-cmake--build-type)
+      (let* ((projection-cmake-preset 'silent)
+             (build-preset-config
+              (projection-cmake--preset-config 'build)))
+        (alist-get 'configuration build-preset-config))))
+
+;;;###autoload (autoload 'projection-cmake-set-configure-log-level "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'configure-log-level
+  :project 'projection-cmake
+  :options '("ERROR" "WARNING" "NOTICE" "STATUS" "VERBOSE" "DEBUG" "TRACE")
+  :category "CMake"
+  :title "CMake configure log-level"
+  :custom-type '(choice (const :tag "Default CMake log-level" nil)
+                        (string :tag "Log level value"))
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Set log-level of CMake configure.")
+
+;;;###autoload (autoload 'projection-cmake-set-build-verbosely "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'build-verbosely
+  :project 'projection-cmake
+  :category "CMake"
+  :title "CMake build verbosely"
+  :custom-type 'boolean
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Run CMake build commands with the --verbose flag.
+This will cause CMake to print out the compilation commands before running them.")
+
+
+
 ;; CMake CTest targets
 
 (defcustom projection-cmake-ctest-cache-targets 'auto
@@ -769,7 +769,7 @@ TEST-PRESET is the active test preset and will be merged into the response.."
 
 
 
-;;; Set build and test targets through projection-multi-embark.
+;; Set build and test targets through projection-multi-embark.
 
 (projection--declare-cache-var
   'projection-cmake-build-target
