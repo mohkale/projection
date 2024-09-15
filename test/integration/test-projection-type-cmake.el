@@ -320,6 +320,127 @@ add_test(NAME hidden COMMAND true)
       )
     )
 
+  (describe "With a CMake kits configuration"
+    :var ((kits '("Test Toolchain"
+                  "With environment vars"
+                  "Generator switch test GCC Make"
+                  "Generator switch test GCC Ninja"
+                  "Generator switch test GCC no generator"
+                  "Generator switch test VS 2019"
+                  "Generator switch test VS 2019 Ninja"
+                  "Generator switch test VS 2019 no generator")))
+    (before-each
+      (+projection-setup-project-tree
+       '((".vscode"
+          ("cmake-kits.json" . "[
+    {
+        \"name\": \"Test Toolchain\",
+        \"description\": \"Primary toolchain for projection tests\",
+        \"toolchainFile\": \"/foo/bar/test-toolchain.cmake\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"environmentVariables\": {
+            \"foo\": \"bar\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Ninja\"
+        },
+        \"cmakeSettings\": {
+            \"CACHE_STRING\": \"CACHE_VALUE\",
+            \"CACHE_BOOL_TRUE\": true,
+            \"CACHE_BOOL_FALSE\": false,
+            \"CACHE_ARRAY\": [
+                \"foo\",
+                \"bar\",
+                \"baz\",
+                \"bag\"
+            ],
+            \"CACHE_NESTED_WITH_TYPE\": {
+                \"type\": \"FILEPATH\",
+                \"value\": \"File path value\"
+            }
+        }
+    },
+    {
+        \"name\": \"With environment vars\",
+        \"environmentVariables\": {
+            \"foo\": \"bar\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test GCC Make\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Unix Makefiles\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test GCC Ninja\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Ninja\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test GCC no generator\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test VS 2019\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\",
+        \"preferredGenerator\": {
+            \"name\": \"Visual Studio 16 2019\",
+            \"platform\": \"win32\",
+            \"toolset\": \"host=x86\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test VS 2019 Ninja\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\",
+        \"preferredGenerator\": {
+            \"name\": \"Ninja\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test VS 2019 no generator\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\"
+    }
+]")))))
+
+    (it "Prompts for current projects kit interactively"
+      ;; GIVEN
+      (let ((projection-cmake-kit 'prompt-once))
+        (spy-on #'completing-read :and-return-value "Test Toolchain")
+
+        ;; WHEN/THEN
+        (+expect-interactive-command-calls-compile-with
+         #'projection-commands-configure-project
+         "env foo\\=bar cmake -S . -B build -G Ninja --toolchain /foo/bar/test-toolchain.cmake -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc -DCACHE_STRING\\:STRING\\=CACHE_VALUE -DCACHE_BOOL_TRUE\\:BOOL\\=TRUE -DCACHE_BOOL_FALSE\\:BOOL\\=FALSE -DCACHE_ARRAY\\:STRING\\=foo\\;bar\\;baz\\;bag -DCACHE_NESTED_WITH_TYPE\\:FILEPATH\\=File\\ path\\ value")
+
+        ;; THEN
+        (expect 'completing-read :to-have-been-called-times 1)
+        (expect (+completion-table-candidates
+                 (spy-calls-args-for 'completing-read 0))
+                :to-equal kits)))
+
+    )
+
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
           (configure-presets-display-names '("Preset number 1 for configuring"

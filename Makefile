@@ -60,7 +60,7 @@ define run-test
 	@echo "[test] buttercup-run-discover $(1)"
 	$(EMACS) \
         --eval '(push (concat default-directory "test/lib/") load-path)' \
-	    -batch -f package-initialize -L . -f buttercup-run-discover --no-color $(1) $(2)
+	    -batch -f package-initialize -L . -f buttercup-run-discover $(1) $(2)
 endef
 
 .PHONY: test
@@ -73,4 +73,4 @@ test/unit:
 
 .PHONY: test/integration
 test/integration:
-	$(call run-test,test/integration)
+	$(call run-test,test/integration,--pattern CMake)
