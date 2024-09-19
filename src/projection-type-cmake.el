@@ -1378,7 +1378,8 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   "Configure command generator for CMake projects."
   (let-alist (projection-cmake--command-options 'configure)
     (projection--join-shell-command
-     `(,@(projection--env-shell-command-prefix .environment)
+     `(,@(projection--env-shell-command-prefix
+          (append .environment projection-cmake-environment-variables))
        "cmake"
        "-S" "."
        ,@(when-let ((build (projection-cmake--build-directory)))

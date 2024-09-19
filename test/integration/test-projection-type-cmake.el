@@ -268,6 +268,14 @@ add_test(NAME hidden COMMAND true)
        #'projection-commands-build-project
        "cmake --build build --parallel\\=10")))
 
+  (it "Assigns any configured environment variables when configuring"
+    ;; GIVEN
+    (let ((projection-cmake-environment-variables '(("foo" . "bar"))))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-configure-project
+       "env foo\\=bar cmake -S . -B build")))
+
   (it "Assigns any configured environment variables when building"
     ;; GIVEN
     (let ((projection-cmake-environment-variables '(("foo" . "bar"))))
