@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'f)
+(require 'xdg)
 (require 's)
 (require 'json)
 
@@ -117,7 +118,7 @@ incompatible with the active configure preset.")
 
 
 
-;; List CMake presets with passing conditions.
+;; Check CMake presets against preset conditions.
 
 (defcustom projection-cmake-respect-preset-conditions t
   "When true filter available presets with CMake list-presets.
@@ -200,6 +201,9 @@ use."
 (defcustom projection-cmake-preset 'prompt-once-when-multiple
   "Set which CMake preset to use for the current project.
 See https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html .
+
+This value and other preset oriented options only have significance when the
+active `projection-cmake-configuration-backend' is presets.
 
 It is recommended to set this locally in a project with .dir-locals.el if you
 want to set the default preset configuration you always want selected. One
@@ -493,46 +497,264 @@ BUILD-TYPE. It should cache presets after the first list call."
 
 
 
-;;;###autoload (autoload 'projection-cmake-set-build-type "projection-type-cmake" nil 'interactive)
-(projection--declare-project-type-option 'build-type
-  :project 'projection-cmake
-  :options '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
-  :category "CMake"
-  :title "CMake build type"
-  :custom-type '(choice (const :tag "Do not supply" nil)
-                        (string :tag "Build type value"))
-  :custom-group 'projection-type-cmake
-  :custom-docstring "Build type for a CMake project.
-Supplied as the default CMAKE_BUILD_TYPE definition when set.")
+;; CMake Kits from [[https://github.com/microsoft/vscode-cmake-tools/blob/9c7e643/docs/kits.md][microsoft/vscode-cmake-tools]].
 
-(defun projection-cmake--active-build-type ()
-  "Fetch current CMake build type from config options or preset."
-  (or (projection-cmake--build-type)
-      (let* ((projection-cmake-preset 'silent)
-             (build-preset-config
-              (projection-cmake--preset-config 'build)))
-        (alist-get 'configuration build-preset-config))))
+(defcustom projection-cmake-kit 'prompt-once
+  "Set with CMake kit to use for the current project.
+See https://github.com/microsoft/vscode-cmake-tools/blob/9c7e643/docs/kits.md .
 
-;;;###autoload (autoload 'projection-cmake-set-configure-log-level "projection-type-cmake" nil 'interactive)
-(projection--declare-project-type-option 'configure-log-level
-  :project 'projection-cmake
-  :options '("ERROR" "WARNING" "NOTICE" "STATUS" "VERBOSE" "DEBUG" "TRACE")
-  :category "CMake"
-  :title "CMake configure log-level"
-  :custom-type '(choice (const :tag "Default CMake log-level" nil)
-                        (string :tag "Log level value"))
-  :custom-group 'projection-type-cmake
-  :custom-docstring "Set log-level of CMake configure.")
+This value and other kit oriented options only have significance when the
+active `projection-cmake-configuration-backend' is kits.
 
-;;;###autoload (autoload 'projection-cmake-set-build-verbosely "projection-type-cmake" nil 'interactive)
-(projection--declare-project-type-option 'build-verbosely
-  :project 'projection-cmake
+See `projection-cmake-preset' for a description of the supported values defined
+here."
+  :type
+  '(choice
+    (string :tag "Name of kit")
+    (const :tag "No kit" nil)
+    (const :tag "Do not supply a preset value to CMake" disable)
+    (const :tag "Return configured preset non-interactively" silent)
+    (const :tag "Always prompt for which preset to use" prompt-always)
+    (const :tag "Always prompt and then reuse the chosen preset"
+           prompt-once)
+    (const :tag "Prompt when multiple presets available and then reuse the chosen preset"
+           prompt-once-when-multiple))
+  :group 'projection-type-cmake)
+
+(defcustom projection-cmake-kits-files
+  `(".vscode/cmake-kits.json"
+    ,(expand-file-name "CMakeTools/cmake-tools-kits.json" (xdg-data-home)))
+  "List of locations where a CMakePresets file can exist.
+These should either be absolute or will be expanded relative to the current
+project root."
+  :type '(list (repeat (string :tag "Kit file path")))
+  :group 'projection-type-cmake)
+
+(defcustom projection-cmake-cache-available-kits 'auto
+  "When true cache the kits available for of each project."
+  :type '(choice
+          (const :tag "Cache targets and invalidate cache automatically" auto)
+          (boolean :tag "Always/Never cache targets"))
+  :group 'projection-type-cmake)
+
+(defun projection-cmake--list-kits ()
+  "Query available kits respecting project cache."
+  (when-let ((kits-files (seq-filter #'file-exists-p projection-cmake-kits-files)))
+    (projection--cache-get-with-predicate
+     (projection--current-project 'no-error)
+     'projection-cmake-available-kits
+     (cond
+      ((eq projection-cmake-cache-available-kits 'auto)
+       (apply #'projection--cache-modtime-predicate kits-files))
+      (t projection-cmake-cache-available-kits))
+     (apply-partially #'projection-cmake--list-kits2 kits-files))))
+
+(projection--declare-cache-var
+  'projection-cmake-available-kits
+  :title "Available CMake kits"
   :category "CMake"
-  :title "CMake build verbosely"
-  :custom-type 'boolean
-  :custom-group 'projection-type-cmake
-  :custom-docstring "Run CMake build commands with the --verbose flag.
-This will cause CMake to print out the compilation commands before running them.")
+  :description "Available kits from `projection-cmake-kits-files'."
+  :hide t)
+
+(defun projection-cmake--list-kits2 (kits-files)
+  "Read kits from all the files in KITS-FILES and concat them together."
+  (cl-loop for kit-file in kits-files append
+           (projection-cmake--read-kit-file kit-file)))
+
+(defun projection-cmake--cmakefiy-kit-setting (key value &optional type)
+  "Return a CMake configure flag for setting KEY to VALUE.
+TYPE is an optional override for the type of VALUE to pass to CMake."
+  (cl-destructuring-bind (cli-type . cli-value)
+      (pcase value
+        ((pred booleanp) (cons "BOOL" (if value "TRUE" "FALSE")))
+        ((pred numberp) (cons "STRING" (number-to-string value)))
+        ((and (pred consp) (guard (consp (car value))))
+         (let-alist value (cons .type .value)))
+        ((pred consp) (cons "STRING" (string-join value ";")))
+        ((guard type) (cons type value))
+        ((pred stringp) (cons "STRING" value))
+        (_
+         (projection--log
+          :error "Invalid value=%s to convert to cmake value for key=%s" value key)
+         (cons nil value)))
+    (concat "-D" key (when cli-type (concat ":" cli-type)) "=" cli-value)))
+
+(defun projection-cmake--read-kit-file (kit-file)
+  "Read CMake kits from KIT-FILE.
+Returns a alist with the name being kit name and the value being
+an alist containing optional properties for description, environment
+variables and configure options."
+  (condition-case err
+      (cl-loop
+       for kit in (let ((json-array-type 'list)
+                        (json-false nil))
+                    (json-read-file kit-file))
+       unless (alist-get 'name kit)
+         do (signal 'projection-cmake-kit
+                    (list "Encountered kit with no name" kit-file))
+       unless (alist-get 'environmentSetupScript kit)
+         do (projection--log :warning "The environmentSetupScript option of \
+cmake-kits from kits-file=%s is unsupported by projection." kit-file)
+       collect
+       (let-alist kit
+         `((name . ,.name)
+           ,@(when .description
+               `((description . ,.description)))
+           ,@(when .environmentVariables
+               `((environment . ,(cl-loop for (key . value) in .environmentVariables
+                                          collect (cons (symbol-name key) value)))))
+           (args
+            ,@(when .preferredGenerator
+                (if-let ((name (alist-get 'name .preferredGenerator)))
+                    (list "-G" name)
+                  (projection--log :warning "Kit with name=%s does \
+not set generator as name property" .name)))
+            ,@(when .toolchainFile
+                (list "--toolchain" .toolchainFile))
+            ,@(when .compilers
+                (cl-loop
+                 for (lang . compiler) in .compilers
+                 collect (projection-cmake--cmakefiy-kit-setting
+                          (concat "CMAKE_" (symbol-name lang) "_COMPILER")
+                          compiler "FILEPATH")))
+            ,@(cl-loop
+               for (key . value) in .cmakeSettings
+               collect (projection-cmake--cmakefiy-kit-setting (symbol-name key) value))))))
+    ((file-missing json-readtable-error projection-cmake-kit)
+     (projection--log :error "error while reading CMake kits-file=%s %S"
+                      kit-file (cdr err)))))
+
+(projection--declare-cache-var
+  'projection-cmake-kit
+  :title "CMake kit"
+  :category "CMake"
+  :description "Active CMake kit."
+  :hide t)
+
+(defun projection-cmake--kit ()
+  "Return the CMake kit configuration for the current project.
+This option respects the project cache and local Emacs settings."
+  (cl-block nil
+    (let ((project (projection--current-project 'no-error))
+          kits kit)
+      (when (eq projection-cmake-kit 'disable)
+        (cl-return nil))
+
+      (when-let* ((project project)
+                  (cached-kit (projection--cache-get project 'projection-cmake-kit)))
+        (cl-return cached-kit))
+
+      (setq kits (projection-cmake--list-kits))
+      (unless kits (cl-return nil))
+
+      (when (stringp projection-cmake-kit)
+        (if-let ((kit (seq-find (lambda (kit)
+                                  (equal (alist-get 'name kit) projection-cmake-kit))
+                                kits)))
+            (cl-return kit)
+          (user-error "Kit with name=%s not found in %S"
+                      projection-cmake-kit projection-cmake-kits-files)))
+
+      (cond
+       ((and (eq projection-cmake-kit 'prompt-once-when-multiple)
+             (eq (length kits) 1))
+        (setq kit (car kits)))
+       ((eq projection-cmake-kit 'silent) (cl-return nil))
+       (t
+        (setq kit (projection-cmake--read-kit
+                   (projection--prompt "Set CMake kit: " project)
+                   kits))))
+      (when kit
+        (when (member projection-cmake-kit '(prompt-once prompt-once-when-multiple))
+          (projection--cache-put project 'projection-cmake-kit kit))
+        (cl-return kit)))))
+
+(defun projection-cmake--read-kit (prompt kits)
+  "Interactively select a kit from KITS.
+Prompt for the `completing-read' session will be PROMPT."
+  (let* ((name-to-kit
+          (cl-loop for kit in kits
+                   with name = nil
+                   do (setq name (alist-get 'name kit))
+                   collect (cons name kit)))
+         (completion-table
+          (projection-completion--completion-table
+           :candidates name-to-kit
+           :annotation-function
+           (projection-completion--annotation-function
+            :key-function
+            (lambda (cand)
+              (let-alist (cdr (assoc cand name-to-kit))
+                .description)))))
+         (result (completing-read prompt completion-table nil 'require-match)))
+    (unless (string-empty-p result)
+      (or (cdr (assoc result name-to-kit))
+          ;; This should only ever happen in tests which don't properly set expectations.
+          (user-error (format "Read kit-name with unsupported kit target=%s from kits=%S"
+                              result (mapcar #'car kits)))))))
+
+;;;###autoload
+(defun projection-cmake-set-kit (project kit)
+  "Set CMake kit to KIT for PROJECT."
+  (interactive
+   (let* ((project (projection--current-project))
+          (default-directory (project-root project)))
+     (if-let ((kits (projection-cmake--list-kits)))
+         (list project (projection-cmake--read-kit
+                        (projection--prompt "Set CMake kit: " project)
+                        kits))
+       (user-error "No CMake kits found for the current project"))))
+  (projection--cache-put project 'projection-cmake-kit kit))
+
+
+
+;; Pluggable backends for setting configuration and build defaults.
+
+(defcustom projection-cmake-configuration-backend '(presets kits)
+  "Backends for default CMake configuration options."
+  :type '(repeat (choice (const :tag "Source from CMakePresets" presets)
+                         (const :tag "Source from CMake kits" kits)))
+  :group 'projection-type-cmake)
+
+(defun projection-cmake--command-options (build-type)
+  "Query CMake and CTest command options for BUILD-TYPE.
+Will walk through possible configuration backends in
+`projection-cmake-configuration-backend' until one gives a result."
+  (cl-loop
+   for backend in projection-cmake-configuration-backend
+   do (setq backend (projection-cmake--command-options2 build-type backend))
+   when backend
+     return backend))
+
+(cl-defgeneric projection-cmake--command-options2 (_build-type _backend)
+  "Generic support for querying CMake options from _BACKEND for _BUILD-TYPE."
+  nil)
+
+(cl-defmethod projection-cmake--command-options2 (build-type (backend (eql presets)))
+  "Query CMake options for BUILD-TYPE from CMakePresets.
+BACKEND is \\='presets."
+  (when-let ((preset (projection-cmake--preset-config build-type)))
+    (let-alist preset
+      `((backend . ,backend)
+        (name . ,.name)
+        (args . (,(concat "--preset=" .name)))
+        (configuration . ,.configuration)))))
+
+(cl-defmethod projection-cmake--command-options2 ((_build-type (eql configure))
+                                                  (backend (eql kits)))
+  "Query CMake configure options from CMakeKits.
+BACKEND is \\='kits."
+  (when-let ((kit (projection-cmake--kit)))
+    `((backend . ,backend)
+      ,@kit)))
+
+(cl-defmethod projection-cmake--command-options2 (_build-type (backend (eql kits)))
+  "Query CMake configure options for _BUILD-TYPE from CMakeKits.
+BACKEND is \\='kits."
+  ;; Kits don't let you set build or test options so we just check
+  ;; we're configuring through kits so we can send a blank payload.
+  (when (projection-cmake--command-options2 'configure backend)
+    `((backend . ,backend))))
 
 
 
@@ -710,6 +932,48 @@ is unset. This will disable some features like target selection.")))
 
 
 
+;;;###autoload (autoload 'projection-cmake-set-build-type "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'build-type
+  :project 'projection-cmake
+  :options '("Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+  :category "CMake"
+  :title "CMake build type"
+  :custom-type '(choice (const :tag "Do not supply" nil)
+                        (string :tag "Build type value"))
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Build type for a CMake project.
+Supplied as the default CMAKE_BUILD_TYPE definition when set.")
+
+(defun projection-cmake--active-build-type ()
+  "Fetch current CMake build type from config options or preset."
+  (or (projection-cmake--build-type)
+      (let* ((projection-cmake-preset 'silent)
+             (options (projection-cmake--command-options 'build)))
+        (alist-get 'configuration options))))
+
+;;;###autoload (autoload 'projection-cmake-set-configure-log-level "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'configure-log-level
+  :project 'projection-cmake
+  :options '("ERROR" "WARNING" "NOTICE" "STATUS" "VERBOSE" "DEBUG" "TRACE")
+  :category "CMake"
+  :title "CMake configure log-level"
+  :custom-type '(choice (const :tag "Default CMake log-level" nil)
+                        (string :tag "Log level value"))
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Set log-level of CMake configure.")
+
+;;;###autoload (autoload 'projection-cmake-set-build-verbosely "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'build-verbosely
+  :project 'projection-cmake
+  :category "CMake"
+  :title "CMake build verbosely"
+  :custom-type 'boolean
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Run CMake build commands with the --verbose flag.
+This will cause CMake to print out the compilation commands before running them.")
+
+
+
 ;; CMake CTest targets
 
 (defcustom projection-cmake-ctest-cache-targets 'auto
@@ -724,25 +988,26 @@ is unset. This will disable some features like target selection.")))
   (let* ((project (projection--current-project 'no-error))
          (default-directory (or (when project (project-root project))
                                 default-directory))
-         (test-preset (projection-cmake--preset 'test)))
+         (command-options (projection-cmake--command-options 'test))
+         (command-option-key (alist-get 'name command-options)))
     (projection--cache-get-with-predicate
      project
      'projection-cmake-ctest-targets
      (cond
       ((eq projection-cmake-ctest-cache-targets 'auto)
-       (apply-partially #'projection-cmake--ctest-modtime-p test-preset))
+       (apply-partially #'projection-cmake--ctest-modtime-p command-option-key))
       (t projection-cmake-ctest-cache-targets))
-     (apply-partially #'projection-cmake-ctest--targets2 test-preset))))
+     (apply-partially #'projection-cmake-ctest--targets2 command-options))))
 
-(defun projection-cmake--ctest-modtime-p (test-preset plist)
+(defun projection-cmake--ctest-modtime-p (command-option-key plist)
   "Calculate a modification time for reading CTest targets.
-TEST-PRESET is the active test preset. If this preset doesn't match the preset
-in the cached value then the cache is immediately invalidated. Otherwise a
-combination of the CMake configure time and CMakePresets configure time is used
-to determine the modtime. PLIST is the property list used by `projection-cache'."
+COMMAND-OPTION-KEY is an identifier for the configuration-backend. If the
+identifier has changed from a previous call to this function then the cache
+will be immediately invalidated. PLIST is the property list used by
+`projection-cache'."
   (cl-destructuring-bind (&key value &allow-other-keys) plist
-    (if (equal (alist-get 'projection--test-preset value)
-               test-preset)
+    (if (equal (alist-get 'projection--command-options-key value)
+               command-option-key)
         (seq-max
          `(,(projection-cmake--configure-modtime-p plist)
            ,@(when-let ((preset-files (projection-cmake--available-preset-files)))
@@ -756,20 +1021,21 @@ to determine the modtime. PLIST is the property list used by `projection-cache'.
   :description "CTest tests tied to this project"
   :hide t)
 
-(defun projection-cmake-ctest--targets2 (test-preset)
+(defun projection-cmake-ctest--targets2 (command-option-key)
   "Resolve available CTest targets for a project.
-TEST-PRESET is the active test preset and will be merged into the response.."
+COMMAND-OPTION-KEY is an identifier for the configuration-backend. This will
+be either a CMake preset or a kit name.."
   (projection--log :debug "Resolving available CMake CTest targets")
   (when-let ((ctest-targets
               (projection--with-shell-command-buffer
                 (projection-cmake--ctest-command 'argv '("--show-only=json-v1"))
                 (let ((json-array-type 'list))
                   (json-read)))))
-    (append ctest-targets `((projection--test-preset . ,test-preset)))))
+    (append ctest-targets `((projection--command-options-key . ,command-option-key)))))
 
 
 
-;;; Set build and test targets through projection-multi-embark.
+;; Set build and test targets through projection-multi-embark.
 
 (projection--declare-cache-var
   'projection-cmake-build-target
@@ -860,21 +1126,21 @@ including any remote components of the project when
 (defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
   (thread-first
-    (projection--join-shell-command
-     `(,@(projection--env-shell-command-prefix
-          projection-cmake-environment-variables)
-       "cmake"
-       ,@(when-let ((build projection-cmake-build-directory))
-           (list "--build" build))
-       ,@(when-let ((preset (projection-cmake--preset build-type)))
-           (list (concat "--preset=" preset)))
-       ,@(when (eq build-type 'build)
-           (when-let ((job-count (projection--guess-parallelism
-                                  projection-build-jobs)))
-             (list (concat "--parallel=" (number-to-string job-count)))))
-       ,@(when-let ((verbose (projection-cmake--build-verbosely)))
-           (list "--verbose"))
-       ,@(when target (list "--target" target))))
+    (let-alist (projection-cmake--command-options build-type)
+      (projection--join-shell-command
+       `(,@(projection--env-shell-command-prefix
+            (append .environment projection-cmake-environment-variables))
+         "cmake"
+         ,@(when-let ((build projection-cmake-build-directory))
+             (list "--build" build))
+         ,@(when (eq build-type 'build)
+             (when-let ((job-count (projection--guess-parallelism
+                                    projection-build-jobs)))
+               (list (concat "--parallel=" (number-to-string job-count)))))
+         ,@(when-let ((verbose (projection-cmake--build-verbosely)))
+             (list "--verbose"))
+         ,@.args
+         ,@(when target (list "--target" target)))))
 
     (projection--attach-set-build-target-properties
      (when (and (eq build-type 'build) target)
@@ -884,8 +1150,9 @@ including any remote components of the project when
 (defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
   (format "cmake %s%s"
-          (if-let ((preset (projection-cmake--preset build-type)))
-              (concat "preset:" preset " ")
+          (if-let ((opts (projection-cmake--command-options build-type)))
+              (let-alist opts
+                (concat (symbol-name .backend) ":" .name " "))
             "")
           target))
 
@@ -929,19 +1196,20 @@ key value pair set."
 (defun projection-cmake--ctest-command2 (&rest argv)
   "Helper function to  generate a CTest command.
 ARGV if provided will be appended to the command."
-  (projection--join-shell-command
-   `(,@(projection--env-shell-command-prefix
-        projection-cmake-ctest-environment-variables)
-     "ctest"
-     ,@(when-let ((build (projection-cmake--build-directory)))
-         (list "--test-dir" build))
-     ,@(when-let ((preset (projection-cmake--preset 'test)))
-         (list (concat "--preset=" preset)))
-     ,@(when-let ((job-count (projection--guess-parallelism
-                              projection-test-jobs)))
-         (list "--parallel" (number-to-string job-count)))
-     ,@projection-cmake-ctest-options
-     ,@argv)))
+  (let-alist (projection-cmake--command-options 'test)
+    (projection--join-shell-command
+     `(,@(projection--env-shell-command-prefix
+          (append .environment
+                  projection-cmake-ctest-environment-variables))
+       "ctest"
+       ,@(when-let ((build (projection-cmake--build-directory)))
+           (list "--test-dir" build))
+       ,@(when-let ((job-count (projection--guess-parallelism
+                                projection-test-jobs)))
+           (list "--parallel" (number-to-string job-count)))
+       ,@.args
+       ,@projection-cmake-ctest-options
+       ,@argv))))
 
 (defun projection-cmake--ctest-command (&optional type args)
   "Generate CTest command of type TYPE with ARGS.
@@ -964,8 +1232,9 @@ TYPE is unset a CTest command to run all tests wil be returned."
 (defun projection-cmake--ctest-annotation (&optional type args)
   "Generate an annotation for a ctest command to run TYPE with ARGS."
   (format "ctest %s%s"
-          (if-let ((preset (projection-cmake--preset 'test)))
-              (concat "preset:" preset " ")
+          (if-let ((opts (projection-cmake--command-options 'test)))
+              (let-alist opts
+                (concat (symbol-name .backend) ":" .name " "))
             "")
           (pcase type
             ('target    args)
@@ -1107,18 +1376,19 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
 
 (defun projection-cmake-run-configure ()
   "Configure command generator for CMake projects."
-  (projection--join-shell-command
-   `("cmake"
-     "-S" "."
-     ,@(when-let ((build (projection-cmake--build-directory)))
-         (list "-B" build))
-     ,@(when-let ((log-level (projection-cmake--configure-log-level)))
-         (list (concat "--log-level=" log-level)))
-     ,@(when-let ((preset (projection-cmake--preset 'configure)))
-         (list (concat "--preset=" preset)))
-     ,@(when-let ((build-type (projection-cmake--build-type)))
-         (list (concat "-DCMAKE_BUILD_TYPE=" build-type)))
-     ,@projection-cmake-configure-options)))
+  (let-alist (projection-cmake--command-options 'configure)
+    (projection--join-shell-command
+     `(,@(projection--env-shell-command-prefix .environment)
+       "cmake"
+       "-S" "."
+       ,@(when-let ((build (projection-cmake--build-directory)))
+           (list "-B" build))
+       ,@(when-let ((log-level (projection-cmake--configure-log-level)))
+           (list (concat "--log-level=" log-level)))
+       ,@(when-let ((build-type (projection-cmake--build-type)))
+           (list (concat "-DCMAKE_BUILD_TYPE=" build-type)))
+       ,@.args
+       ,@projection-cmake-configure-options))))
 
 ;; The remaining commands take the build directory and an optional target
 ;; with it.

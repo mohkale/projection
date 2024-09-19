@@ -36,7 +36,7 @@ of BASE and the cdr is the FILE-TREE of that sub-directory."
                  do (f-write (cdr file) 'utf-8 (f-join base (car file)))
                else
                  do (let ((sub (f-join base (car file))))
-                      (mkdir sub)
+                      (mkdir sub 'parents)
                       (+projection-setup-project-tree (cdr file) sub))
                else
                  do (error "Unexpected argument type" file)))
@@ -128,6 +128,11 @@ Use this like so:
 (defun +interactively-set-cmake-preset (build-type preset)
   (spy-on #'completing-read :and-return-value (concat (symbol-name build-type) ":" preset))
   (call-interactively #'projection-cmake-set-preset)
+  (expect 'completing-read :to-have-been-called-times 1))
+
+(defun +interactively-set-cmake-kit (kit)
+  (spy-on #'completing-read :and-return-value kit)
+  (call-interactively #'projection-cmake-set-kit)
   (expect 'completing-read :to-have-been-called-times 1))
 
 (defun +interactively-set-cmake-build-type (build-type)

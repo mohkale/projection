@@ -12,6 +12,208 @@
 (require 'projection-test-utils)
 
 (describe "Project type CMake"
+  :var ((cmake-preset-file "{
+  \"version\": 6,
+  \"cmakeMinimumRequired\": {
+    \"major\": 3,
+    \"minor\": 23,
+    \"patch\": 0
+  },
+  \"configurePresets\": [
+    {
+      \"name\": \"configurePreset1\",
+      \"displayName\": \"Preset number 1 for configuring\",
+      \"description\": \"Default build using Ninja Multi-Config generator\",
+      \"generator\": \"Ninja Multi-Config\",
+      \"cacheVariables\": {
+        \"CMAKE_CONFIGURATION_TYPES\": \"Debug;Release;MinSizeRel;RelWithDebInfo\"
+      }
+    },
+    {
+      \"name\": \"configurePreset2\",
+      \"displayName\": \"Preset number 2 for configuring\"
+    },
+    {
+      \"name\": \"windowsOnlyPreset\",
+      \"displayName\": \"Windows only preset\",
+      \"condition\": {
+        \"type\": \"equals\",
+        \"lhs\": \"${hostSystemName}\",
+        \"rhs\": \"Windows\"
+      }
+    }
+  ],
+  \"buildPresets\": [
+    {
+      \"name\": \"buildForConfigurePreset1-Debug\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Debug\"
+    },
+    {
+      \"name\": \"buildForConfigurePreset1-Release\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Release\"
+    },
+    {
+      \"name\": \"buildForConfigurePreset2-Debug\",
+      \"configurePreset\": \"configurePreset2\",
+      \"configuration\": \"Debug\"
+    }
+  ],
+  \"testPresets\": [
+    {
+      \"name\": \"excludeHidden\",
+      \"hidden\": true,
+      \"filter\": {
+        \"exclude\": {
+          \"name\": \"hidden\"
+        }
+      }
+    },
+    {
+      \"name\": \"testForConfigurePreset1-Debug\",
+      \"displayName\": \"Default\",
+      \"configuration\": \"Debug\",
+      \"configurePreset\": \"configurePreset1\",
+      \"inherits\": [\"excludeHidden\"]
+    },
+    {
+      \"name\": \"testForConfigurePreset1WithHiddenTests-Debug\",
+      \"displayName\": \"WithHidden\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Debug\"
+    },
+    {
+      \"name\": \"testForConfigurePreset1-Release\",
+      \"displayName\": \"Default\",
+      \"configuration\": \"Release\",
+      \"configurePreset\": \"configurePreset1\",
+      \"inherits\": [\"excludeHidden\"]
+    },
+    {
+      \"name\": \"testForConfigurePreset1WithHiddenTests-Release\",
+      \"displayName\": \"WithHidden\",
+      \"configurePreset\": \"configurePreset1\",
+      \"configuration\": \"Release\"
+    },
+    {
+      \"name\": \"testForConfigurePreset2\",
+      \"configurePreset\": \"configurePreset2\",
+      \"inherits\": [\"excludeHidden\"]
+    }
+  ],
+  \"workflowPresets\": [
+    {
+      \"name\": \"default\",
+      \"steps\": [
+        {
+          \"type\": \"configure\",
+          \"name\": \"configurePreset2\"
+        },
+        {
+          \"type\": \"build\",
+          \"name\": \"buildForConfigurePreset2-Debug\"
+        }
+      ]
+    }
+  ],
+  \"vendor\": {
+    \"example.com/ExampleIDE/1.0\": {
+      \"autoFormat\": false
+    }
+  }
+}")
+        (cmake-kit-file "[
+    {
+        \"name\": \"Test Toolchain\",
+        \"description\": \"Primary toolchain for projection tests\",
+        \"toolchainFile\": \"/foo/bar/test-toolchain.cmake\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"environmentVariables\": {
+            \"foo\": \"bar\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Ninja\"
+        },
+        \"cmakeSettings\": {
+            \"CACHE_STRING\": \"CACHE_VALUE\",
+            \"CACHE_BOOL_TRUE\": true,
+            \"CACHE_BOOL_FALSE\": false,
+            \"CACHE_ARRAY\": [
+                \"foo\",
+                \"bar\",
+                \"baz\",
+                \"bag\"
+            ],
+            \"CACHE_NESTED_WITH_TYPE\": {
+                \"type\": \"FILEPATH\",
+                \"value\": \"File path value\"
+            }
+        }
+    },
+    {
+        \"name\": \"With environment vars\",
+        \"environmentVariables\": {
+            \"foo\": \"bar\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test GCC Make\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Unix Makefiles\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test GCC Ninja\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Ninja\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test GCC no generator\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test VS 2019\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\",
+        \"preferredGenerator\": {
+            \"name\": \"Visual Studio 16 2019\",
+            \"platform\": \"win32\",
+            \"toolset\": \"host=x86\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test VS 2019 Ninja\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\",
+        \"preferredGenerator\": {
+            \"name\": \"Ninja\"
+        }
+    },
+    {
+        \"name\": \"Generator switch test VS 2019 no generator\",
+        \"visualStudio\": \"VisualStudio.16.0\",
+        \"visualStudioArchitecture\": \"x86\"
+    }
+]")
+        )
   (+projection-test-setup)
 
   (before-each
@@ -251,16 +453,16 @@ add_test(NAME hidden COMMAND true)
         (call-interactively #'projection-commands-configure-project)
 
         (+with-completing-read-default-return
-          ;; WHEN
-          (call-interactively 'projection-artifacts-list)
+         ;; WHEN
+         (call-interactively 'projection-artifacts-list)
 
-          ;; THEN
-          (expect (+completion-table-candidates
-                   (spy-calls-args-for 'completing-read 0))
-                  :to-equal '("CMake executable: main"
-                              "CMake library: libmain_lib.a"
-                              "CTest: main-test"
-                              "CTest: hidden")))))
+         ;; THEN
+         (expect (+completion-table-candidates
+                  (spy-calls-args-for 'completing-read 0))
+                 :to-equal '("CMake executable: main"
+                             "CMake library: libmain_lib.a"
+                             "CTest: main-test"
+                             "CTest: hidden")))))
 
     (describe "Dape"
       (before-each
@@ -320,6 +522,196 @@ add_test(NAME hidden COMMAND true)
       )
     )
 
+  (describe "With a CMake kits configuration"
+    :var ((kits '("Test Toolchain"
+                  "With environment vars"
+                  "Generator switch test GCC Make"
+                  "Generator switch test GCC Ninja"
+                  "Generator switch test GCC no generator"
+                  "Generator switch test VS 2019"
+                  "Generator switch test VS 2019 Ninja"
+                  "Generator switch test VS 2019 no generator")))
+    (before-each
+      (+projection-setup-project-tree
+       `((".vscode"
+          ("cmake-kits.json" . ,cmake-kit-file)))))
+
+    (it "Supports all kit settings"
+      ;; GIVEN
+      (let ((projection-cmake-kit 'silent))
+        (+interactively-set-cmake-kit "Generator switch test GCC Make")
+
+        ;; WHEN/THEN
+        (+expect-interactive-command-calls-compile-with
+         #'projection-commands-configure-project
+         "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")))
+
+    (describe "Prompt once"
+      (it "Prompts for current projects kit interactively"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'prompt-once))
+          (spy-on #'completing-read :and-return-value "Generator switch test GCC Make")
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-configure-project
+           "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")
+
+          ;; THEN
+          (expect 'completing-read :to-have-been-called-times 1)
+          (expect (+completion-table-candidates
+                   (spy-calls-args-for 'completing-read 0))
+                  :to-equal kits)))
+
+      (it "Does not prompt for kit when cached after first prompt"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'prompt-once))
+          (spy-on #'completing-read :and-return-value "Generator switch test GCC Make")
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-configure-project
+           "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")
+
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")))))
+
+    (describe "Silent"
+      (it "Will not prompt"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'silent))
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build"))))
+
+      (it "Will use explicitly configured kit"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'silent))
+          (+interactively-set-cmake-kit "Generator switch test GCC Make")
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")))))
+
+    (describe "Disabled"
+      (it "Does not prompt or pass kit options"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'disable))
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build"))))
+
+      (it "Does not pass kit options even when a kit is configured"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'disable))
+          (+interactively-set-cmake-kit "Generator switch test GCC Make")
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build")))))
+
+    (describe "Prompt always"
+      (it "Does not cache preset when configured to always prompt"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'prompt-always))
+          (spy-on #'completing-read :and-return-value "Generator switch test GCC Make")
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-configure-project
+           "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")
+
+          ;; WHEN/THEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-configure-project
+           "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")
+
+          ;; THEN
+          (expect 'completing-read :to-have-been-called-times 2))))
+
+    (describe "Prompt once when multiple"
+      (describe "Single project kit"
+        (before-each
+          (write-region
+           "[
+    {
+        \"name\": \"Generator switch test GCC Make\",
+        \"compilers\": {
+            \"CXX\": \"g++\",
+            \"C\": \"gcc\"
+        },
+        \"preferredGenerator\": {
+            \"name\": \"Unix Makefiles\"
+        }
+    }
+]"
+           nil
+           ".vscode/cmake-kits.json"))
+
+        (it "Uses sole available kit for current project"
+          ;; GIVEN
+          (let ((projection-cmake-kit 'prompt-once-when-multiple))
+            ;; WHEN/THEN
+            (+with-completing-read-not-called
+             (+expect-interactive-command-calls-compile-with
+              #'projection-commands-configure-project
+              "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")))))
+
+      (it "Prompt for kit when multiple kits are available for the current project"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'prompt-once-when-multiple))
+          (spy-on #'completing-read :and-return-value "Generator switch test GCC Make")
+
+          ;; WHEN
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-configure-project
+           "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")
+
+          ;; THEN
+          (expect 'completing-read :to-have-been-called-times 1)))
+
+      (it "Caches kit after selection"
+        ;; GIVEN
+        (let ((projection-cmake-kit 'prompt-once-when-multiple))
+          (spy-on #'completing-read :and-return-value "Generator switch test GCC Make")
+          (+expect-interactive-command-calls-compile-with
+           #'projection-commands-configure-project
+           "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")
+
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc")))))
+
+    (describe "Named kit"
+      (it "Uses named kit without prompting"
+        ;; GIVEN
+        (let ((projection-cmake-kit "Generator switch test GCC Make"))
+          ;; WHEN/THEN
+          (+with-completing-read-not-called
+           (+expect-interactive-command-calls-compile-with
+            #'projection-commands-configure-project
+            "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc"))))
+
+      (it "Signals error when configured kit is unavailable"
+        ;; GIVEN
+        (let ((projection-cmake-kit "foobar"))
+          (spy-on #'compile)
+
+          ;; WHEN/THEN
+          (let ((err (should-error (call-interactively #'projection-commands-configure-project))))
+            (expect (cadr err) :to-match
+                    "Kit with name=foobar not found"))
+
+          ;; THEN
+          (expect 'compile :to-have-been-called-times 0)))))
+
   (describe "With a CMake presets configuration"
     :var ((configure-presets '("configurePreset1" "configurePreset2" "configurePreset3"))
           (configure-presets-display-names '("Preset number 1 for configuring"
@@ -329,117 +721,7 @@ add_test(NAME hidden COMMAND true)
           (build-presets-for-configure-preset-2 '("buildForConfigurePreset2-Debug")))
     (before-each
       (+projection-setup-project-tree
-       '(("CMakePresets.json" . "{
-  \"version\": 6,
-  \"cmakeMinimumRequired\": {
-    \"major\": 3,
-    \"minor\": 23,
-    \"patch\": 0
-  },
-  \"configurePresets\": [
-    {
-      \"name\": \"configurePreset1\",
-      \"displayName\": \"Preset number 1 for configuring\",
-      \"description\": \"Default build using Ninja Multi-Config generator\",
-      \"generator\": \"Ninja Multi-Config\",
-      \"cacheVariables\": {
-        \"CMAKE_CONFIGURATION_TYPES\": \"Debug;Release;MinSizeRel;RelWithDebInfo\"
-      }
-    },
-    {
-      \"name\": \"configurePreset2\",
-      \"displayName\": \"Preset number 2 for configuring\"
-    },
-    {
-      \"name\": \"windowsOnlyPreset\",
-      \"displayName\": \"Windows only preset\",
-      \"condition\": {
-        \"type\": \"equals\",
-        \"lhs\": \"${hostSystemName}\",
-        \"rhs\": \"Windows\"
-      }
-    }
-  ],
-  \"buildPresets\": [
-    {
-      \"name\": \"buildForConfigurePreset1-Debug\",
-      \"configurePreset\": \"configurePreset1\",
-      \"configuration\": \"Debug\"
-    },
-    {
-      \"name\": \"buildForConfigurePreset1-Release\",
-      \"configurePreset\": \"configurePreset1\",
-      \"configuration\": \"Release\"
-    },
-    {
-      \"name\": \"buildForConfigurePreset2-Debug\",
-      \"configurePreset\": \"configurePreset2\",
-      \"configuration\": \"Debug\"
-    }
-  ],
-  \"testPresets\": [
-    {
-      \"name\": \"excludeHidden\",
-      \"hidden\": true,
-      \"filter\": {
-        \"exclude\": {
-          \"name\": \"hidden\"
-        }
-      }
-    },
-    {
-      \"name\": \"testForConfigurePreset1-Debug\",
-      \"displayName\": \"Default\",
-      \"configuration\": \"Debug\",
-      \"configurePreset\": \"configurePreset1\",
-      \"inherits\": [\"excludeHidden\"]
-    },
-    {
-      \"name\": \"testForConfigurePreset1WithHiddenTests-Debug\",
-      \"displayName\": \"WithHidden\",
-      \"configurePreset\": \"configurePreset1\",
-      \"configuration\": \"Debug\"
-    },
-    {
-      \"name\": \"testForConfigurePreset1-Release\",
-      \"displayName\": \"Default\",
-      \"configuration\": \"Release\",
-      \"configurePreset\": \"configurePreset1\",
-      \"inherits\": [\"excludeHidden\"]
-    },
-    {
-      \"name\": \"testForConfigurePreset1WithHiddenTests-Release\",
-      \"displayName\": \"WithHidden\",
-      \"configurePreset\": \"configurePreset1\",
-      \"configuration\": \"Release\"
-    },
-    {
-      \"name\": \"testForConfigurePreset2\",
-      \"configurePreset\": \"configurePreset2\",
-      \"inherits\": [\"excludeHidden\"]
-    }
-  ],
-  \"workflowPresets\": [
-    {
-      \"name\": \"default\",
-      \"steps\": [
-        {
-          \"type\": \"configure\",
-          \"name\": \"configurePreset2\"
-        },
-        {
-          \"type\": \"build\",
-          \"name\": \"buildForConfigurePreset2-Debug\"
-        }
-      ]
-    }
-  ],
-  \"vendor\": {
-    \"example.com/ExampleIDE/1.0\": {
-      \"autoFormat\": false
-    }
-  }
-}"))))
+       `(("CMakePresets.json" . ,cmake-preset-file))))
 
     (it "Can includes presets failing condition checks"
       (let ((projection-cmake-respect-preset-conditions nil))
@@ -748,4 +1030,71 @@ add_test(NAME hidden COMMAND true)
               (expect (funcall-interactively set-command target) :to-throw 'user-error))))
         )
       ))
+
+  (describe "With CMake presets and a CMake kits configuration"
+    (before-each
+      (+projection-setup-project-tree
+       `(("CMakePresets.json" . ,cmake-preset-file)
+         (".vscode"
+          ("cmake-kits.json" . ,cmake-kit-file)))))
+
+    (it "Does not prompt for either configuration when set"
+      ;; GIVEN
+      (let ((projection-cmake-configuration-backend nil))
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-commands-configure-project
+          "cmake -S . -B build"))))
+
+    (it "Prefers kit to presets when configured"
+      ;; GIVEN
+      (let ((projection-cmake-configuration-backend '(kits presets)))
+        (+interactively-set-cmake-kit "Generator switch test GCC Make")
+        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+          (+interactively-set-cmake-preset 'build "buildForConfigurePreset1-Debug")
+
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-commands-configure-project
+          "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc"))
+
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-commands-build-project
+          "cmake --build build"))))
+
+    (it "Prefers presets to kits when configured"
+      ;; GIVEN
+      (let ((projection-cmake-configuration-backend '(presets kits)))
+        (+interactively-set-cmake-kit "Generator switch test GCC Make")
+        (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+          (+interactively-set-cmake-preset 'build "buildForConfigurePreset1-Debug")
+
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-commands-configure-project
+          "cmake -S . -B build --preset\\=configurePreset1"))
+
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-commands-build-project
+          "cmake --build build --preset\\=buildForConfigurePreset1-Debug"))))
+
+    (it "Gracefully falls back to kits when no presets are available"
+      ;; GIVEN
+      (f-delete "CMakePresets.json" 'force)
+      (let ((projection-cmake-configuration-backend '(presets kits)))
+        (+interactively-set-cmake-kit "Generator switch test GCC Make")
+
+        ;; WHEN/THEN
+        (+with-completing-read-not-called
+         (+expect-interactive-command-calls-compile-with
+          #'projection-commands-configure-project
+          "cmake -S . -B build -G Unix\\ Makefiles -DCMAKE_CXX_COMPILER\\:FILEPATH\\=g\\+\\+ -DCMAKE_C_COMPILER\\:FILEPATH\\=gcc"))))
+    )
   )
