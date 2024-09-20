@@ -592,7 +592,7 @@ variables and configure options."
        unless (alist-get 'name kit)
          do (signal 'projection-cmake-kit
                     (list "Encountered kit with no name" kit-file))
-       unless (alist-get 'environmentSetupScript kit)
+       when (alist-get 'environmentSetupScript kit)
          do (projection--log :warning "The environmentSetupScript option of \
 cmake-kits from kits-file=%s is unsupported by projection." kit-file)
        collect
