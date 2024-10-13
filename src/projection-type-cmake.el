@@ -1103,7 +1103,9 @@ build path is relative."
           (const :tag "Do not do remote matching, the build area will always be local" nil))
   :group 'projection-type-cmake)
 
-(defcustom projection-cmake-configure-options nil
+(defcustom projection-cmake-configure-options
+  '("--fresh"  ;; Force delete CMake cache file when re-configuring
+    )
   "Default CMake options when configured with projection.
 Place any -D options or extra flags you always want to use (for example
 -DCMAKE_EXPORT_COMPILE_COMMANDS) in this option variable."
