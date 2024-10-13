@@ -199,6 +199,7 @@ Use this like so:
      (+projection--cache-set projection-cmake-ctest-options nil)
      (+projection--cache-set projection-build-jobs nil)
      (+projection--cache-set projection-test-jobs nil)
+     (+projection--cache-set projection-cmake-configure-options nil)
      (+projection--cache-set projection-cmake-environment-variables nil)
      (+projection--cache-set projection-cmake-ctest-environment-variables nil)))
 
