@@ -258,7 +258,7 @@ backend."
      ,@(when-let* ((build-directory (projection-meson--build-directory 'expand))
                    (build-directory-exists (file-exists-p build-directory)))
          (list "--reconfigure"))
-     ,@(when-let ((build-type (projection-meson--build-type)))
+     ,@(when-let* ((build-type (projection-meson--build-type)))
          (list (concat "--buildtype=" build-type))))))
 
 (defun projection-meson-get-build-command (&optional target)

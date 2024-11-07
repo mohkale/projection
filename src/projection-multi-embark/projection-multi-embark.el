@@ -57,10 +57,10 @@ arguments to the special property.
 Pass SET-RAW to always set `%s' command to COMMAND directly."
                   type projection-multi-embark--custom-property type)
          (let ((project (projection--current-project)))
-           (if-let ((should-not-set-raw (not set-raw))
-                    (command-is-string (stringp command))
-                    (set-command-property
-                     (get-text-property 0 ',projection-multi-embark--custom-property command)))
+           (if-let* ((should-not-set-raw (not set-raw))
+                     (command-is-string (stringp command))
+                     (set-command-property
+                      (get-text-property 0 ',projection-multi-embark--custom-property command)))
                (apply set-command-property
                       (append
                        (list :type ',type
@@ -69,9 +69,9 @@ Pass SET-RAW to always set `%s' command to COMMAND directly."
                        (cl-loop for prop being the elements of (text-properties-at 0 command)
                                 using (index i)
                                 when (eq (% i 2) 0)
-                                  collect (intern (concat ":" (symbol-name prop)))
+                                collect (intern (concat ":" (symbol-name prop)))
                                 else
-                                  collect prop)))
+                                collect prop)))
              (funcall #',default-func-name command project))))
 
        (defun ,raw-func-name (command)

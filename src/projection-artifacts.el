@@ -42,7 +42,7 @@
 
 (defun projection-artifacts--all-artifacts (project)
   "Query all artifacts for project types matching PROJECT."
-  (when-let ((project-types (projection-project-types (project-root project))))
+  (when-let* ((project-types (projection-project-types (project-root project))))
     (cl-loop
      for config in project-types
      with artifacts-generator = nil
@@ -71,18 +71,18 @@ restrict the artifacts the user is presented with."
   (or filter (setq filter (lambda (_) t)))
   (let ((project (projection--current-project)))
     (setq prompt (projection--prompt prompt project))
-    (if-let ((artifacts
-              (thread-last
-                project
-                (projection-artifacts--all-artifacts)
-                (projection-artifacts--format-artifacts-for-completion)
-                (seq-filter filter))))
+    (if-let* ((artifacts
+               (thread-last
+                 project
+                 (projection-artifacts--all-artifacts)
+                 (projection-artifacts--format-artifacts-for-completion)
+                 (seq-filter filter))))
         (let* ((completion-table
                 (projection-completion--completion-table
                  :candidates artifacts
                  :group-function
                  (lambda (cand transform)
-                   (when-let ((artifact (alist-get cand artifacts nil nil #'string-equal)))
+                   (when-let* ((artifact (alist-get cand artifacts nil nil #'string-equal)))
                      (let ((category (or (alist-get 'category artifact)
                                          projection-artifacts--default-completion-category)))
                        (setq cand (substring cand (+ 2 (length category))))

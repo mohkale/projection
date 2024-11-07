@@ -13,8 +13,8 @@
 (defun +projection-clear-all-cache ()
   "Clear the defined cache for all projects."
   (dolist (cache-table (projection--cache-all-cache-tables))
-    (when-let ((cache (and (boundp cache-table)
-                           (symbol-value cache-table))))
+    (when-let* ((cache (and (boundp cache-table)
+                            (symbol-value cache-table))))
       (clrhash cache))))
 
 

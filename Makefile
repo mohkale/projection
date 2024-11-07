@@ -20,7 +20,13 @@ ci/cd: lint test
 lint: compile checkdoc
 
 .PHONY: checkdoc
-checkdoc: $(ELCHKDOC) ## Check for missing or poorly formatted docstrings
+checkdoc: configure $(ELCHKDOC) ## Check for missing or poorly formatted docstrings
+
+.PHONY: configure
+configure: .cask
+
+.cask:
+	cask install
 
 $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	mkdir -p "$$(dirname "$@")"
@@ -31,10 +37,11 @@ $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	    --eval "(checkdoc-file \"$^\")" 2>&1 \
 		| sed "s_^$$(basename "$^"):_$^:_" \
 		| tee "$@" \
+		| grep -E -v -e "\.cask/.*(if|when)-let' is an obsolete macro" \
 	    | grep . && exit 1 || true
 
 .PHONY: compile
-compile: $(ELC) ## Check for byte-compiler errors
+compile: configure $(ELC) ## Check for byte-compiler errors
 
 $(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
 	mkdir -p "$$(dirname "$@")"
@@ -43,7 +50,7 @@ $(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
 	    -L . \
 	    --eval '(setq create-lockfiles nil)' \
 	    -f batch-byte-compile "$^" 2>&1 \
-		| grep -v -e "^Wrote" -e "^Loading" \
+		| grep -v -E -e "^Wrote" -e "^Loading" -e "\.cask/.*(if|when)-let' is an obsolete macro" \
 		| grep . && exit 1 || true ;\
 	mv -f "$^c" "$@"
 

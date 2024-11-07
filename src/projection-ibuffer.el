@@ -136,8 +136,8 @@ BUFFER. This function returns the final project for buffer when true."
 ;;;###autoload (autoload 'ibuffer-make-column-projection-name "projection-ibuffer")
 (define-ibuffer-column projection-name
   (:name "Project")
-  (when-let ((project
-              (projection-ibuffer--project-buffer-p (current-buffer))))
+  (when-let* ((project
+               (projection-ibuffer--project-buffer-p (current-buffer))))
     (project-name project)))
 
 ;;;###autoload (autoload 'ibuffer-filter-by-projection-files "projection-ibuffer" nil t)
@@ -162,9 +162,9 @@ BUFFER. This function returns the final project for buffer when true."
 ;;;###autoload (autoload 'ibuffer-make-column-projection-relative-file "projection-ibuffer")
 (define-ibuffer-column projection-relative-file
   (:name "Filename")
-  (when-let ((file-name (ibuffer-buffer-file-name))
-             (project (projection-ibuffer--project-buffer-p (current-buffer))))
-    (if-let ((root (project-root project)))
+  (when-let* ((file-name (ibuffer-buffer-file-name))
+              (project (projection-ibuffer--project-buffer-p (current-buffer))))
+    (if-let* ((root (project-root project)))
         (file-relative-name buffer-file-name root)
       (abbreviate-file-name buffer-file-name))))
 

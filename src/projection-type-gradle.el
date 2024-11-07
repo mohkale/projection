@@ -45,7 +45,7 @@
         "gradle")
      ,@(when projection-gradle-use-daemon
          (list "--daemon"))
-     ,@(when-let ((job-count projection-build-jobs))
+     ,@(when-let* ((job-count projection-build-jobs))
          (list "--parallel"))
      ,@args)))
 

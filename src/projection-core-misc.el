@@ -28,7 +28,7 @@
   "Retrieve the current project or raise an error.
 If NO-ERROR then don't raise an error if the project could not be resolved."
   ;; TODO: Maybe this is worth caching locally in the current buffer as well.
-  (if-let ((project (project-current)))
+  (if-let* ((project (project-current)))
       project
     (unless no-error
       (user-error "No project found relative to %s" default-directory))))
@@ -42,8 +42,8 @@ of remote projects. When set to a path that is considered a remote TRAMP
 component used to reach the current project. Otherwise when set to a truthy
 value we prefix the remote component of the current project."
   (let ((project-root
-         (or (when-let ((project
-                         (projection--current-project 'no-error)))
+         (or (when-let* ((project
+                          (projection--current-project 'no-error)))
                (project-root project))
              default-directory)))
     (if (file-name-absolute-p file-name)

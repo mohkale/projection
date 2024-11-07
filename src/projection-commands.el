@@ -64,9 +64,9 @@ to \\='read or \\='write respectively to enable either of these operations)."
             (projection-commands--read-shell-command
              project cmd-type
              (projection-commands--ignore-no-command
-              (when-let ((default-command
-                           (projection-commands--get-command
-                            project project-config cmd-type cmd-var)))
+              (when-let* ((default-command
+                            (projection-commands--get-command
+                             project project-config cmd-type cmd-var)))
                 (when (stringp default-command)
                   default-command))))))
        (pcase use-cache

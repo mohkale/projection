@@ -102,7 +102,7 @@ there was an error enabling the hooks."
 (defun projection-hook--disable (&optional hook-list silent)
   "Disable all configured hooks for the current project.
 See `projection-hook--enable' for a description of HOOK-LIST and SILENT."
-  (when-let ((project (projection--current-project 'no-error)))
+  (when-let* ((project (projection--current-project 'no-error)))
     (or hook-list
         (setq hook-list (projection--cache-get
                          project

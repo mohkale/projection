@@ -254,8 +254,8 @@ PROJECT-set-OPTION."
 PROJECT will default to the current project when not set."
                   cache-var)
          (or
-          (when-let ((project (or project
-                                  (projection--current-project 'no-error))))
+          (when-let* ((project (or project
+                                   (projection--current-project 'no-error))))
             (projection--cache-get project (quote ,cache-var)))
           ,cache-var)))))
 

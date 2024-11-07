@@ -94,8 +94,8 @@ the current project."
     (setq project (projection--current-project)))
 
   (let ((project-key (projection--cache-key project)))
-    (if-let ((existing (gethash project-key cache)))
-        (if-let ((pair (assq key existing)))
+    (if-let* ((existing (gethash project-key cache)))
+        (if-let* ((pair (assq key existing)))
             (setcdr pair value)
           (setcdr existing
                   (append `((,key . ,value)
@@ -113,7 +113,7 @@ the current project."
     (setq project (projection--current-project)))
 
   (let ((project-key (projection--cache-key project)))
-    (when-let ((existing (gethash project-key cache)))
+    (when-let* ((existing (gethash project-key cache)))
       (puthash project-key (assoc-delete-all key existing) cache))))
 
 (defun projection--cache-all-cache-tables ()
@@ -211,8 +211,8 @@ The result of this is intended to be used in a `completing-read' interface."
     (dolist (cache-config (reverse projection--cache-var-alist))
       (cl-destructuring-bind (&key title category hide cache-var &allow-other-keys)
           (cdr cache-config)
-        (when-let ((cache (and (boundp cache-var)
-                               (symbol-value cache-var))))
+        (when-let* ((cache (and (boundp cache-var)
+                                (symbol-value cache-var))))
           (let ((value (projection--cache-get project (car cache-config) cache)))
             (when (or (not hide) value)
               (push (list title category value (car cache-config) cache) result))))))
@@ -273,8 +273,8 @@ This command interactively removes a cached project variable."
   (interactive (list (projection--current-project)))
   (let ((key (projection--cache-key project)))
     (dolist (cache-table (projection--cache-all-cache-tables))
-      (when-let ((table (and (boundp cache-table)
-                             (symbol-value cache-table))))
+      (when-let* ((table (and (boundp cache-table)
+                              (symbol-value cache-table))))
         (remhash key table)))))
 
 ;;;###autoload

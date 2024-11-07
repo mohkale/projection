@@ -43,7 +43,7 @@
 
     (after-each
       (dolist (it '("foo" "bar" "baz"))
-        (when-let ((buf (find-buffer-visiting it)))
+        (when-let* ((buf (find-buffer-visiting it)))
           (kill-buffer buf))))
 
     (it "Sets up hooks in each project buffer"

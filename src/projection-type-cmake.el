@@ -73,7 +73,7 @@ incompatible with the active configure preset.")
 
 (defun projection-cmake--list-presets ()
   "List CMake presets from preset config files respecting cache."
-  (when-let ((preset-files (projection-cmake--available-preset-files)))
+  (when-let* ((preset-files (projection-cmake--available-preset-files)))
     (projection--cache-get-with-predicate
      (projection--current-project 'no-error)
      'projection-cmake-presets
@@ -97,12 +97,12 @@ incompatible with the active configure preset.")
       (let ((presets-result (mapcar #'list projection-cmake--preset-build-types)))
         (dolist (config (mapcar #'projection-cmake--read-presets-file preset-files))
           (dolist (preset-type projection-cmake--preset-build-types)
-            (when-let ((preset-config
-                        (thread-last
-                          config
-                          (alist-get (intern (concat (symbol-name preset-type) "Presets")))
-                          (mapcar (lambda (preset)
-                                    (append preset `((projection--preset-type . ,preset-type))))))))
+            (when-let* ((preset-config
+                         (thread-last
+                           config
+                           (alist-get (intern (concat (symbol-name preset-type) "Presets")))
+                           (mapcar (lambda (preset)
+                                     (append preset `((projection--preset-type . ,preset-type))))))))
               (setcdr (assoc preset-type presets-result)
                       (append (cdr (assoc preset-type presets-result))
                               preset-config)))))
@@ -141,8 +141,8 @@ use."
 (defun projection-cmake--available-presets ()
   "List CMake presets that pass their condition check respecting cache."
   (when projection-cmake-respect-preset-conditions
-    (when-let ((preset-files
-                (seq-filter #'file-exists-p projection-cmake-preset-files)))
+    (when-let* ((preset-files
+                 (seq-filter #'file-exists-p projection-cmake-preset-files)))
       (projection--cache-get-with-predicate
        (projection--current-project 'no-error)
        'projection-cmake-available-presets
@@ -252,11 +252,11 @@ presets should always be visible."
             (active-configure-preset (projection-cmake--preset 'configure)))
       (cl-remove-if
        (lambda (preset-config)
-         (if-let ((build-type-has-required-configure-preset
-                   (member (alist-get 'projection--preset-type preset-config)
-                           projection-cmake--preset-build-types-tied-to-configure))
-                  (required-configure-preset
-                   (alist-get 'configurePreset preset-config)))
+         (if-let* ((build-type-has-required-configure-preset
+                    (member (alist-get 'projection--preset-type preset-config)
+                            projection-cmake--preset-build-types-tied-to-configure))
+                   (required-configure-preset
+                    (alist-get 'configurePreset preset-config)))
              (not (equal required-configure-preset active-configure-preset))
            nil))
        presets)
@@ -274,9 +274,9 @@ configure preset."
             (build-type (projection-cmake--active-build-type)))
       (cl-remove-if
        (lambda (preset-config)
-         (if-let ((preset-is-not-build-type
-                   (not (eq 'build (alist-get 'projection--preset-type preset-config))))
-                  (preset-build-type (alist-get 'configuration preset-config)))
+         (if-let* ((preset-is-not-build-type
+                    (not (eq 'build (alist-get 'projection--preset-type preset-config))))
+                   (preset-build-type (alist-get 'configuration preset-config)))
              (not (equal build-type preset-build-type))
            nil))
        presets)
@@ -302,7 +302,7 @@ with the active configure preset."
                  (projection-cmake--list-presets-for-build-type-match-configure-preset build-type)
                  (projection-cmake--list-presets-for-build-type-match-active-build-type build-type)))
               ;; Filter out presets that are not available in the current environment.
-              (presets (if-let ((available-presets (projection-cmake--available-presets)))
+              (presets (if-let* ((available-presets (projection-cmake--available-presets)))
                            (cl-remove-if-not (lambda (preset-config)
                                                (assoc (alist-get 'name preset-config)
                                                       (alist-get
@@ -346,7 +346,7 @@ Prompt for the `completing-read' session will be PROMPT."
            :annotation-function
            (projection-completion--annotation-function
             :key-function (lambda (cand)
-                            (when-let ((cand-alist (funcall preset-display-name-to-preset cand)))
+                            (when-let* ((cand-alist (funcall preset-display-name-to-preset cand)))
                               (or (alist-get 'description cand-alist)
                                   ;; Show configured name when no set display-name or
                                   ;; the set display-name is different to the preset
@@ -365,7 +365,7 @@ Prompt for the `completing-read' session will be PROMPT."
 
 (defun projection-cmake--preset-config (build-type)
   "Fetch CMake preset configuration for BUILD-TYPE."
-  (when-let ((preset-name (projection-cmake--preset build-type)))
+  (when-let* ((preset-name (projection-cmake--preset build-type)))
     (seq-find (lambda (preset-config)
                 (equal (alist-get 'name preset-config) preset-name))
               (projection-cmake--list-presets-for-build-type build-type))))
@@ -476,7 +476,7 @@ BUILD-TYPE. It should cache presets after the first list call."
   (interactive
    (let* ((project (projection--current-project))
           (default-directory (project-root project)))
-     (if-let ((presets (projection-cmake--list-presets-for-build-type nil)))
+     (if-let* ((presets (projection-cmake--list-presets-for-build-type nil)))
          (let* ((preset-config
                  (projection-cmake--read-preset
                   (projection--prompt "Set CMake preset: " project)
@@ -539,7 +539,7 @@ project root."
 
 (defun projection-cmake--list-kits ()
   "Query available kits respecting project cache."
-  (when-let ((kits-files (seq-filter #'file-exists-p projection-cmake-kits-files)))
+  (when-let* ((kits-files (seq-filter #'file-exists-p projection-cmake-kits-files)))
     (projection--cache-get-with-predicate
      (projection--current-project 'no-error)
      'projection-cmake-available-kits
@@ -605,7 +605,7 @@ cmake-kits from kits-file=%s is unsupported by projection." kit-file)
                                           collect (cons (symbol-name key) value)))))
            (args
             ,@(when .preferredGenerator
-                (if-let ((name (alist-get 'name .preferredGenerator)))
+                (if-let* ((name (alist-get 'name .preferredGenerator)))
                     (list "-G" name)
                   (projection--log :warning "Kit with name=%s does \
 not set generator as name property" .name)))
@@ -648,9 +648,9 @@ This option respects the project cache and local Emacs settings."
       (unless kits (cl-return nil))
 
       (when (stringp projection-cmake-kit)
-        (if-let ((kit (seq-find (lambda (kit)
-                                  (equal (alist-get 'name kit) projection-cmake-kit))
-                                kits)))
+        (if-let* ((kit (seq-find (lambda (kit)
+                                   (equal (alist-get 'name kit) projection-cmake-kit))
+                                 kits)))
             (cl-return kit)
           (user-error "Kit with name=%s not found in %S"
                       projection-cmake-kit projection-cmake-kits-files)))
@@ -699,7 +699,7 @@ Prompt for the `completing-read' session will be PROMPT."
   (interactive
    (let* ((project (projection--current-project))
           (default-directory (project-root project)))
-     (if-let ((kits (projection-cmake--list-kits)))
+     (if-let* ((kits (projection-cmake--list-kits)))
          (list project (projection-cmake--read-kit
                         (projection--prompt "Set CMake kit: " project)
                         kits))
@@ -733,7 +733,7 @@ Will walk through possible configuration backends in
 (cl-defmethod projection-cmake--command-options2 (build-type (backend (eql presets)))
   "Query CMake options for BUILD-TYPE from CMakePresets.
 BACKEND is \\='presets."
-  (when-let ((preset (projection-cmake--preset-config build-type)))
+  (when-let* ((preset (projection-cmake--preset-config build-type)))
     (let-alist preset
       `((backend . ,backend)
         (name . ,.name)
@@ -744,7 +744,7 @@ BACKEND is \\='presets."
                                                   (backend (eql kits)))
   "Query CMake configure options from CMakeKits.
 BACKEND is \\='kits."
-  (when-let ((kit (projection-cmake--kit)))
+  (when-let* ((kit (projection-cmake--kit)))
     `((backend . ,backend)
       ,@kit)))
 
@@ -864,7 +864,7 @@ lookups which can slow down the processing of the code-model immensely."
 (cl-defsubst projection-cmake--file-api-query-config-targets (api-replies config-obj)
   "Read all target configs from the CMake CONFIG-OBJ.
 API-REPLIES is a collection of files parsed from the CMake reply directory."
-  (if-let ((name (alist-get 'name config-obj)))
+  (if-let* ((name (alist-get 'name config-obj)))
       (let ((target-configs (cl-loop for target in (alist-get 'targets config-obj)
                                       with target-config-file = nil
                                       do (setq target-config-file (alist-get 'jsonFile target))
@@ -1010,7 +1010,7 @@ will be immediately invalidated. PLIST is the property list used by
                command-option-key)
         (seq-max
          `(,(projection-cmake--configure-modtime-p plist)
-           ,@(when-let ((preset-files (projection-cmake--available-preset-files)))
+           ,@(when-let* ((preset-files (projection-cmake--available-preset-files)))
                (list (apply #'projection--cache-modtime-predicate preset-files)))))
       (projection--cache-now))))
 
@@ -1026,7 +1026,7 @@ will be immediately invalidated. PLIST is the property list used by
 COMMAND-OPTION-KEY is an identifier for the configuration-backend. This will
 be either a CMake preset or a kit name.."
   (projection--log :debug "Resolving available CMake CTest targets")
-  (when-let ((ctest-targets
+  (when-let* ((ctest-targets
               (projection--with-shell-command-buffer
                 (projection-cmake--ctest-command 'argv '("--show-only=json-v1"))
                 (let ((json-array-type 'list))
@@ -1133,13 +1133,13 @@ including any remote components of the project when
        `(,@(projection--env-shell-command-prefix
             (append .environment projection-cmake-environment-variables))
          "cmake"
-         ,@(when-let ((build projection-cmake-build-directory))
+         ,@(when-let* ((build projection-cmake-build-directory))
              (list "--build" build))
          ,@(when (eq build-type 'build)
-             (when-let ((job-count (projection--guess-parallelism
-                                    projection-build-jobs)))
+             (when-let* ((job-count (projection--guess-parallelism
+                                     projection-build-jobs)))
                (list (concat "--parallel=" (number-to-string job-count)))))
-         ,@(when-let ((verbose (projection-cmake--build-verbosely)))
+         ,@(when-let* ((verbose (projection-cmake--build-verbosely)))
              (list "--verbose"))
          ,@.args
          ,@(when target (list "--target" target)))))
@@ -1152,7 +1152,7 @@ including any remote components of the project when
 (defun projection-cmake--annotation (build-type target)
   "Generate an annotation for a cmake command to run TARGET for BUILD-TYPE."
   (format "cmake %s%s"
-          (if-let ((opts (projection-cmake--command-options build-type)))
+          (if-let* ((opts (projection-cmake--command-options build-type)))
               (let-alist opts
                 (concat (symbol-name .backend) ":" .name " "))
             "")
@@ -1169,7 +1169,7 @@ including any remote components of the project when
   "Generate an annotation for a cmake command to run a workflow PRESET."
   (format "cmake %s%s%s"
           (concat "preset:" preset " ")
-          (if-let ((build (projection-cmake--build-directory)))
+          (if-let* ((build (projection-cmake--build-directory)))
               (concat "build:" build " ")
             "")
           "workflow"))
@@ -1204,10 +1204,10 @@ ARGV if provided will be appended to the command."
           (append .environment
                   projection-cmake-ctest-environment-variables))
        "ctest"
-       ,@(when-let ((build (projection-cmake--build-directory)))
+       ,@(when-let* ((build (projection-cmake--build-directory)))
            (list "--test-dir" build))
-       ,@(when-let ((job-count (projection--guess-parallelism
-                                projection-test-jobs)))
+       ,@(when-let* ((job-count (projection--guess-parallelism
+                                 projection-test-jobs)))
            (list "--parallel" (number-to-string job-count)))
        ,@.args
        ,@projection-cmake-ctest-options
@@ -1234,7 +1234,7 @@ TYPE is unset a CTest command to run all tests wil be returned."
 (defun projection-cmake--ctest-annotation (&optional type args)
   "Generate an annotation for a ctest command to run TYPE with ARGS."
   (format "ctest %s%s"
-          (if-let ((opts (projection-cmake--command-options 'test)))
+          (if-let* ((opts (projection-cmake--command-options 'test)))
               (let-alist opts
                 (concat (symbol-name .backend) ":" .name " "))
             "")
@@ -1260,7 +1260,7 @@ This file should change on every build reconfiguration."
 (defun projection-cmake--configure-modtime-p (&rest _)
   "Get when CMake was last configured based on `projection-cmake-cache-file'."
   (projection--cache-modtime-predicate
-   (if-let ((build-directory (projection-cmake--build-directory 'expand)))
+   (if-let* ((build-directory (projection-cmake--build-directory 'expand)))
        (expand-file-name projection-cmake-cache-file build-directory)
      (unless (file-name-absolute-p projection-cmake-cache-file)
        ;; This will probably always be unmodified since it checks from
@@ -1294,8 +1294,8 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
     (let ((result nil))
       (dolist (target targets)
         (let-alist target
-          (when-let ((props
-                      (alist-get .type projection-cmake--artifact-types nil nil #'string-equal)))
+          (when-let* ((props
+                       (alist-get .type projection-cmake--artifact-types nil nil #'string-equal)))
             (dolist (artifact .artifacts)
               (setq artifact (alist-get 'path artifact))
               (push
@@ -1328,15 +1328,15 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
              `((name . ,.name)
                (category . "CTest")
                (arg0 . ,(car .command))
-               ,@(when-let ((argv (cdr .command)))
+               ,@(when-let* ((argv (cdr .command)))
                    `((argv . ,argv)))
                (type . cmake-test)
                (debuggable . t)
-               ,@(when-let ((working-directory
-                             (projection-ctest--read-property .properties "WORKING_DIRECTORY")))
+               ,@(when-let* ((working-directory
+                              (projection-ctest--read-property .properties "WORKING_DIRECTORY")))
                    `((working-directory . ,working-directory)))
-               ,@(when-let ((environment
-                             (projection-ctest--read-property .properties "ENVIRONMENT")))
+               ,@(when-let* ((environment
+                              (projection-ctest--read-property .properties "ENVIRONMENT")))
                    (setq environment
                          (cl-loop
                           for env-variable in environment
@@ -1384,11 +1384,11 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
           (append .environment projection-cmake-environment-variables))
        "cmake"
        "-S" "."
-       ,@(when-let ((build (projection-cmake--build-directory)))
+       ,@(when-let* ((build (projection-cmake--build-directory)))
            (list "-B" build))
-       ,@(when-let ((log-level (projection-cmake--configure-log-level)))
+       ,@(when-let* ((log-level (projection-cmake--configure-log-level)))
            (list (concat "--log-level=" log-level)))
-       ,@(when-let ((build-type (projection-cmake--build-type)))
+       ,@(when-let* ((build-type (projection-cmake--build-type)))
            (list (concat "-DCMAKE_BUILD_TYPE=" build-type)))
        ,@.args
        ,@projection-cmake-configure-options))))

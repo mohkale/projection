@@ -236,8 +236,8 @@ switch to then you will be dropped into a `completing-read' session with all
 possible files and the first match being the one you would've switched to if
 SELECT-INTERACTIVELY is not set."
   (interactive "P")
-  (when-let ((file
-              (projection-find--other-file select-interactively)))
+  (when-let* ((file
+               (projection-find--other-file select-interactively)))
     (funcall #'find-file file)))
 
 (defun projection-find-list-test-files (project)

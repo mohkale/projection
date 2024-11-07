@@ -45,11 +45,11 @@ This is used purely to filter available debuggers for a specific debug session."
   "Select a debug adapter compatible with ARTIFACT."
   (if-let* ((type (alist-get 'type artifact))
             (major-mode (alist-get type projection-dape--artifact-category-to-major-mode)))
-      (if-let ((available-configs
-                (cl-loop for (key . config) in dape-configs
-                         when (and (dape--config-mode-p config)
-                                   (dape--config-ensure config))
-                         collect (dape--config-to-string key nil))))
+      (if-let* ((available-configs
+                 (cl-loop for (key . config) in dape-configs
+                          when (and (dape--config-mode-p config)
+                                    (dape--config-ensure config))
+                          collect (dape--config-to-string key nil))))
           (intern
            (or (when (eq (length available-configs) 1)
                  (car available-configs))

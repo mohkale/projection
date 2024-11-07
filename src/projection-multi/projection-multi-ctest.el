@@ -48,7 +48,7 @@
            do (setq test-labels
                     (seq-filter
                      (lambda (label)
-                       (when-let ((doesnt-exist (not (gethash label label-set))))
+                       (when-let* ((doesnt-exist (not (gethash label label-set))))
                          (puthash label t label-set)
                          t))
                      (cl-dolist (prop (alist-get 'properties test))

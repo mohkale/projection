@@ -56,7 +56,7 @@ test."
        ((pred null))
        ((or 'prompt-once 'prompt-once-when-multiple)
         (thread-last
-          (if-let ((packages (projection-golang--list-packages)))
+          (if-let* ((packages (projection-golang--list-packages)))
               (if (and (eq (length packages) 1)
                        (eq projection-golang-package
                            'prompt-once-when-multiple))

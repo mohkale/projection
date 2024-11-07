@@ -207,7 +207,7 @@
 Set TARGET as the TARGET to build when set."
   (projection--join-shell-command
    `("make"
-     ,@(when-let ((jobs (projection--guess-parallelism projection-build-jobs)))
+     ,@(when-let* ((jobs (projection--guess-parallelism projection-build-jobs)))
          (list "-j" (number-to-string jobs)))
      ,@(when target (list target)))))
 

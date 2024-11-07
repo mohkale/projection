@@ -46,7 +46,7 @@
   "Interactively read a recent-file from the current project.."
   (let ((project (projection--current-project)))
     (unless recentf-mode (recentf-mode 1))
-    (if-let ((recent-project-files (projection-recentf--list project)))
+    (if-let* ((recent-project-files (projection-recentf--list project)))
         (expand-file-name
          (completing-read
           (projection--prompt "Open recent file: " project)

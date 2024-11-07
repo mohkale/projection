@@ -68,9 +68,9 @@ prefix:project-type:project-command."
     (let (result)
       (dolist (project-config current-project-types)
         (dolist (cmd-type-config projection-commands--registered-cmd-types)
-          (when-let ((cmd
-                      (projection-commands--ignore-no-command
-                       (funcall (cadr cmd-type-config) project project-config :use-cache nil))))
+          (when-let* ((cmd
+                       (projection-commands--ignore-no-command
+                        (funcall (cadr cmd-type-config) project project-config :use-cache nil))))
             (push `(,(concat project-type-prefix ":"
                              (symbol-name (oref project-config name)) ":"
                              (symbol-name (car cmd-type-config)))
@@ -94,7 +94,7 @@ prefix:project-type:project-command."
   "Extract all `compile-multi' triggers for the PROJECT."
   (append
    (list #'projection-multi-projection-targets)
-   (when-let ((project-types (projection-project-types (project-root project))))
+   (when-let* ((project-types (projection-project-types (project-root project))))
      (cl-loop
       for config in project-types
       with targets = nil
@@ -138,7 +138,7 @@ result of each function should be deterministic."
                      `((symbol-function ',function)
                        (lambda (&rest args)
                          (let ((key (append (list ',function) args)))
-                           (if-let ((cached
+                           (if-let* ((cached
                                      (assoc key --projection-multi-helper-cache #'equal)))
                                (cdr cached)
                              (let ((value (apply ,cached-function args)))

@@ -93,7 +93,7 @@
 When set the generated targets will be prefixed with PROJECT-TYPE."
   (setq project-type (or project-type "poetry:poe"))
 
-  (when-let ((file-name (cl-find-if #'file-exists-p projection-multi-poetry-poe-project-file)))
+  (when-let* ((file-name (cl-find-if #'file-exists-p projection-multi-poetry-poe-project-file)))
     (cl-loop
      for target in (projection-multi-poetry-poe--targets-from-file file-name)
      collect (cons (concat project-type ":" target)

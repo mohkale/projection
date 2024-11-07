@@ -87,7 +87,7 @@ targets) with this option."
 
 (defun projection-multi-cmake--targets-from-code-model ()
   "Determine list of available CMake targets from the code-model."
-  (when-let ((targets (projection-cmake--file-api-target-config)))
+  (when-let* ((targets (projection-cmake--file-api-target-config)))
     (append
      (thread-last
        targets

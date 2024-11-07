@@ -39,7 +39,7 @@ recommended to set this in a dir-locals file.")
 (defun projection--project-matches-p (root-dir project-type)
   "Assert whether project of type PROJECT-TYPE matches ROOT-DIR."
   (let ((default-directory root-dir))
-    (if-let ((predicate (oref project-type predicate)))
+    (if-let* ((predicate (oref project-type predicate)))
         (progn
           (setq predicate
                 (if (and (consp predicate)
@@ -88,15 +88,15 @@ recommended to set this in a dir-locals file.")
   "Determine the project type for ROOT-DIR.
 With MUST-MATCH an error will be raised if no project type could be matched."
   (or
-   (when-let ((type (projection--cache-get root-dir 'type)))
+   (when-let* ((type (projection--cache-get root-dir 'type)))
      (projection--name-to-type type))
 
-   (when-let ((project-type
-               (when projection-primary-project-type
-                 (projection--name-to-type projection-primary-project-type))))
+   (when-let* ((project-type
+                (when projection-primary-project-type
+                  (projection--name-to-type projection-primary-project-type))))
      project-type)
 
-   (when-let ((project-type (projection--match-project-type root-dir)))
+   (when-let* ((project-type (projection--match-project-type root-dir)))
      (projection--cache-put root-dir 'type (oref project-type name))
      project-type)
 
@@ -116,10 +116,10 @@ With MUST-MATCH an error will be raised if no project type could be matched."
 With MUST-MATCH an error will be raised if no project types could be matched."
   (let ((matching-types
          (or
-          (when-let ((types (projection--cache-get root-dir 'types)))
+          (when-let* ((types (projection--cache-get root-dir 'types)))
             (mapcar #'projection--name-to-type types))
 
-          (when-let ((project-types (projection--match-project-types root-dir)))
+          (when-let* ((project-types (projection--match-project-types root-dir)))
             (projection--cache-put root-dir 'types
                                    (mapcar #'projection-type--name project-types))
             project-types))))
@@ -127,7 +127,7 @@ With MUST-MATCH an error will be raised if no project types could be matched."
     ;; Ensure the default project-type is the first entry in the collection
     ;; of matching types. This is so any functions relying on this result can
     ;; expect on the invariant of (car types) == default-type.
-    (when-let ((default-type (projection-project-type root-dir)))
+    (when-let* ((default-type (projection-project-type root-dir)))
       (when (and
              (not (eq default-type projection-default-type))
              (not (eq default-type (car matching-types))))
@@ -137,7 +137,7 @@ With MUST-MATCH an error will be raised if no project types could be matched."
     ;; Ensure the locally overridden project-type is in the collection of matching
     ;; types. It doesn't necessarily have to be the primary type since you can
     ;; override it after the fact but it should always be in the list.
-    (when-let ((local-primary-project-type
+    (when-let* ((local-primary-project-type
                (when projection-primary-project-type
                  (projection--name-to-type projection-primary-project-type))))
       (unless (member local-primary-project-type matching-types)
