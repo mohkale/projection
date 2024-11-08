@@ -108,6 +108,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-yarn-script-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-yarn)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-yarn
     #'projection-multi-yarn-script-targets))

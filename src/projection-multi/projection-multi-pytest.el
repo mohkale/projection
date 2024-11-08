@@ -135,6 +135,20 @@
    `((t ,#'projection-multi-pytest-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-django)
+;;;###autoload
+(defvar projection-project-type-python-pip)
+;;;###autoload
+(defvar projection-project-type-python-pkg)
+;;;###autoload
+(defvar projection-project-type-python-toml)
+;;;###autoload
+(defvar projection-project-type-python-tox)
+;;;###autoload
+(defvar projection-project-type-python-pipenv)
+;;;###autoload
+(defvar projection-project-type-python-poetry)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets
     (list projection-project-type-django

@@ -46,6 +46,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-golang-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-golang)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-golang
     #'projection-multi-golang-targets))
