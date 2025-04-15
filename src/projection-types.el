@@ -42,7 +42,8 @@
    :name 'haskell-cabal
    :predicate (defun projection-haskell-cabal-project-p ()
                 (and (file-expand-wildcards "?*.cabal")
-                     (not (file-exists-p "stack.yml"))))
+                     (not (file-exists-p "stack.yml"))
+                     (not (file-exists-p "stack.yaml"))))
    :build "cabal build"
    :test  "cabal test"
    :run   "cabal run"
