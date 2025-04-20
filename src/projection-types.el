@@ -730,15 +730,28 @@ Set TARGET as the TARGET to build when set."
 
 
 
+(autoload 'projection-haskell-stack-run-build "projection-type-haskell-stack")
+(autoload 'projection-haskell-stack-run-test  "projection-type-haskell-stack")
+(autoload 'projection-haskell-stack-run-bench "projection-type-haskell-stack")
+(autoload 'projection-haskell-stack-run-docs  "projection-type-haskell-stack")
+(autoload 'projection-haskell-stack-run-ghci  "projection-type-haskell-stack")
+(autoload 'projection-haskell-stack-run-clean "projection-type-haskell-stack")
+
 (defvar projection-project-type-haskell-stack
   (projection-type
    :name 'haskell-stack
    :predicate "stack.yaml"
-   :build "stack build"
-   :test "stack build --test"
-   :test-suffix "Spec"))
+   :build     #'projection-haskell-stack-run-build
+   :test      #'projection-haskell-stack-run-test
+   :compile-multi-targets
+   `(("haskell-stack:bench"   . ,#'projection-haskell-stack-run-bench)
+     ("haskell-stack:haddock" . ,#'projection-haskell-stack-run-docs)
+     ("haskell-stack:ghci"   . ,#'projection-haskell-stack-run-ghci)
+     ("haskell-stack:clean"   . ,#'projection-haskell-stack-run-clean))))
 
-(add-to-list 'projection-project-types projection-project-type-haskell-stack 'append)
+(add-to-list 'projection-project-types
+             projection-project-type-haskell-stack
+             'append)
 
 
 
