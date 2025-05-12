@@ -600,6 +600,16 @@ Set TARGET as the TARGET to build when set."
 
 
 
+(defvar projection-project-type-babashka
+  (projection-type
+   :name 'babashka
+   :predicate "bb.edn"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-babashka 'append)
+
+
+
 (defvar projection-project-type-bloop
   (projection-type
    :name 'bloop
