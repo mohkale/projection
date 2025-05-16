@@ -53,9 +53,9 @@
 (defvar projection-multi-bb--parser-expression
   "
 (for [i *input*
-      [task-name {task-doc :doc}] (:tasks i)
+      [task-name task-body] (:tasks i)
       :when (symbol? task-name)]
-  (str task-name (char 0) task-doc))
+  (str task-name (char 0) (:doc task-body)))
 "
   "A Babashka expression that will read bb.edn structures from *input*, and
 evaluate to a sequence of strings.  Each string is the task name, a null byte,
