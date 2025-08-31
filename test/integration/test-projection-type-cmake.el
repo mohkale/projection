@@ -235,8 +235,12 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -std=c++11 -O3\")
 
 add_library(main_lib main.cpp)
+install(TARGETS main_lib COMPONENT main-lib-component)
+
 add_executable(main main.cpp)
 target_link_libraries(main main_lib)
+install(TARGETS main COMPONENT main-component)
+install(FILES main.cpp TYPE DATA COMPONENT main-component)
 
 add_test(NAME main-test COMMAND true main-test-arg)
 set_property(TEST main-test PROPERTY ENVIRONMENT \"FOO=1\")
@@ -399,7 +403,8 @@ add_test(NAME hidden COMMAND true)
         (expect (spy-calls-args-for 'compile 0) :to-equal '("rm -rf build")))))
 
   (describe "CMake file API"
-    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install")))
+    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install"
+                              "cmake:install:component:main-component" "cmake:install:component:main-lib-component")))
 
     (it "Skips setup when build directory is unset"
       (let ((projection-cmake-build-directory nil))

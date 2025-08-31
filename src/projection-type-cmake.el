@@ -816,14 +816,17 @@ This function respects `projection-cmake-cache-code-model'."
                       (alist-get index-file api-replies nil nil #'string-equal)))
                     (codemodel
                      (alist-get codemodel-file api-replies nil nil #'string-equal)))
-          (let ((targets-by-config
-                 (thread-last
-                   codemodel
-                   (alist-get 'configurations)
-                   (mapcar (apply-partially
-                            #'projection-cmake--file-api-query-config-targets api-replies)))))
+          (let* ((configurations (alist-get 'configurations codemodel))
+                 (targets-by-config
+                  (mapcar (apply-partially
+                           #'projection-cmake--file-api-query-config-targets api-replies)
+                          configurations))
+                 (install-components
+                  (projection-cmake--file-api-query-install-components
+                   api-replies configurations)))
             `((codemodel . ,codemodel)
-              (targets-by-config . ,targets-by-config)))))
+              (targets-by-config . ,targets-by-config)
+              (install-components . ,install-components)))))
     ((file-missing json-error projection-cmake-code-model)
      (projection--log :error "error while querying CMake code-model %s." (cdr err)))))
 
@@ -878,6 +881,26 @@ API-REPLIES is a collection of files parsed from the CMake reply directory."
                                         collect target-config)))
         (cons name target-configs))
     (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
+
+(cl-defsubst projection-cmake--file-api-query-install-components (api-replies configurations)
+  "Read all installable components names from the CMake CONFIGURATIONS.
+API-REPLIES is a collection of files parsed from the CMake reply directory."
+  (let ((component-names (make-hash-table :test #'equal)))
+    (cl-labels
+        ((save-component (component)
+          (unless (gethash component component-names)
+            (puthash component t component-names)))
+         (read-components (config-obj)
+          (dolist (directory (alist-get 'directories config-obj))
+            (when-let* ((directory-config-file (alist-get 'jsonFile directory))
+                        (directory-config
+                         (alist-get directory-config-file api-replies
+                                    nil nil #'string-equal)))
+              (dolist (install-target (alist-get 'installers directory-config))
+                (when-let* ((component (alist-get 'component install-target)))
+                  (save-component component)))))))
+      (mapc #'read-components configurations))
+    (hash-table-keys component-names)))
 
 ;;;###autoload
 (defun projection-cmake--file-api-create-query-file ()
@@ -1126,6 +1149,18 @@ including any remote components of the project when
          projection-cmake-build-directory
          projection-cmake-build-directory-remote)
       projection-cmake-build-directory)))
+
+(defun projection-cmake--install-command (component)
+  "Generate a CMake command to install COMPONENT."
+  (let-alist (projection-cmake--command-options 'install)
+    (projection--join-shell-command
+     `(,@(projection--env-shell-command-prefix
+          (append .environment projection-cmake-environment-variables))
+       "cmake"
+       ,@(if-let* ((build projection-cmake-build-directory))
+             (list "--install" build)
+           (user-error "Cannot install unless `projection-cmake-build-directory' is set"))
+       "--component" ,component))))
 
 (defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."

@@ -104,11 +104,11 @@ Candidates will be prefixed with PROJECT-TYPE."
    for target in
    (projection-multi-cmake--targets-from-code-model)
    unless (string-match-p projection-multi-cmake-exclude-targets target)
-     collect `(,(concat project-type ":" target)
-               :command
-               ,(projection-cmake--command 'build target)
-               :annotation
-               ,(projection-cmake--annotation 'build target))))
+   collect `(,(concat project-type ":" target)
+             :command
+             ,(projection-cmake--command 'build target)
+             :annotation
+             ,(projection-cmake--annotation 'build target))))
 
 (defun projection-multi-cmake--workflow-preset-triggers (project-type)
   "`compile-multi' target generator using CMake workflow presets.
@@ -122,6 +122,18 @@ Candidates will be prefixed with PROJECT-TYPE."
              :annotation
              ,(projection-cmake--workflow-annotation preset))))
 
+(defun projection-multi-cmake--install-components (project-type)
+  "`compile-multi' target generator for installing individual components.
+Candidates will be prefixed with PROJECT-TYPE."
+  (cl-loop
+   for component in
+   (alist-get 'install-components (projection-cmake--file-api-code-model))
+   collect `(,(concat project-type ":install:component:" component)
+             :command
+             ,(projection-cmake--install-command component)
+             :annotation
+             ,(concat "cmake component:" component))))
+
 ;;;###autoload
 (defun projection-multi-cmake-targets (&optional project-type)
   "`compile-multi' target generator function for CMake projects.
@@ -131,7 +143,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
   (let ((projection-cmake-preset 'silent))
     (append
      (projection-multi-cmake--dynamic-triggers project-type)
-     (projection-multi-cmake--workflow-preset-triggers project-type))))
+     (projection-multi-cmake--workflow-preset-triggers project-type)
+     (projection-multi-cmake--install-components project-type))))
 
 ;;;###autoload
 (defun projection-multi-compile-cmake ()
