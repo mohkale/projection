@@ -579,6 +579,7 @@ TYPE is an optional override for the type of VALUE to pass to CMake."
          (cons nil value)))
     (concat "-D" key (when cli-type (concat ":" cli-type)) "=" cli-value)))
 
+(put 'projection-cmake-kit 'error-conditions '(projection-cmake-kit error))
 (defun projection-cmake--read-kit-file (kit-file)
   "Read CMake kits from KIT-FILE.
 Returns a alist with the name being kit name and the value being
@@ -796,6 +797,7 @@ This function respects `projection-cmake-cache-code-model'."
   :description "CMake file-API code-model from last configure time"
   :hide t)
 
+(put 'projection-cmake-code-model 'error-conditions '(projection-cmake-code-model error))
 (defun projection-cmake--file-api-code-model2 ()
   "Get the generated code-model object for the projection client."
   (projection--log :debug "Reading CMake code-model")

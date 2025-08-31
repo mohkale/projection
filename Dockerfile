@@ -22,13 +22,13 @@ COPY docker/gitconfig /etc/gitconfig
 
 # Install all build/test dependencies.
 RUN apt-get update \
- && apt-get install -y software-properties-common wget \
+ && apt-get install -y wget \
  && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
   | gpg --dearmor - \
   | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
- && apt-add-repository "deb https://apt.kitware.com/ubuntu/ focal main" \
+ && echo "deb https://apt.kitware.com/ubuntu/ jammy-rc main" >> /etc/apt/sources.list \
  && apt-get update \
- && apt-get install -y cmake npm yarn ninja-build golang meson gradle python3-pytest \
+ && apt-get install -y cmake npm yarnpkg ninja-build golang meson gradle python3-pytest \
  && apt-get clean \
  && npm install -g yarn \
  && rm -rf /var/lib/apt/lists/*

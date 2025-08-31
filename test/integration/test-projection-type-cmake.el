@@ -226,7 +226,7 @@
 int main() {
   printf(\"Hello world\\n\");
 }")
-       ("CMakeLists.txt" . "cmake_minimum_required(VERSION 3.2)
+       ("CMakeLists.txt" . "cmake_minimum_required(VERSION 3.13)
 project(projection_test)
 
 enable_testing()
