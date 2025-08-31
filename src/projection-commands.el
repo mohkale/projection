@@ -49,6 +49,7 @@ DEFAULT is the optional initial command that the user will be presented with."
      (projection-command-error
       (projection--log :debug "%s" (cadr err)))))
 
+(put 'projection-command-error 'error-conditions '(projection-command-error error))
 (cl-defun projection-commands--get-command
     (project project-config cmd-type cmd-var &optional &key prompt (use-cache t))
   "Determine the command to do CMD-TYPE in PROJECT using PROJECT-CONFIG.
