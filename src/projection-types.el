@@ -266,7 +266,7 @@ Set TARGET as the TARGET to build when set."
    :install   #'projection-cmake-run-install
    :artifacts-list (list #'projection-cmake-list-artifacts
                          #'projection-ctest-list-artifacts)
-   :test-suffix ".t"
+   :test-suffix '(".t" ".g")
    :compile-multi-targets
    `(("cmake:clear" . ,#'projection-cmake-clear-build-directory))))
 

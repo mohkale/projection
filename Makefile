@@ -37,7 +37,7 @@ $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	    --eval "(checkdoc-file \"$^\")" 2>&1 \
 		| sed "s_^$$(basename "$^"):_$^:_" \
 		| tee "$@" \
-		| grep -E -v -e "\.cask/.*(if|when)-let' is an obsolete macro" \
+		| grep -E -v -e "\.cask/.*(if|when)-let' is an obsolete macro" -e "Obsolete name argument.*package-directory-recipe" \
 	    | grep . && exit 1 || true
 
 .PHONY: compile
@@ -50,7 +50,7 @@ $(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
 	    -L . \
 	    --eval '(setq create-lockfiles nil)' \
 	    -f batch-byte-compile "$^" 2>&1 \
-		| grep -v -E -e "^Wrote" -e "^Loading" -e "\.cask/.*(if|when)-let' is an obsolete macro" \
+		| grep -v -E -e "^Wrote" -e "^Loading" -e "\.cask/.*(if|when)-let' is an obsolete macro" -e "Obsolete name argument.*package-directory-recipe" \
 		| grep . && exit 1 || true ;\
 	mv -f "$^c" "$@"
 
@@ -81,3 +81,28 @@ test/unit:
 .PHONY: test/integration
 test/integration:
 	$(call run-test,test/integration)
+
+.PHONY: docker-build
+docker-build: ## Create a build image for running tests
+	@echo "[docker] Building docker image"
+	docker build -t projection-test --progress plain .
+
+DOCKER_FLAGS := -it
+define docker_run
+	docker run \
+	  --rm \
+	  $(DOCKER_FLAGS) \
+      --workdir /workspaces/flymake-collection \
+	  --volume "$$(pwd)":/workspaces/flymake-collection:ro \
+	  projection-test \
+	  $1 $2 $3 $4 $5 $6 $7 $8 $9
+endef
+
+DOCKER_RUN := bash
+.PHONY: docker
+docker: docker-build ## Run a command in the built docker-image.
+	$(call docker_run,$(DOCKER_RUN))
+
+.PHONY: docker-test
+docker-test: docker-build
+	$(call docker_run,make,test)

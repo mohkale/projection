@@ -94,7 +94,9 @@ test('simple test', exe)")
                                     "infodir" "libdir" "libexecdir" "localedir"
                                     "localstatedir" "mandir" "prefix" "sbindir"
                                     "sharedstatedir" "sysconfdir" "errorlogs"
-                                    "stdsplit")))
+                                    "stdsplit" "default_both_libraries" "genvslite"
+                                    "python.allow_limited_api" "python.bytecompile"
+                                    "vsenv" "licensedir")))
     (before-each
       (spy-on #'projection--shell-command)
       (call-interactively #'projection-commands-configure-project))
@@ -178,7 +180,7 @@ test('simple test', exe)")
       (expect 'completing-read :to-have-been-called-times 2)
       (expect (+completion-table-candidates (spy-calls-args-for 'completing-read 1))
               :to-equal '("ninja" "vs" "vs2010" "vs2012" "vs2013"
-                          "vs2015" "vs2017" "vs2019" "vs2022" "xcode"))
+                          "vs2015" "vs2017" "vs2019" "vs2022" "xcode" "none"))
 
       (expect 'projection--shell-command :to-have-been-called-times 1)
       (expect (cadr (spy-calls-args-for 'projection--shell-command 0))

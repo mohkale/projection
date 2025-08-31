@@ -147,7 +147,7 @@ supported by `compile-multi-config'."))
 
 (cl-defmethod initialize-instance :after ((obj projection-type) &rest _args)
   "Initialise a new projection type object."
-  (unless (slot-boundp obj :name)
+  (unless (slot-boundp obj 'name)
     (error "Must define the :name slot for a `projection-type' object"))
   (when (slot-boundp obj 'test-prefix)
     (oset obj test-prefix (ensure-list (oref obj test-prefix))))
