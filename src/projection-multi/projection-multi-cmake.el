@@ -122,13 +122,19 @@ Candidates will be prefixed with PROJECT-TYPE."
              :annotation
              ,(projection-cmake--workflow-annotation preset))))
 
+(defconst projection-multi-cmake--unspecified-component-name "Unspecified"
+  "See CMAKE_INSTALL_DEFAULT_COMPONENT_NAME.
+https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_DEFAULT_COMPONENT_NAME.html")
+
 (defun projection-multi-cmake--install-components (project-type)
   "`compile-multi' target generator for installing individual components.
 Candidates will be prefixed with PROJECT-TYPE."
   (cl-loop
    for component in
    (projection-cmake--file-api-install-components)
-   collect `(,(concat project-type ":install:component:" component)
+   collect `(,(if (string-equal component projection-multi-cmake--unspecified-component-name)
+                  (concat project-type ":install:no-component")
+                (concat project-type ":install:component:" component))
              :command
              ,(projection-cmake--install-command component)
              :annotation

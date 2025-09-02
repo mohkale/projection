@@ -240,7 +240,9 @@ install(TARGETS main_lib COMPONENT main-lib-component)
 add_executable(main main.cpp)
 target_link_libraries(main main_lib)
 install(TARGETS main COMPONENT main-component)
-install(FILES main.cpp TYPE DATA COMPONENT main-component)
+
+# No component
+install(FILES main.cpp TYPE DATA)
 
 add_test(NAME main-test COMMAND true main-test-arg)
 set_property(TEST main-test PROPERTY ENVIRONMENT \"FOO=1\")
@@ -404,7 +406,8 @@ add_test(NAME hidden COMMAND true)
 
   (describe "CMake file API"
     :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install"
-                              "cmake:install:component:main-component" "cmake:install:component:main-lib-component")))
+                              "cmake:install:component:main-component" "cmake:install:component:main-lib-component"
+                              "cmake:install:no-component")))
 
     (it "Skips setup when build directory is unset"
       (let ((projection-cmake-build-directory nil))
