@@ -138,7 +138,7 @@ Candidates will be prefixed with PROJECT-TYPE."
              :command
              ,(projection-cmake--install-command component)
              :annotation
-             ,(concat "cmake component:" component))))
+             ,(projection-cmake--install-annotation component))))
 
 ;;;###autoload
 (defun projection-multi-cmake-targets (&optional project-type)

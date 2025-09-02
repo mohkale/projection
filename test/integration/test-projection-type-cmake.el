@@ -258,6 +258,12 @@ add_test(NAME hidden COMMAND true)
      #'projection-commands-configure-project
      "cmake -S . -B build"))
 
+  (it "Can install a CMake project"
+    ;; GIVEN/WHEN/THEN
+    (+expect-interactive-command-calls-compile-with
+     #'projection-commands-install-project
+     "cmake --install build"))
+
   (it "Adapts configuring to the configured CMake build directory"
     ;; GIVEN
     (let ((projection-cmake-build-directory "blarg"))
@@ -265,6 +271,14 @@ add_test(NAME hidden COMMAND true)
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-configure-project
        "cmake -S . -B blarg")))
+
+  (it "Adapts installing to the configured CMake build directory"
+    ;; GIVEN
+    (let ((projection-cmake-build-directory "blarg"))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-install-project
+       "cmake --install blarg")))
 
   (it "Builds with a customized number of jobs in parallel"
     ;; GIVEN
@@ -281,6 +295,14 @@ add_test(NAME hidden COMMAND true)
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-configure-project
        "env foo\\=bar cmake -S . -B build")))
+
+  (it "Assigns any configured environment variables when installing"
+    ;; GIVEN
+    (let ((projection-cmake-environment-variables '(("foo" . "bar"))))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-install-project
+       "env foo\\=bar cmake --install build")))
 
   (it "Assigns any configured environment variables when building"
     ;; GIVEN
@@ -306,13 +328,13 @@ add_test(NAME hidden COMMAND true)
      #'projection-commands-configure-project
      "cmake -S . -B build --log-level\\=DEBUG"))
 
-  (it "Builds verbosely when configured"
+  (it "Installs verbosely when configured"
     ;; GIVEN
-    (+interactively-set-cmake-build-verbosely t)
+    (+interactively-set-cmake-install-verbosely t)
     ;; WHEN/THEN
     (+expect-interactive-command-calls-compile-with
-     #'projection-commands-build-project
-     "cmake --build build --verbose"))
+     #'projection-commands-install-project
+     "cmake --install build --verbose"))
 
   (it "Can set any customized configure options"
     ;; GIVEN
@@ -808,6 +830,16 @@ add_test(NAME hidden COMMAND true)
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
                 :to-equal build-presets-for-configure-preset-1)))
+
+    (it "Uses build preset config for install command"
+      ;; GIVEN
+      (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+      (+interactively-set-cmake-preset 'build "buildForConfigurePreset1-Debug")
+
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-install-project
+       "cmake --install build --config Debug"))
 
     (it "Doesn't prompt for a preset when one was set interactively"
       ;; GIVEN

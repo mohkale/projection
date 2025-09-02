@@ -149,6 +149,13 @@ Use this like so:
 
   (expect 'y-or-n-p :to-have-been-called-times 1))
 
+(defun +interactively-set-cmake-install-verbosely (install-verbosely)
+  (spy-on #'y-or-n-p :and-return-value install-verbosely)
+
+  (call-interactively #'projection-cmake-set-install-verbosely)
+
+  (expect 'y-or-n-p :to-have-been-called-times 1))
+
 (defun +interactively-set-cmake-configure-log-level (log-level)
   (spy-on #'completing-read :and-return-value log-level)
 

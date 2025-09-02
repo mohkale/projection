@@ -1009,6 +1009,15 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set.")
   :custom-docstring "Run CMake build commands with the --verbose flag.
 This will cause CMake to print out the compilation commands before running them.")
 
+;;;###autoload (autoload 'projection-cmake-set-install-verbosely "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'install-verbosely
+  :project 'projection-cmake
+  :category "CMake"
+  :title "CMake install verbosely"
+  :custom-type 'boolean
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Run CMake install commands with the --verbose flag.")
+
 
 
 ;; CMake CTest targets
@@ -1162,17 +1171,32 @@ including any remote components of the project when
          projection-cmake-build-directory-remote)
       projection-cmake-build-directory)))
 
-(defun projection-cmake--install-command (component)
+(defun projection-cmake--install-command (&optional component)
   "Generate a CMake command to install COMPONENT."
-  (let-alist (projection-cmake--command-options 'install)
+  ;; We query build presets to access the configuration for installation.
+  (let-alist (projection-cmake--command-options 'build)
     (projection--join-shell-command
      `(,@(projection--env-shell-command-prefix
-          (append .environment projection-cmake-environment-variables))
+          projection-cmake-environment-variables)
        "cmake"
        ,@(if-let* ((build projection-cmake-build-directory))
              (list "--install" build)
            (user-error "Cannot install unless `projection-cmake-build-directory' is set"))
-       "--component" ,component))))
+       ,@(when .configuration
+           (list "--config" .configuration))
+       ,@(when-let* ((verbose (projection-cmake--install-verbosely)))
+           (list "--verbose"))
+       ,@(when component
+           (list "--component" component))))))
+
+(defun projection-cmake--install-annotation (component)
+  "Generate an annotation for a cmake command to install COMPONENT."
+  (format "cmake %scomponent:%s"
+          (if-let* ((opts (projection-cmake--command-options 'install)))
+              (let-alist opts
+                (concat (symbol-name .backend) ":" .name " "))
+            "")
+          component))
 
 (defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
@@ -1442,6 +1466,10 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
        ,@.args
        ,@projection-cmake-configure-options))))
 
+(defun projection-cmake-run-install ()
+  "Install command generator for CMake projects."
+  (projection-cmake--install-command))
+
 ;; The remaining commands take the build directory and an optional target
 ;; with it.
 
@@ -1456,10 +1484,6 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   (apply
    #'projection-cmake--ctest-command
    (projection--cache-get 'query 'projection-cmake-ctest-target)))
-
-(defun projection-cmake-run-install ()
-  "Install command generator for CMake projects."
-  (projection-cmake--command 'install "install"))
 
 (provide 'projection-type-cmake)
 ;;; projection-type-cmake.el ends here
