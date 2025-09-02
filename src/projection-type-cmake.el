@@ -821,12 +821,12 @@ This function respects `projection-cmake-cache-code-model'."
                   (mapcar (apply-partially
                            #'projection-cmake--file-api-query-config-targets api-replies)
                           configurations))
-                 (install-components
+                 (install-components-by-config
                   (projection-cmake--file-api-query-install-components
                    api-replies configurations)))
             `((codemodel . ,codemodel)
               (targets-by-config . ,targets-by-config)
-              (install-components . ,install-components)))))
+              (install-components-by-config . ,install-components-by-config)))))
     ((file-missing json-error projection-cmake-code-model)
      (projection--log :error "error while querying CMake code-model %s." (cdr err)))))
 
@@ -883,14 +883,11 @@ API-REPLIES is a collection of files parsed from the CMake reply directory."
     (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
 
 (cl-defsubst projection-cmake--file-api-query-install-components (api-replies configurations)
-  "Read all installable components names from the CMake CONFIGURATIONS.
+  "Read instal components per configuration names from the CMake CONFIGURATIONS.
 API-REPLIES is a collection of files parsed from the CMake reply directory."
-  (let ((component-names (make-hash-table :test #'equal)))
-    (cl-labels
-        ((save-component (component)
-          (unless (gethash component component-names)
-            (puthash component t component-names)))
-         (read-components (config-obj)
+  (cl-labels
+      ((read-components (config-obj)
+        (let ((result))
           (dolist (directory (alist-get 'directories config-obj))
             (when-let* ((directory-config-file (alist-get 'jsonFile directory))
                         (directory-config
@@ -898,9 +895,13 @@ API-REPLIES is a collection of files parsed from the CMake reply directory."
                                     nil nil #'string-equal)))
               (dolist (install-target (alist-get 'installers directory-config))
                 (when-let* ((component (alist-get 'component install-target)))
-                  (save-component component)))))))
-      (mapc #'read-components configurations))
-    (hash-table-keys component-names)))
+                  (push component result)))))
+          (projection--uniquify result))))
+    (mapcar (lambda (config-obj)
+              (if-let* ((name (alist-get 'name config-obj)))
+                  (cons name (read-components config-obj))
+                (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
+            configurations)))
 
 ;;;###autoload
 (defun projection-cmake--file-api-create-query-file ()
@@ -926,6 +927,17 @@ first configured."
               (target-configurations (alist-get 'targets-by-config code-model)))
     (or (cdr (assoc build-type target-configurations))
         (cdar target-configurations))))
+
+(defun projection-cmake--file-api-install-components ()
+  "Get target metadata for the active CMake build config.
+If none is active or we could not deduce the active config we default to the
+first configured."
+  (when-let* ((code-model (projection-cmake--file-api-code-model))
+              (build-type (or (projection-cmake--active-build-type) ""))
+              (install-component-configurations
+               (alist-get 'install-components-by-config code-model)))
+    (or (cdr (assoc build-type install-component-configurations))
+        (cdar install-component-configurations))))
 
 (defun projection-cmake--cmake-project-p (project-types)
   "Helper to check whether one of the types in PROJECT-TYPES is CMake.

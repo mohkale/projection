@@ -127,7 +127,7 @@ Candidates will be prefixed with PROJECT-TYPE."
 Candidates will be prefixed with PROJECT-TYPE."
   (cl-loop
    for component in
-   (alist-get 'install-components (projection-cmake--file-api-code-model))
+   (projection-cmake--file-api-install-components)
    collect `(,(concat project-type ":install:component:" component)
              :command
              ,(projection-cmake--install-command component)
