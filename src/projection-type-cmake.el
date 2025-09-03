@@ -822,7 +822,7 @@ This function respects `projection-cmake-cache-code-model'."
                            #'projection-cmake--file-api-query-config-targets api-replies)
                           configurations))
                  (install-components-by-config
-                  (projection-cmake--file-api-query-install-components
+                  (projection-cmake--file-api-query-components
                    api-replies configurations)))
             `((codemodel . ,codemodel)
               (targets-by-config . ,targets-by-config)
@@ -882,8 +882,9 @@ API-REPLIES is a collection of files parsed from the CMake reply directory."
         (cons name target-configs))
     (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
 
-(cl-defsubst projection-cmake--file-api-query-install-components (api-replies configurations)
-  "Read instal components per configuration names from the CMake CONFIGURATIONS.
+(cl-defsubst projection-cmake--file-api-query-components (api-replies configurations)
+  "Read instal components from CMake CONFIGURATIONS.
+Each install component will be grouped by configuration the name.
 API-REPLIES is a collection of files parsed from the CMake reply directory."
   (cl-labels
       ((read-components (config-obj)
