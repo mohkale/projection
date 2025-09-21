@@ -158,6 +158,7 @@ result of each function should be deterministic."
     (require 'projection-type-cmake)
     (require 'projection-type-meson)
     (require 'projection-type-golang)
+    (require 'projection-type-meson)
     (projection-multi--cache-command-helpers
         (project-current
          projection-cmake--preset
