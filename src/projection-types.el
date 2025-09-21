@@ -554,6 +554,20 @@ Set TARGET as the TARGET to build when set."
 
 
 
+(defvar projection-project-type-bloop
+  (projection-type
+   :name 'bloop
+   :predicate ".bloop/bloop.settings.json"
+   :build "bloop compile root"
+   :test "bloop test --propagate --reporter scalac root"
+   :src-dir "src/main/"
+   :test-dir "src/test/"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-bloop 'append)
+
+
+
 (defvar projection-project-type-lein-test
   (projection-type
    :name 'lein-test
@@ -597,20 +611,6 @@ Set TARGET as the TARGET to build when set."
    :test-suffix "_test"))
 
 (add-to-list 'projection-project-types projection-project-type-clojure-cli 'append)
-
-
-
-(defvar projection-project-type-bloop
-  (projection-type
-   :name 'bloop
-   :predicate ".bloop"
-   :build "bloop compile root"
-   :test "bloop test --propagate --reporter scalac root"
-   :src-dir "src/main/"
-   :test-dir "src/test/"
-   :test-suffix "Spec"))
-
-(add-to-list 'projection-project-types projection-project-type-bloop 'append)
 
 
 
