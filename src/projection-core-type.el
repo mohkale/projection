@@ -133,7 +133,25 @@ _test.")
               (list (repeat function)))
     :documentation "Function used to query available artifacts for this project type.
 See `projection-artifacts'.")
-   ;; Multi compile
+   ;; `projection-customize-compilation'
+   (compilation-search-paths
+    :initarg :compilation-search-paths
+    :initform nil
+    :custom '(choice
+              string
+              function
+              (list (repeat (choice string function))))
+    :documentation "List of search paths to add to `compilation-search-path' for this project.")
+   (compilation-error-regexp-alist
+    :initarg :compilation-error-regexp-alist
+    :initform nil
+    :custom '(list (cons (symbol :tag "Pattern name")
+                         (sexp :tag "Value for `compilation-error-regexp-alist'")))
+    :documentation "List of search paths to add to `compilation-error-regexp-alist' for this project.
+This is intentionally written like an entry in
+`compilation-error-regexp-alist-alist' but will be added
+`compilation-error-regexp-alist' instead.")
+   ;; `projection-multi-compile'
    (compile-multi-targets
     :initarg :compile-multi-targets
     :initform nil

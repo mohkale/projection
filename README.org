@@ -40,7 +40,7 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
 * Installation
 ** Manually
    1. Clone the repo.
-   2. Add the src and/or the src/projection-multi path to your Emacs ~load-path~.
+   2. Add the src and/or any sub-package directories to your Emacs ~load-path~.
    3. Load it when needed.
 
 ** MELPA
@@ -65,6 +65,12 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
       :ensure t
       ;; Enable the `projection-hook' feature.
       :hook (after-init . global-projection-hook-mode)
+
+      ;; Enable the `projection-customize-compilation' feature.
+      :hook (compilation-mode . projection-customize-compilation-mode)
+      :custom
+      (compilation-buffer-name-function
+       #'projection-customize-compilation-buffer-name-function)
 
       ;; Require projections immediately after project.el.
       :config
@@ -134,6 +140,15 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
    With this you can hook certain functions (Example: ~read-only-mode~) into a project
    and retroactively apply it to both all the open buffers from that project and any
    new buffers that will be opened in it.
+
+** Projection Customize Compilation
+   Provides project specific integration atop =M-x compile=. This includes:
+
+   + Add project type specific build paths to =compilation-search-path=.
+     This allows you to navigate to compilation errors within CMake generated Makefiles,
+     or other search paths specific to a given kind of project.
+   + Add project type specific error regexps to =compilation-error-regexp-alist=.
+   + Define a utility function =projection-customize-compilation-buffer-name-function= that you can add to =compilation-buffer-name-function=.
 
 ** Projection ibuffer
    Offers variants of ~projectile-ibuffer~ and the [[https://github.com/purcell/ibuffer-projectile][ibuffer-projectile]] project in the

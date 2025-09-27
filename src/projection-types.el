@@ -103,6 +103,13 @@
    :test #'projection-golang-run-test
    :run #'projection-golang-run-run
    :test-suffix "_test"
+   ;; Adapted from [[https://github.com/nlamirault/gotest.el/blob/490189e68d743a851bfb42d0017428a7550e8615/gotest.el#L179][gotest.el]].
+   :compilation-error-regexp-alist
+   '((projection-go-test-testing . ("^[[:space:]]+\\([[:alnum:]-_/.]+\\.go\\):\\([0-9]+\\): .*$" 1 2)) ;; stdlib package testing
+     (projection-go-test-testify . ("^[[:space:]]+Location:\t\\([[:alnum:]-_/.]+\\.go\\):\\([0-9]+\\)$" 1 2)) ;; testify package assert
+     (projection-go-test-gopanic . ("^[[:space:]]+\\([[:alnum:]-_/.]+\\.go\\):\\([0-9]+\\) \\+0x\\(?:[0-9a-f]+\\)" 1 2)) ;; panic()
+     (projection-go-test-compile . ("^\\([[:alnum:]-_/.]+\\.go\\):\\([0-9]+\\):\\(?:\\([0-9]+\\):\\)? .*$" 1 2 3)) ;; go compiler
+     (projection-go-test-linkage . ("^\\([[:alnum:]-_/.]+\\.go\\):\\([0-9]+\\): undefined: .*$" 1 2)))
    :compile-multi-targets
    '(("go:mod:tidy" . "go mod tidy")
      ("go:mod:verify" . "go mod verify")
@@ -142,6 +149,7 @@
 (autoload 'projection-meson-get-build-command     "projection-type-meson")
 (autoload 'projection-meson-get-test-command      "projection-type-meson")
 (autoload 'projection-meson-get-install-command   "projection-type-meson")
+(autoload 'projection-meson--build-directory      "projection-type-meson")
 
 (defvar projection-project-type-meson
   (projection-type
@@ -150,7 +158,10 @@
    :configure #'projection-meson-get-configure-command
    :build #'projection-meson-get-build-command
    :test #'projection-meson-get-test-command
-   :install #'projection-meson-get-install-command))
+   :install #'projection-meson-get-install-command
+   :compilation-search-paths
+   (lambda ()
+     (projection-meson--build-directory 'expand))))
 
 (add-to-list 'projection-project-types projection-project-type-meson 'append)
 
@@ -253,8 +264,20 @@ Set TARGET as the TARGET to build when set."
 (autoload 'projection-cmake-run-test      "projection-type-cmake")
 (autoload 'projection-cmake-run-install   "projection-type-cmake")
 (autoload 'projection-cmake-clear-build-directory "projection-type-cmake")
+(autoload 'projection-cmake--build-directory "projection-type-cmake")
 (autoload 'projection-cmake-list-artifacts "projection-type-cmake")
 (autoload 'projection-ctest-list-artifacts "projection-type-cmake")
+
+(defvar projection-types--gnu-ctest-compilation-error-regexp
+  (eval-when-compile
+    (require 'compile)
+    (let* ((gnu (alist-get 'gnu compilation-error-regexp-alist-alist))
+           (new-regex (seq-copy gnu)))
+      (setcar new-regex (concat (rx bol (+ digit) ": ")
+                                (string-remove-prefix (rx bol) (car new-regex))))
+      new-regex))
+  "`compilation-error-regexp-alist-alist' entry for ctest -V invocations.
+This will prefix all compiler output with a test number colon prefix.")
 
 (defvar projection-project-type-cmake
   (projection-type
@@ -267,6 +290,11 @@ Set TARGET as the TARGET to build when set."
    :artifacts-list (list #'projection-cmake-list-artifacts
                          #'projection-ctest-list-artifacts)
    :test-suffix '(".t" ".g")
+   :compilation-error-regexp-alist
+   `((projection-gnu+ctest . ,projection-types--gnu-ctest-compilation-error-regexp))
+   :compilation-search-paths
+   (lambda ()
+     (projection-cmake--build-directory 'expand))
    :compile-multi-targets
    `(("cmake:clear" . ,#'projection-cmake-clear-build-directory))))
 
