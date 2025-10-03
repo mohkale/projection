@@ -536,7 +536,7 @@ This will prefix all compiler output with a test number colon prefix.")
                 "gradlew")
    :build #'projection-gradle-run-build
    :test #'projection-gradle-run-test
-   :test-suffix "Spec"))
+   :test-suffix '("Spec" "Test")
 
 (add-to-list 'projection-project-types projection-project-type-gradle 'append)
 
