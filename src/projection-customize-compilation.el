@@ -77,7 +77,7 @@ See `compilation-buffer-name-function' for a description of NAME-OF-MODE."
             if (stringp path)
               collect path
             else if (functionp path)
-              collect (funcall path)
+              append (ensure-list (funcall path))
             else
               do (user-error "Invalid `compilation-search-paths' entry=%S in project type: %S" path config)))))
 

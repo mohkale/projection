@@ -37,6 +37,36 @@
   "Whether to enable gradle daemon support."
   :type 'boolean)
 
+(defcustom projection-gradle-cache-java-directories t
+  "When true cache the list of directories containing Java files with each project."
+  :type '(boolean :tag "Always/Never cache presets")
+  :group 'projection-type-gradle)
+
+(projection--declare-cache-var
+  'projection-gradle-java-directories
+  :title "Gradle java directories"
+  :category "Gradle"
+  :description "Directories containing java files"
+  :hide t)
+
+(defun projection-gradle-java-directories ()
+  "Query directories in project containing java files respecting cache."
+  (projection--cache-get-with-predicate
+   (projection--current-project 'no-error)
+   'projection-gradle-java-directories
+   projection-gradle-cache-java-directories
+   #'projection-gradle--java-directories2))
+
+(defun projection-gradle--java-directories2 ()
+  "Query directories in project containing java files."
+  (when-let* ((project (projection--current-project 'no-error)))
+    (thread-last
+      project
+      (project-files)
+      (seq-filter (apply-partially #'string-match-p (rx ".java" eol)))
+      (mapcar #'file-name-directory)
+      (projection--uniquify))))
+
 (defun projection-gradle--command (&rest args)
   "Generate a Gradle command with ARGS."
   (projection--join-shell-command

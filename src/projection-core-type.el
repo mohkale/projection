@@ -141,7 +141,8 @@ See `projection-artifacts'.")
               string
               function
               (list (repeat (choice string function))))
-    :documentation "List of search paths to add to `compilation-search-path' for this project.")
+    :documentation "List of search paths to add to `compilation-search-path' for this project.
+If defined as a function the function will be invoked to return either a path or list of paths.")
    (compilation-error-regexp-alist
     :initarg :compilation-error-regexp-alist
     :initform nil

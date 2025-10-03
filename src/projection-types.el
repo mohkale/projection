@@ -527,6 +527,7 @@ This will prefix all compiler output with a test number colon prefix.")
 
 (autoload 'projection-gradle-run-build "projection-type-gradle")
 (autoload 'projection-gradle-run-test  "projection-type-gradle")
+(autoload 'projection-gradle-java-directories "projection-type-gradle")
 
 (defvar projection-project-type-gradle
   (projection-type
@@ -537,6 +538,7 @@ This will prefix all compiler output with a test number colon prefix.")
    :build #'projection-gradle-run-build
    :test #'projection-gradle-run-test
    :test-suffix '("Spec" "Test")
+   :compilation-search-paths #'projection-gradle-java-directories))
 
 (add-to-list 'projection-project-types projection-project-type-gradle 'append)
 
