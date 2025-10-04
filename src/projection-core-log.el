@@ -28,6 +28,16 @@ Set to nil to disable all debug logging."
   :group 'projection
   :type '(optional string))
 
+(defcustom projection-log-level :error
+  "Value of `warning-minimum-log-level' for `projection' logs."
+  :group 'projection
+  :type 'symbol)
+
+(defcustom projection-log-display-level :emergency
+  "Value of `warning-minimum-level' for `projection' logs."
+  :group 'projection
+  :type 'symbol)
+
 (defmacro projection--log (level msg &rest args)
   "Log, at level LEVEL, the message MSG formatted with ARGS.
 LEVEL is passed to `display-warning', which is used to display
@@ -50,7 +60,8 @@ generated it."
 See `projection--log' for a description of LEVEL MSG and ARGS.
 SUBLOG is the name of the file that produced the log."
   (when projection-log-buffer
-    (let ((warning-minimum-level :emergency)
+    (let ((warning-minimum-level projection-log-display-level)
+          (warning-minimum-log-level projection-log-level)
           (warning-type-format
            (format " [%s]" (or sublog 'projection))))
       (ignore warning-minimum-level)
