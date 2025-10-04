@@ -29,6 +29,8 @@
   "Projection project type definitions."
   :group 'projection)
 
+(autoload 'projection-java-directories "projection-type-java")
+
 ;; NOTE: Project type detection happens in reverse order to registration. As
 ;; function based project type detection is considerably slower than simple
 ;; file based matching, such project types are defined near the top of this
@@ -519,7 +521,8 @@ This will prefix all compiler output with a test number colon prefix.")
    :build "mvn -B clean install"
    :test "mvn -B test"
    :src-dir "src/main/"
-   :test-dir "src/test/"))
+   :test-dir "src/test/"
+   :compilation-search-paths #'projection-java-directories))
 
 (add-to-list 'projection-project-types projection-project-type-maven 'append)
 
@@ -527,7 +530,6 @@ This will prefix all compiler output with a test number colon prefix.")
 
 (autoload 'projection-gradle-run-build "projection-type-gradle")
 (autoload 'projection-gradle-run-test  "projection-type-gradle")
-(autoload 'projection-gradle-java-directories "projection-type-gradle")
 
 (defvar projection-project-type-gradle
   (projection-type
@@ -538,7 +540,7 @@ This will prefix all compiler output with a test number colon prefix.")
    :build #'projection-gradle-run-build
    :test #'projection-gradle-run-test
    :test-suffix '("Spec" "Test")
-   :compilation-search-paths #'projection-gradle-java-directories))
+   :compilation-search-paths #'projection-java-directories))
 
 (add-to-list 'projection-project-types projection-project-type-gradle 'append)
 
