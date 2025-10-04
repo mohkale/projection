@@ -43,8 +43,9 @@
    `(,(if (file-exists-p "gradlew")
           "./gradlew"
         "gradle")
-     ,@(when projection-gradle-use-daemon
-         (list "--daemon"))
+     ,(if projection-gradle-use-daemon
+          "--daemon"
+        "--no-daemon")
      ,@(when-let* ((job-count projection-build-jobs))
          (list "--parallel"))
      ,@args)))

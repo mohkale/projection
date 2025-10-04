@@ -40,7 +40,7 @@
         ;; WHEN/THEN
         (+expect-interactive-command-calls-compile-with
          #'projection-commands-build-project
-         "gradle build -x test"))))
+         "gradle --no-daemon build -x test"))))
 
   (describe "Multi compile"
     (before-all (require 'projection-multi-gradle))
