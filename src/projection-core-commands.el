@@ -142,5 +142,13 @@ REMOVE-TYPES is a list of project types to stop associating with PROJECT."
     concat ": "
     concat value)))
 
+
+
+(defvar projection-local-cache-directory)
+;;;###autoload (autoload 'projection-clear-local-cache-directory "projection-core-commands" nil 'interactive)
+(defalias 'projection-clear-local-cache-directory
+  (projection--create-clear-directory-command
+   'projection-local-cache-directory))
+
 (provide 'projection-core-commands)
 ;;; projection-core-commands.el ends here

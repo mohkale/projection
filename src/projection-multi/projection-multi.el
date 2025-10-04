@@ -39,6 +39,7 @@
 
 (require 'compile-multi)
 (require 'projection-commands)
+(require 'projection-core-commands)
 
 (defgroup projection-multi nil
   "Project type integration for `compile-multi'."
@@ -178,8 +179,11 @@ result of each function should be deterministic."
   (let ((project (projection--current-project 'no-error)))
     (projection-multi-compile--run
      project
-     (append `((t ,@(when project
-                      (projection-multi--project-triggers project))))
+     (append `((t
+                ,@(when project
+                    (projection-multi--project-triggers project)))
+               ((file-exists-p projection-local-cache-directory)
+                ("projection:clear-local-cache-directory" . ,#'projection-clear-local-cache-directory)))
              (when projection-multi-extend-existing-config
                compile-multi-config)))))
 

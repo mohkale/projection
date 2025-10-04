@@ -122,5 +122,10 @@
   :type projection-build-jobs--type
   :group 'projection)
 
+(defcustom projection-local-cache-directory ".projection"
+  "Root directory local to a project where projection can dump artifacts."
+  :type 'string
+  :group 'projection)
+
 (provide 'projection)
 ;;; projection.el ends here
