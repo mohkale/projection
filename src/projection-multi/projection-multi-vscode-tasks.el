@@ -108,6 +108,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-compile-vscode-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-vscode-tasks)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-vscode-tasks
     #'projection-multi-compile-vscode-targets))

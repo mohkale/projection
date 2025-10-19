@@ -109,6 +109,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-poetry-poe-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-python-poetry)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-python-poetry
     #'projection-multi-poetry-poe-targets))

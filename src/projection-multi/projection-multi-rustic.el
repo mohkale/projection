@@ -74,6 +74,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-rustic-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-rust-cargo)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-rust-cargo
     #'projection-multi-rustic-targets))

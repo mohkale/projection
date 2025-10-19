@@ -73,6 +73,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-meson-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-meson)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-meson
     #'projection-multi-meson-targets))
