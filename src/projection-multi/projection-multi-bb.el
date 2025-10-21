@@ -57,15 +57,14 @@
       :when (symbol? task-name)]
   (str task-name (char 0) (:doc task-body)))
 "
-  "A Babashka expression that will read bb.edn structures from *input*, and
-evaluate to a sequence of strings.  Each string is the task name, a null byte,
-then the task description.")
+  "Parse tasks from bb.edn. A Babashka expression that will read bb.edn
+structures from *input*, and evaluate to a sequence of strings.  Each string is
+the task name, a null byte, then the task description.")
 
 ;;;###autoload
 (defun projection-multi-bb--tasks2 ()
-  "`compile-multi' target generator function for Babashka tasks.  Returns a list
-of lists each of form (TASK-NAME TASK-DESCRIPTION)."
-  ;; REVIEW: This procedure parses the output of 
+  "A `compile-multi' target generator function for Babashka tasks.  Returns a
+list of lists each of form (TASK-NAME TASK-DESCRIPTION)."
   (projection--log :debug "Resolving available Babashka tasks")
   (projection--with-shell-command-buffer
     ;; Important not to quote the redirection!
@@ -80,6 +79,7 @@ of lists each of form (TASK-NAME TASK-DESCRIPTION)."
 
 ;;;###autoload
 (defun projection-multi-bb--tasks ()
+  "Read tasks from bb.edn respecting project-cache."
   (projection--cache-get-with-predicate
    (projection--current-project 'no-error)
    'projection-multi-bb-tasks
