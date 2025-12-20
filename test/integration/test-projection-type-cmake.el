@@ -235,8 +235,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -std=c++11 -O3\")
 
 add_library(main_lib main.cpp)
+install(TARGETS main_lib COMPONENT main-lib-component)
+
 add_executable(main main.cpp)
 target_link_libraries(main main_lib)
+install(TARGETS main COMPONENT main-component)
+
+# No component
+install(FILES main.cpp TYPE DATA)
 
 add_test(NAME main-test COMMAND true main-test-arg)
 set_property(TEST main-test PROPERTY ENVIRONMENT \"FOO=1\")
@@ -252,6 +258,12 @@ add_test(NAME hidden COMMAND true)
      #'projection-commands-configure-project
      "cmake -S . -B build"))
 
+  (it "Can install a CMake project"
+    ;; GIVEN/WHEN/THEN
+    (+expect-interactive-command-calls-compile-with
+     #'projection-commands-install-project
+     "cmake --install build"))
+
   (it "Adapts configuring to the configured CMake build directory"
     ;; GIVEN
     (let ((projection-cmake-build-directory "blarg"))
@@ -259,6 +271,14 @@ add_test(NAME hidden COMMAND true)
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-configure-project
        "cmake -S . -B blarg")))
+
+  (it "Adapts installing to the configured CMake build directory"
+    ;; GIVEN
+    (let ((projection-cmake-build-directory "blarg"))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-install-project
+       "cmake --install blarg")))
 
   (it "Builds with a customized number of jobs in parallel"
     ;; GIVEN
@@ -275,6 +295,14 @@ add_test(NAME hidden COMMAND true)
       (+expect-interactive-command-calls-compile-with
        #'projection-commands-configure-project
        "env foo\\=bar cmake -S . -B build")))
+
+  (it "Assigns any configured environment variables when installing"
+    ;; GIVEN
+    (let ((projection-cmake-environment-variables '(("foo" . "bar"))))
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-install-project
+       "env foo\\=bar cmake --install build")))
 
   (it "Assigns any configured environment variables when building"
     ;; GIVEN
@@ -300,13 +328,13 @@ add_test(NAME hidden COMMAND true)
      #'projection-commands-configure-project
      "cmake -S . -B build --log-level\\=DEBUG"))
 
-  (it "Builds verbosely when configured"
+  (it "Installs verbosely when configured"
     ;; GIVEN
-    (+interactively-set-cmake-build-verbosely t)
+    (+interactively-set-cmake-install-verbosely t)
     ;; WHEN/THEN
     (+expect-interactive-command-calls-compile-with
-     #'projection-commands-build-project
-     "cmake --build build --verbose"))
+     #'projection-commands-install-project
+     "cmake --install build --verbose"))
 
   (it "Can set any customized configure options"
     ;; GIVEN
@@ -399,7 +427,9 @@ add_test(NAME hidden COMMAND true)
         (expect (spy-calls-args-for 'compile 0) :to-equal '("rm -rf build")))))
 
   (describe "CMake file API"
-    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install")))
+    :var ((expected-targets '("cmake:all" "cmake:clean" "cmake:main_lib" "cmake:main" "cmake:install"
+                              "cmake:install:component:main-component" "cmake:install:component:main-lib-component"
+                              "cmake:install:no-component")))
 
     (it "Skips setup when build directory is unset"
       (let ((projection-cmake-build-directory nil))
@@ -800,6 +830,16 @@ add_test(NAME hidden COMMAND true)
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
                 :to-equal build-presets-for-configure-preset-1)))
+
+    (it "Uses build preset config for install command"
+      ;; GIVEN
+      (+interactively-set-cmake-preset 'configure "Preset number 1 for configuring")
+      (+interactively-set-cmake-preset 'build "buildForConfigurePreset1-Debug")
+
+      ;; WHEN/THEN
+      (+expect-interactive-command-calls-compile-with
+       #'projection-commands-install-project
+       "cmake --install build --config Debug"))
 
     (it "Doesn't prompt for a preset when one was set interactively"
       ;; GIVEN

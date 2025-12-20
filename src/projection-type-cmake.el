@@ -816,14 +816,17 @@ This function respects `projection-cmake-cache-code-model'."
                       (alist-get index-file api-replies nil nil #'string-equal)))
                     (codemodel
                      (alist-get codemodel-file api-replies nil nil #'string-equal)))
-          (let ((targets-by-config
-                 (thread-last
-                   codemodel
-                   (alist-get 'configurations)
-                   (mapcar (apply-partially
-                            #'projection-cmake--file-api-query-config-targets api-replies)))))
+          (let* ((configurations (alist-get 'configurations codemodel))
+                 (targets-by-config
+                  (mapcar (apply-partially
+                           #'projection-cmake--file-api-query-config-targets api-replies)
+                          configurations))
+                 (install-components-by-config
+                  (projection-cmake--file-api-query-components
+                   api-replies configurations)))
             `((codemodel . ,codemodel)
-              (targets-by-config . ,targets-by-config)))))
+              (targets-by-config . ,targets-by-config)
+              (install-components-by-config . ,install-components-by-config)))))
     ((file-missing json-error projection-cmake-code-model)
      (projection--log :error "error while querying CMake code-model %s." (cdr err)))))
 
@@ -879,6 +882,28 @@ API-REPLIES is a collection of files parsed from the CMake reply directory."
         (cons name target-configs))
     (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
 
+(cl-defsubst projection-cmake--file-api-query-components (api-replies configurations)
+  "Read instal components from CMake CONFIGURATIONS.
+Each install component will be grouped by configuration the name.
+API-REPLIES is a collection of files parsed from the CMake reply directory."
+  (cl-labels
+      ((read-components (config-obj)
+        (let ((result))
+          (dolist (directory (alist-get 'directories config-obj))
+            (when-let* ((directory-config-file (alist-get 'jsonFile directory))
+                        (directory-config
+                         (alist-get directory-config-file api-replies
+                                    nil nil #'string-equal)))
+              (dolist (install-target (alist-get 'installers directory-config))
+                (when-let* ((component (alist-get 'component install-target)))
+                  (push component result)))))
+          (projection--uniquify result))))
+    (mapcar (lambda (config-obj)
+              (if-let* ((name (alist-get 'name config-obj)))
+                  (cons name (read-components config-obj))
+                (signal 'projection-cmake-code-model "Encountered configuration object with no name")))
+            configurations)))
+
 ;;;###autoload
 (defun projection-cmake--file-api-create-query-file ()
   "Create a file-api client query file for projection."
@@ -903,6 +928,17 @@ first configured."
               (target-configurations (alist-get 'targets-by-config code-model)))
     (or (cdr (assoc build-type target-configurations))
         (cdar target-configurations))))
+
+(defun projection-cmake--file-api-install-components ()
+  "Get target metadata for the active CMake build config.
+If none is active or we could not deduce the active config we default to the
+first configured."
+  (when-let* ((code-model (projection-cmake--file-api-code-model))
+              (build-type (or (projection-cmake--active-build-type) ""))
+              (install-component-configurations
+               (alist-get 'install-components-by-config code-model)))
+    (or (cdr (assoc build-type install-component-configurations))
+        (cdar install-component-configurations))))
 
 (defun projection-cmake--cmake-project-p (project-types)
   "Helper to check whether one of the types in PROJECT-TYPES is CMake.
@@ -973,6 +1009,15 @@ Supplied as the default CMAKE_BUILD_TYPE definition when set.")
   :custom-group 'projection-type-cmake
   :custom-docstring "Run CMake build commands with the --verbose flag.
 This will cause CMake to print out the compilation commands before running them.")
+
+;;;###autoload (autoload 'projection-cmake-set-install-verbosely "projection-type-cmake" nil 'interactive)
+(projection--declare-project-type-option 'install-verbosely
+  :project 'projection-cmake
+  :category "CMake"
+  :title "CMake install verbosely"
+  :custom-type 'boolean
+  :custom-group 'projection-type-cmake
+  :custom-docstring "Run CMake install commands with the --verbose flag.")
 
 
 
@@ -1126,6 +1171,33 @@ including any remote components of the project when
          projection-cmake-build-directory
          projection-cmake-build-directory-remote)
       projection-cmake-build-directory)))
+
+(defun projection-cmake--install-command (&optional component)
+  "Generate a CMake command to install COMPONENT."
+  ;; We query build presets to access the configuration for installation.
+  (let-alist (projection-cmake--command-options 'build)
+    (projection--join-shell-command
+     `(,@(projection--env-shell-command-prefix
+          projection-cmake-environment-variables)
+       "cmake"
+       ,@(if-let* ((build projection-cmake-build-directory))
+             (list "--install" build)
+           (user-error "Cannot install unless `projection-cmake-build-directory' is set"))
+       ,@(when .configuration
+           (list "--config" .configuration))
+       ,@(when-let* ((verbose (projection-cmake--install-verbosely)))
+           (list "--verbose"))
+       ,@(when component
+           (list "--component" component))))))
+
+(defun projection-cmake--install-annotation (component)
+  "Generate an annotation for a cmake command to install COMPONENT."
+  (format "cmake %scomponent:%s"
+          (if-let* ((opts (projection-cmake--command-options 'install)))
+              (let-alist opts
+                (concat (symbol-name .backend) ":" .name " "))
+            "")
+          component))
 
 (defun projection-cmake--command (&optional build-type target)
   "Generate a CMake command optionally to run TARGET for BUILD-TYPE."
@@ -1395,6 +1467,10 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
        ,@.args
        ,@projection-cmake-configure-options))))
 
+(defun projection-cmake-run-install ()
+  "Install command generator for CMake projects."
+  (projection-cmake--install-command))
+
 ;; The remaining commands take the build directory and an optional target
 ;; with it.
 
@@ -1409,10 +1485,6 @@ directory is unknown and `projection-cmake-cache-file' is not absolute."))
   (apply
    #'projection-cmake--ctest-command
    (projection--cache-get 'query 'projection-cmake-ctest-target)))
-
-(defun projection-cmake-run-install ()
-  "Install command generator for CMake projects."
-  (projection-cmake--command 'install "install"))
 
 (provide 'projection-type-cmake)
 ;;; projection-type-cmake.el ends here
