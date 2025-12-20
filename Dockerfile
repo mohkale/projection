@@ -30,6 +30,7 @@ RUN apt-get update \
  && apt-get update \
  && apt-get install -y cmake npm yarnpkg ninja-build golang meson gradle python3-pytest \
  && apt-get clean \
+ && curl -s https://raw.githubusercontent.com/babashka/babashka/master/install | bash \
  && npm install -g yarn \
  && rm -rf /var/lib/apt/lists/*
 
