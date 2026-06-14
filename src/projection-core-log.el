@@ -64,7 +64,7 @@ SUBLOG is the name of the file that produced the log."
           (warning-minimum-log-level projection-log-level)
           (warning-type-format
            (format " [%s]" (or sublog 'projection))))
-      (ignore warning-minimum-level)
+      (ignore warning-minimum-level warning-minimum-log-level)
       (display-warning
        (list 'projection sublog)
        (apply #'format-message msg args)
