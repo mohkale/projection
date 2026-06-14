@@ -1,12 +1,12 @@
 ARG EMACS_VERSION=master
-FROM silex/emacs:$EMACS_VERSION-ci-cask
+FROM silex/emacs:$EMACS_VERSION-ci-eask
 
 ARG UNAME=projection-docker
 
 # Setup basic git credentials so tests that use git work.
 COPY docker/gitconfig /root/.gitconfig
 
-# # Install all Emacs package dependencies.
+# Install all Emacs package dependencies.
 # RUN mkdir -p /tmp/projection-build
 # COPY Cask /tmp/projection-build
 # COPY src /tmp/projection-build/src
@@ -14,10 +14,10 @@ COPY docker/gitconfig /root/.gitconfig
 #  && cask install \
 #  && rm -rvf /tmp/projection-build
 
-RUN chmod 755 -R /root/ \
- && chmod 777 -R /root/.cask \
- && mkdir -p /nonexistent \
- && chown -R nobody /nonexistent
+# RUN chmod 755 -R /root/ \
+#  && chmod 777 -R /root/.eask \
+#  && mkdir -p /nonexistent \
+#  && chown -R nobody /nonexistent
 COPY docker/gitconfig /etc/gitconfig
 
 # Install all build/test dependencies.
@@ -33,6 +33,6 @@ RUN apt-get update \
  && npm install -g yarn \
  && rm -rf /var/lib/apt/lists/*
 
-ENV PATH=$PATH:/nix/store/emacs/bin/:/root/.cask/bin:$HOME/.cask/bin/
+ENV PATH=$PATH:/nix/store/emacs/bin/
 
 CMD bash

@@ -74,8 +74,8 @@ PACKAGE-JSON is the file that will be used to invalidate the cache of targets."
                   (or
                    (and
                     "info Commands available from binary scripts: "
-                    (group-n 1 (+ any)))
-                   (and (repeat 3 space) "-" space (group-n 2 (+ any))))
+                    (group-n 1 (+ not-newline)))
+                   (and (repeat 3 space) "-" space (group-n 2 (+ not-newline))))
                   eol))
                 nil 'noerror)
           (cond

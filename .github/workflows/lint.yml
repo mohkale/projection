@@ -20,4 +20,4 @@ jobs:
       - name: Build test container
         run: docker build --build-arg EMACS_VERSION=${{ matrix.emacs_version }} --tag projection-test .
       - name: Run linters
-        run: docker run --rm --volume .:/workarea --workdir /workarea projection-test sh -c 'cask install && make lint'
+        run: docker run --rm --volume .:/workarea --workdir /workarea projection-test sh -c 'eask install-deps && make lint'

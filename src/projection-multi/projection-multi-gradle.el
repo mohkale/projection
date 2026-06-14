@@ -67,7 +67,7 @@
                   (re-search-forward
                    (rx bol
                        (group (+ (or alnum ":")))
-                       (? space "-" space (group (+ any)))
+                       (? space "-" space (group (+ not-newline)))
                        eol)
                    (line-end-position)
                    'noerror))

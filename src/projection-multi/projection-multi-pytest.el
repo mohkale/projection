@@ -68,12 +68,12 @@
        while (re-search-forward (rx bol
                                     (or
                                      (and
-                                      (group-n 1 (+ any)) "::"
-                                      (group-n 2 (+ any)) "::"
-                                      (group-n 3 (+ any)))
+                                      (group-n 1 (+ not-newline)) "::"
+                                      (group-n 2 (+ not-newline)) "::"
+                                      (group-n 3 (+ not-newline)))
                                      (and
-                                      (group-n 1 (+ any)) "::"
-                                      (group-n 3 (+ any))))
+                                      (group-n 1 (+ not-newline)) "::"
+                                      (group-n 3 (+ not-newline))))
                                     eol)
                                 nil 'no-error)
        ;; Collect parameterised test without params first.
