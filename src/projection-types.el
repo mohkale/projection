@@ -514,15 +514,43 @@ This will prefix all compiler output with a test number colon prefix.")
 
 
 
+(autoload 'projection-maven-run-configure "projection-type-maven")
+(autoload 'projection-maven-run-build "projection-type-maven")
+(autoload 'projection-maven-run-test  "projection-type-maven")
+(autoload 'projection-maven-resolve-and-extract-source-files "projection-type-maven")
+(autoload 'projection-maven-local-source-directories "projection-type-maven")
+
 (defvar projection-project-type-maven
   (projection-type
    :name 'maven
    :predicate "pom.xml"
-   :build "mvn -B clean install"
-   :test "mvn -B test"
+   :configure #'projection-maven-run-configure
+   :build #'projection-maven-run-build
+   :test #'projection-maven-run-test
+   :test-suffix "Test"
    :src-dir "src/main/"
    :test-dir "src/test/"
-   :compilation-search-paths #'projection-java-directories))
+   :compilation-search-paths
+   (list #'projection-java-directories
+         #'projection-maven-local-source-directories)
+   :compile-multi-targets
+   (append
+    `(("maven:resolve-sources" . ,#'projection-maven-resolve-and-extract-source-files))
+    (eval-when-compile
+      ;; Taken from [[https://github.com/microsoft/vscode-maven/blob/9f23369ad3da382f43c58302e0c673481e4e8f03/src/completion/constants.ts#L8][vscode-maven]].
+      (cl-loop for lifecycle in '("clean"
+                                  "validate"
+                                  "compile"
+                                  "test"
+                                  "test-compile"
+                                  "package"
+                                  "verify"
+                                  "install"
+                                  "site"
+                                  "deploy")
+               collect (cons (concat "maven:lifecycle:" lifecycle)
+                             (concat "mvn --color=always -B " lifecycle)))))
+   ))
 
 (add-to-list 'projection-project-types projection-project-type-maven 'append)
 
