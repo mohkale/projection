@@ -170,9 +170,9 @@ use."
       (save-match-data
         (while (search-forward-regexp
                 (rx
-                 (or (and bol "Available " (group-n 1 (one-or-more any)) " presets:" )
+                 (or (and bol "Available " (group-n 1 (one-or-more not-newline)) " presets:" )
                      (and bol (+ space) "\"" (group-n 2 (+ (not "\""))) "\""
-                          (optional (+ space) "-" (+ space) (group-n 3 (+ any))))))
+                          (optional (+ space) "-" (+ space) (group-n 3 (+ not-newline))))))
                 nil 'noerror)
           (cond
            ((match-string 1)
@@ -806,7 +806,7 @@ This function respects `projection-cmake-cache-code-model'."
       (let* ((api-replies (projection-cmake--file-api-bulk-read-reply-directory
                            (projection-cmake--build-directory 'expand)))
              (indexes (seq-filter (apply-partially #'string-match-p
-                                                   (rx bol "index-" (+ any) ".json" eol))
+                                                   (rx bol "index-" (+ not-newline) ".json" eol))
                                   (mapcar #'car api-replies)))
              (index-file (car (cl-sort indexes #'string>))))
         (unless indexes

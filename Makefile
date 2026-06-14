@@ -5,7 +5,7 @@ SRC      := $(wildcard $(SRC_DIR)/*.el $(SRC_DIR)/projection-multi/*.el $(SRC_DI
 ELC      := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.elc,$(SRC))
 ELCHKDOC := $(patsubst $(SRC_DIR)/%.el,$(BIN_DIR)/%.checkdoc,$(SRC))
 
-EMACS ?= cask emacs \
+EMACS ?= eask emacs \
     --eval '(push (concat default-directory "$(SRC_DIR)/") load-path)' \
 	--eval '(push (concat default-directory "$(SRC_DIR)/projection-dape") load-path)' \
 	--eval '(push (concat default-directory "$(SRC_DIR)/projection-multi") load-path)' \
@@ -23,10 +23,10 @@ lint: compile checkdoc
 checkdoc: configure $(ELCHKDOC) ## Check for missing or poorly formatted docstrings
 
 .PHONY: configure
-configure: .cask
+configure: .eask
 
-.cask:
-	cask install
+.eask:
+	eask install
 
 $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	mkdir -p "$$(dirname "$@")"
@@ -37,7 +37,7 @@ $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	    --eval "(checkdoc-file \"$^\")" 2>&1 \
 		| sed "s_^$$(basename "$^"):_$^:_" \
 		| tee "$@" \
-		| grep -E -v -e "\.cask/.*(if|when)-let' is an obsolete macro" -e "Obsolete name argument.*package-directory-recipe" \
+		| grep -E -v -e "\.eask/.*(if|when)-let' is an obsolete macro" -e "Obsolete name argument.*package-directory-recipe" \
 	    | grep . && exit 1 || true
 
 .PHONY: compile
@@ -50,7 +50,7 @@ $(BIN_DIR)/%.elc: $(SRC_DIR)/%.el
 	    -L . \
 	    --eval '(setq create-lockfiles nil)' \
 	    -f batch-byte-compile "$^" 2>&1 \
-		| grep -v -E -e "^Wrote" -e "^Loading" -e "\.cask/.*(if|when)-let' is an obsolete macro" -e "Obsolete name argument.*package-directory-recipe" \
+		| grep -v -E -e "^Wrote" -e "^Loading" -e "\.eask/.*(if|when)-let' is an obsolete macro" -e "Obsolete name argument.*package-directory-recipe" \
 		| grep . && exit 1 || true ;\
 	mv -f "$^c" "$@"
 

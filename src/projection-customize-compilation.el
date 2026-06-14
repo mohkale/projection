@@ -68,13 +68,18 @@ See `compilation-buffer-name-function' for a description of NAME-OF-MODE."
     (when-let* ((project (projection--current-project 'no-error)))
       (projection-project-types (project-root project)))
     append (cl-loop
-            for path in (ensure-list (oref config compilation-search-paths))
+            for path in
+            ;; Kludge for `ensure-list' in Emacs older than 30.
+            (let ((paths (oref config compilation-search-paths)))
+              (if (functionp paths)
+                  (list paths)
+                (ensure-list paths)))
             if (stringp path)
-            collect path
+              collect path
             else if (functionp path)
-            collect (funcall path)
+              collect (funcall path)
             else
-            do (user-error "Invalid `compilation-search-paths' in project type: %S" config)))))
+              do (user-error "Invalid `compilation-search-paths' entry=%S in project type: %S" path config)))))
 
 
 
