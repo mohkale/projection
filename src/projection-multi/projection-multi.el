@@ -61,7 +61,7 @@ not set PROJECT will be determined automatically.
 
 The generated candidates will be of the form
 prefix:project-type:project-command."
-  (setq project-type-prefix (or project-type-prefix "project"))
+  (setq project-type-prefix (or project-type-prefix "projection"))
 
   (when-let* ((project (or project (projection--current-project 'no-error)))
               (current-project-types

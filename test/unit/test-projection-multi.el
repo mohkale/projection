@@ -87,14 +87,14 @@
       (call-interactively #'projection-multi-compile)
 
       ;; THEN
-      (dolist (target '("project:foo:run" "project:bar:test"))
+      (dolist (target '("projection:foo:run" "projection:bar:test"))
         (expect (+completion-table-candidates
                  (spy-calls-args-for 'completing-read 0))
                 :to-contain target)))
 
     (it "Run selected command"
       ;; GIVEN
-      (spy-on #'completing-read :and-return-value "project:foo:run")
+      (spy-on #'completing-read :and-return-value "projection:foo:run")
 
       ;; WHEN
       (call-interactively #'projection-multi-compile)
