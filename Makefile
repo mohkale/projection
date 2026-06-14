@@ -26,7 +26,7 @@ checkdoc: configure $(ELCHKDOC) ## Check for missing or poorly formatted docstri
 configure: .eask
 
 .eask:
-	eask install
+	eask install --dev
 
 $(BIN_DIR)/%.checkdoc: $(SRC_DIR)/%.el
 	mkdir -p "$$(dirname "$@")"
