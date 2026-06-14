@@ -723,11 +723,13 @@ This will prefix all compiler output with a test number colon prefix.")
 
 (defvar projection-project-type-emacs-eask
   (projection-type
-   :name 'emacs-eask
+   :name 'eask
    :predicate "Eask"
-   :build "eask install"
+   :configure "eask install-deps"
    :test-prefix "test-"
-   :test-suffix "-test"))
+   :test-suffix "-test"
+   :compile-multi-targets
+   '(("eask" . "eask info"))))
 
 (add-to-list 'projection-project-types projection-project-type-emacs-eask 'append)
 
