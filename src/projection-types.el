@@ -234,6 +234,23 @@ Set TARGET as the TARGET to build when set."
 
 (add-to-list 'projection-project-types projection-project-type-make 'append)
 
+(defun projection-just-run-build (&optional target)
+  "Build command generator for Just projects.
+Set TARGET as the TARGET to build when set."
+  (projection--join-shell-command
+   `("just"
+     ,@(when target (list target)))))
+
+(defvar projection-project-type-just
+  (projection-type
+   :name 'just
+   :predicate '("justfile")
+   :build   #'projection-just-run-build
+   :test    (apply-partially #'projection-just-run-build "test")
+   :install "just install"))
+
+(add-to-list 'projection-project-types projection-project-type-just 'append)
+
 
 
 (defcustom projection-autotools-configure-options nil
