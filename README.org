@@ -213,7 +213,7 @@ very targeted support for some project types like [[https://cmake.org/][CMake]].
    - Make
    - Poetry Poe
    - Tox
-
+   - Babashka
 
 ** Projection multi-embark
 #+html: <p align="right">

@@ -674,6 +674,30 @@ This will prefix all compiler output with a test number colon prefix.")
 
 
 
+(defvar projection-project-type-babashka
+  (projection-type
+   :name 'babashka
+   :predicate "bb.edn"
+   :test-suffix "_test"))
+
+(add-to-list 'projection-project-types projection-project-type-babashka 'append)
+
+
+
+(defvar projection-project-type-bloop
+  (projection-type
+   :name 'bloop
+   :predicate ".bloop"
+   :build "bloop compile root"
+   :test "bloop test --propagate --reporter scalac root"
+   :src-dir "src/main/"
+   :test-dir "src/test/"
+   :test-suffix "Spec"))
+
+(add-to-list 'projection-project-types projection-project-type-bloop 'append)
+
+
+
 (defvar projection-project-type-ruby-rspec
   (projection-type
    :name 'ruby-rspec
