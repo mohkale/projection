@@ -102,6 +102,8 @@ When set the generated targets will be prefixed with PROJECT-TYPE."
    `((t ,#'projection-multi-gradle-targets))))
 
 ;;;###autoload
+(defvar projection-project-type-gradle)
+;;;###autoload
 (with-eval-after-load 'projection-types
   (projection-type-append-compile-multi-targets projection-project-type-gradle
     #'projection-multi-gradle-targets))
