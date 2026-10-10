@@ -831,6 +831,23 @@ This function respects `projection-cmake-cache-code-model'."
      (projection--log :error "error while querying CMake code-model %s." (cdr err)))))
 
 (defun projection-cmake--file-api-bulk-read-reply-directory (build-dir)
+  "Read all JSON replies from the CMake file API under BUILD-DIR.
+Local replies are read directly without relying on a particular shell.
+Remote replies are read in bulk to avoid separate file transfers."
+  (if (file-remote-p build-dir)
+      (projection-cmake--file-api-bulk-read-remote-reply-directory build-dir)
+    (let ((reply-path (expand-file-name
+                       (projection-cmake--file-api-reply-directory-suffix)
+                       build-dir)))
+      (cl-loop for file in (directory-files reply-path t (rx ".json" eol))
+               collect (cons (file-name-nondirectory file)
+                             (with-temp-buffer
+                               (insert-file-contents file)
+                               (json-parse-buffer :object-type 'alist :array-type 'list
+                                                  :null-object json-null
+                                                  :false-object json-false)))))))
+
+(defun projection-cmake--file-api-bulk-read-remote-reply-directory (build-dir)
   "Read all files in the CMake file API reply directory under BUILD-DIR at once.
 This a performance optimisation for remote files to be able to parse the entire
 CMake file API reply at once. The alternative is to do multiple separate read
